@@ -1,6 +1,4 @@
 {
   "name": "iPhone Alarms Sync",
-  "render_readme": true,
-  "domains": ["iphone_alarms_sync"],
-  "iot_class": "Cloud Push"
+  "render_readme": true
 }
