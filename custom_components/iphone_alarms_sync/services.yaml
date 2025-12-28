@@ -1,0 +1,44 @@
+sync_alarms:
+  name: Sync alarms
+  description: Synchronize all alarms from iPhone
+  fields:
+    phone_id:
+      name: Phone ID
+      description: The phone identifier
+      required: true
+      selector:
+        text:
+    alarms:
+      name: Alarms
+      description: List of alarm objects
+      required: true
+      selector:
+        object:
+
+report_alarm_event:
+  name: Report alarm event
+  description: Report an alarm event (goes_off, snoozed, stopped)
+  fields:
+    phone_id:
+      name: Phone ID
+      description: The phone identifier
+      required: true
+      selector:
+        text:
+    alarm_id:
+      name: Alarm ID
+      description: The alarm identifier
+      required: true
+      selector:
+        text:
+    event:
+      name: Event
+      description: Event type (goes_off, snoozed, stopped)
+      required: true
+      selector:
+        select:
+          options:
+            - goes_off
+            - snoozed
+            - stopped
+

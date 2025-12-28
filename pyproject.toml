@@ -1,0 +1,23 @@
+[project]
+name = "iphone-alarms-sync"
+version = "0.1.0"
+description = "Home Assistant custom integration for iPhone alarms sync"
+requires-python = ">=3.13"
+dependencies = []
+
+[project.optional-dependencies]
+dev = ["ruff>=0.1.0", "mypy>=1.0.0", "pre-commit>=3.0.0"]
+
+[tool.ruff]
+line-length = 88
+target-version = "py313"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "N", "W"]
+ignore = []
+
+[tool.mypy]
+python_version = "3.13"
+warn_return_any = true
+warn_unused_configs = true
+ignore_missing_imports = true

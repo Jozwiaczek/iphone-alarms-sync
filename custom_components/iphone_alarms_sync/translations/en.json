@@ -1,0 +1,73 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Add iPhone",
+        "description": "Enter phone name or select Mobile App device",
+        "data": {
+          "mobile_app_device": "Mobile App Device (optional)",
+          "phone_name": "Phone Name"
+        }
+      },
+      "shortcuts": {
+        "title": "Shortcuts Setup",
+        "description": "Import shortcuts on your iPhone. Your phone_id is: {phone_id}"
+      },
+      "wait_sync": {
+        "title": "Waiting for First Sync",
+        "description": "Waiting for first sync from iPhone. Phone ID: {phone_id}"
+      }
+    },
+    "error": {
+      "cannot_connect": "Unable to connect",
+      "invalid_auth": "Invalid authentication",
+      "unknown": "Unexpected error"
+    },
+    "abort": {
+      "already_configured": "Device is already configured",
+      "waiting_for_sync": "Waiting for first sync"
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "iPhone Alarms Sync Options",
+        "menu_options": {
+          "overview": "Overview",
+          "alarms": "Alarms",
+          "events": "Events History",
+          "settings": "Phone Settings",
+          "shortcuts": "Shortcuts Setup",
+          "delete": "Delete Phone"
+        }
+      },
+      "overview": {
+        "title": "Overview",
+        "description": "Phone: {phone_name}\nAlarms: {alarm_count}\nLast Sync: {last_sync}\nRecent Events: {recent_events}"
+      },
+      "alarms": {
+        "title": "Alarms",
+        "description": "Alarms:\n{alarm_list}"
+      },
+      "events": {
+        "title": "Events History",
+        "description": "Events:\n{event_list}"
+      },
+      "settings": {
+        "title": "Phone Settings",
+        "data": {
+          "phone_name": "Phone Name",
+          "mobile_app_device": "Mobile App Device (optional)"
+        }
+      },
+      "shortcuts": {
+        "title": "Shortcuts Setup",
+        "description": "Your phone_id is: {phone_id}"
+      },
+      "delete": {
+        "title": "Delete Phone",
+        "description": "Are you sure you want to delete this phone and all its alarms?"
+      }
+    }
+  }
+}
