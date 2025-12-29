@@ -2,30 +2,19 @@
   "config": {
     "step": {
       "user": {
-        "title": "Add iPhone/iPad",
-        "description": "Choose how you want to name your device:\n\n• **Use Mobile App Device name (with reference)**: Links this integration to an existing Mobile App device. The name will be taken from that device, and you'll have a reference connection between them.\n\n• **Use custom name**: Enter any name you want. This creates a standalone entry without linking to a Mobile App device.",
-        "data": {
-          "name_source": "Name Source",
-          "mobile_app_device_id": "Mobile App Device",
-          "custom_name": "Custom Name"
-        }
-      },
-      "confirm": {
-        "title": "Device Registered",
-        "description": "Device has been registered successfully!\n\n**Your Phone ID:**\n`{phone_id}`\n\nCopy this ID - you'll need it when setting up the shortcut on your iPhone/iPad.\n\nThe service `iphone_alarms_sync.sync_alarms` is now available. You can create a shortcut that calls this service with your phone_id and alarms data."
+        "title": "iPhone Alarms Sync",
+        "description": "Set up iPhone Alarms Sync integration. You can add and manage your iPhone/iPad devices in the Configure menu after setup."
       }
     },
     "error": {
       "cannot_connect": "Unable to connect",
       "invalid_auth": "Invalid authentication",
       "unknown": "Unexpected error",
-      "no_mobile_app_devices": "No Mobile App devices found. Please use custom name instead.",
-      "device_not_found": "Selected device not found",
-      "required": "This field is required"
+      "required": "This field is required",
+      "already_exists": "A device with this name already exists"
     },
     "abort": {
-      "already_configured": "Device is already configured",
-      "phone_name_not_set": "Phone name was not set"
+      "single_instance_allowed": "Only one instance of this integration is allowed"
     }
   },
   "options": {
@@ -33,40 +22,50 @@
       "init": {
         "title": "iPhone Alarms Sync Options",
         "menu_options": {
+          "manage_devices": "Manage Devices",
           "overview": "Overview",
-          "alarms": "Alarms",
           "events": "Events History",
-          "settings": "Device Settings",
-          "shortcuts": "Shortcuts Setup",
-          "delete": "Delete Device"
+          "shortcuts": "Shortcuts Setup"
+        }
+      },
+      "manage_devices": {
+        "title": "Manage Devices",
+        "description": "Devices:\n{phone_list}\n\nUse the options below to add, edit, or delete devices."
+      },
+      "add_device": {
+        "title": "Add Device",
+        "description": "Add a new iPhone/iPad device to sync alarms from.",
+        "data": {
+          "phone_name": "Device Name",
+          "mobile_app_device_id": "Mobile App Device (optional)"
+        }
+      },
+      "edit_device": {
+        "title": "Edit Device",
+        "description": "Edit device settings.",
+        "data": {
+          "phone_name": "Device Name",
+          "mobile_app_device_id": "Mobile App Device (optional)"
+        }
+      },
+      "delete_device": {
+        "title": "Delete Device",
+        "description": "Are you sure you want to delete **{phone_name}** and all its alarms?",
+        "data": {
+          "confirm": "Confirm deletion"
         }
       },
       "overview": {
         "title": "Overview",
-        "description": "Phone: {phone_name}\nAlarms: {alarm_count}\nLast Sync: {last_sync}\nRecent Events: {recent_events}"
-      },
-      "alarms": {
-        "title": "Alarms",
-        "description": "Alarms:\n{alarm_list}"
+        "description": "Devices: {phone_count}\nAlarms: {alarm_count}\nLast Sync: {last_sync}\nRecent Events: {recent_events}"
       },
       "events": {
         "title": "Events History",
         "description": "Events:\n{event_list}"
       },
-      "settings": {
-        "title": "Device Settings",
-        "data": {
-          "phone_name": "Device Name",
-          "mobile_app_device": "Mobile App Device (optional)"
-        }
-      },
       "shortcuts": {
         "title": "Shortcuts Setup",
-        "description": "**Your Phone ID:**\n`{phone_id}`\n\nCopy this ID - you'll need it when setting up the shortcut on your iPhone/iPad.\n\nThe service `iphone_alarms_sync.sync_alarms` is available. You can create a shortcut that calls this service with your phone_id and alarms data."
-      },
-      "delete": {
-        "title": "Delete Phone",
-        "description": "Are you sure you want to delete this phone and all its alarms?"
+        "description": "**Phone IDs:**\n{phone_ids}\n\nCopy the ID for your device - you'll need it when setting up the shortcut on your iPhone/iPad.\n\nThe service `iphone_alarms_sync.sync_alarms` is available. You can create a shortcut that calls this service with your phone_id and alarms data."
       }
     }
   }

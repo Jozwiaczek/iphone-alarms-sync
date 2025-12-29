@@ -11,15 +11,13 @@ from homeassistant.data_entry_flow import FlowResult
 from homeassistant.helpers import device_registry as dr
 
 from .const import (
-    CONF_MOBILE_APP_DEVICE,
-    CONF_PHONE_ID,
     CONF_PHONE_NAME,
     DOMAIN,
 )
-from .coordinator import IPhoneAlarmsSyncConfigEntry
-
-NAME_SOURCE_MOBILE_APP = "mobile_app"
-NAME_SOURCE_CUSTOM = "custom"
+from .coordinator import (
+    IPhoneAlarmsSyncConfigEntry,
+    IPhoneAlarmsSyncCoordinator,
+)
 
 
 def slugify(text: str) -> str:
@@ -30,171 +28,17 @@ def slugify(text: str) -> str:
 
 
 class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):  # type: ignore[call-arg]
-    VERSION = 1
-
-    def __init__(self) -> None:
-        self.phone_name: str | None = None
-        self.phone_id: str | None = None
-        self.mobile_app_device_id: str | None = None
+    VERSION = 2
 
     async def async_step_user(
         self, user_input: dict[str, Any] | None = None
     ) -> FlowResult:
-        errors: dict[str, str] = {}
-
-        device_registry = dr.async_get(self.hass)
-        mobile_app_devices = [
-            device.id
-            for device in device_registry.devices.values()
-            if any(
-                entry.domain == mobile_app.DOMAIN
-                for entry_id in device.config_entries
-                if (entry := self.hass.config_entries.async_get_entry(entry_id))
-            )
-        ]
-
-        device_options = {}
-        for device_id in mobile_app_devices:
-            device = device_registry.async_get(device_id)
-            if device:
-                device_options[device.id] = device.name
-
-        name_source_options = {
-            NAME_SOURCE_CUSTOM: "Use custom name",
-        }
-        if mobile_app_devices:
-            name_source_options[
-                NAME_SOURCE_MOBILE_APP
-            ] = "Use Mobile App Device name (with reference)"
-
-        if user_input is None:
-            schema = vol.Schema(
-                {
-                    vol.Required(
-                        "name_source",
-                        default=NAME_SOURCE_MOBILE_APP
-                        if mobile_app_devices
-                        else NAME_SOURCE_CUSTOM,
-                    ): vol.In(name_source_options),
-                }
-            )
-            return self.async_show_form(
-                step_id="user",
-                data_schema=schema,
-                errors=errors,
-            )
-
-        name_source = user_input.get("name_source")
-
-        if name_source == NAME_SOURCE_MOBILE_APP:
-            if not mobile_app_devices:
-                errors["base"] = "no_mobile_app_devices"
-                schema = vol.Schema(
-                    {
-                        vol.Required("name_source", default=NAME_SOURCE_CUSTOM): vol.In(
-                            name_source_options
-                        ),
-                    }
-                )
-                return self.async_show_form(
-                    step_id="user", data_schema=schema, errors=errors
-                )
-
-            if "mobile_app_device_id" not in user_input:
-                schema = vol.Schema(
-                    {
-                        vol.Required(
-                            "name_source", default=NAME_SOURCE_MOBILE_APP
-                        ): vol.In(name_source_options),
-                        vol.Required("mobile_app_device_id"): vol.In(device_options),
-                    }
-                )
-                return self.async_show_form(
-                    step_id="user", data_schema=schema, errors=errors
-                )
-
-            device_id = user_input["mobile_app_device_id"]
-            device = device_registry.async_get(device_id)
-            if device:
-                self.mobile_app_device_id = device_id
-                self.phone_name = device.name
-            else:
-                errors["base"] = "device_not_found"
-                schema = vol.Schema(
-                    {
-                        vol.Required(
-                            "name_source", default=NAME_SOURCE_MOBILE_APP
-                        ): vol.In(name_source_options),
-                        vol.Required("mobile_app_device_id"): vol.In(device_options),
-                    }
-                )
-                return self.async_show_form(
-                    step_id="user", data_schema=schema, errors=errors
-                )
-
-        elif name_source == NAME_SOURCE_CUSTOM:
-            if "custom_name" not in user_input:
-                schema = vol.Schema(
-                    {
-                        vol.Required("name_source", default=NAME_SOURCE_CUSTOM): vol.In(
-                            name_source_options
-                        ),
-                        vol.Required("custom_name"): str,
-                    }
-                )
-                return self.async_show_form(
-                    step_id="user", data_schema=schema, errors=errors
-                )
-
-            custom_name = user_input.get("custom_name", "").strip()
-            if not custom_name:
-                errors["base"] = "required"
-                schema = vol.Schema(
-                    {
-                        vol.Required("name_source", default=NAME_SOURCE_CUSTOM): vol.In(
-                            name_source_options
-                        ),
-                        vol.Required("custom_name"): str,
-                    }
-                )
-                return self.async_show_form(
-                    step_id="user", data_schema=schema, errors=errors
-                )
-
-            self.phone_name = custom_name
-            self.mobile_app_device_id = None
-
-        if self.phone_name is None:
-            return self.async_abort(reason="phone_name_not_set")
-
-        self.phone_id = slugify(self.phone_name)
-
-        await self.async_set_unique_id(self.phone_id)
-        self._abort_if_unique_id_configured()
-
-        return await self.async_step_confirm()
-
-    async def async_step_confirm(
-        self, user_input: dict[str, Any] | None = None
-    ) -> FlowResult:
-        if self.phone_id is None or self.phone_name is None:
-            return self.async_abort(reason="phone_name_not_set")
-
-        if user_input is None:
-            return self.async_show_form(
-                step_id="confirm",
-                description_placeholders={
-                    "phone_id": self.phone_id,
-                },
-            )
+        if self._async_current_entries():
+            return self.async_abort(reason="single_instance_allowed")
 
         return self.async_create_entry(
-            title=self.phone_name,
-            data={
-                CONF_PHONE_NAME: self.phone_name,
-                CONF_PHONE_ID: self.phone_id,
-                "mobile_app_device_id": self.mobile_app_device_id,
-            },
+            title="iPhone Alarms Sync",
+            data={},
         )
 
     @staticmethod
@@ -208,6 +52,15 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):  # type: ignore[call
 class OptionsFlowHandler(config_entries.OptionsFlow):
     def __init__(self, config_entry: IPhoneAlarmsSyncConfigEntry) -> None:
         self.config_entry = config_entry
+        self.selected_phone_id: str | None = None
+
+    def _get_coordinator(self) -> IPhoneAlarmsSyncCoordinator | None:
+        if (
+            not hasattr(self.config_entry, "runtime_data")
+            or not self.config_entry.runtime_data
+        ):
+            return None
+        return self.config_entry.runtime_data.coordinator  # type: ignore[no-any-return]
 
     async def async_step_init(
         self, user_input: dict[str, Any] | None = None
@@ -215,70 +68,271 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
         return self.async_show_menu(
             step_id="init",
             menu_options=[
+                "manage_devices",
                 "overview",
-                "alarms",
                 "events",
-                "settings",
                 "shortcuts",
-                "delete",
             ],
         )
+
+    async def async_step_manage_devices(
+        self, user_input: dict[str, Any] | None = None
+    ) -> FlowResult:
+        coordinator = self._get_coordinator()
+        if coordinator is None:
+            return await self.async_step_init()
+        phones = coordinator.get_all_phones()
+
+        if not phones:
+            return await self.async_step_add_device()
+
+        menu_options = {"add_device": "Add New Device"}
+        for phone_id, phone in phones.items():
+            menu_options[f"edit_{phone_id}"] = f"Edit: {phone.phone_name}"
+            menu_options[f"delete_{phone_id}"] = f"Delete: {phone.phone_name}"
+
+        if user_input is None:
+            phone_list = "\n".join(
+                f"- {phone.phone_name} ({phone_id})"
+                for phone_id, phone in phones.items()
+            )
+            return self.async_show_menu(
+                step_id="manage_devices",
+                menu_options=menu_options,
+                description_placeholders={"phone_list": phone_list},
+            )
+
+        selected = user_input.get("next_step_id")
+        if selected == "add_device":
+            return await self.async_step_add_device()
+        elif selected and selected.startswith("edit_"):
+            self.selected_phone_id = selected.replace("edit_", "")
+            return await self.async_step_edit_device()
+        elif selected and selected.startswith("delete_"):
+            self.selected_phone_id = selected.replace("delete_", "")
+            return await self.async_step_delete_device()
+
+        return await self.async_step_init()
+
+    async def async_step_add_device(
+        self, user_input: dict[str, Any] | None = None
+    ) -> FlowResult:
+        errors: dict[str, str] = {}
+        coordinator = self._get_coordinator()
+        if coordinator is None:
+            return await self.async_step_init()
+        existing_phones = coordinator.get_all_phones()
+
+        device_registry = dr.async_get(self.hass)
+        mobile_app_devices = [
+            device.id
+            for device in device_registry.devices.values()
+            if any(
+                entry.domain == mobile_app.DOMAIN
+                for entry_id in device.config_entries
+                if (entry := self.hass.config_entries.async_get_entry(entry_id))
+            )
+        ]
+
+        device_options = {None: "None"}
+        for device_id in mobile_app_devices:
+            device = device_registry.async_get(device_id)
+            if device:
+                device_options[device.id] = device.name
+
+        if user_input is None:
+            schema = vol.Schema(
+                {
+                    vol.Required(CONF_PHONE_NAME): str,
+                    vol.Optional("mobile_app_device_id", default=None): vol.In(
+                        device_options
+                    ),
+                }
+            )
+            return self.async_show_form(
+                step_id="add_device", data_schema=schema, errors=errors
+            )
+
+        phone_name = user_input.get(CONF_PHONE_NAME, "").strip()
+        if not phone_name:
+            errors["base"] = "required"
+            schema = vol.Schema(
+                {
+                    vol.Required(CONF_PHONE_NAME): str,
+                    vol.Optional("mobile_app_device_id", default=None): vol.In(
+                        device_options
+                    ),
+                }
+            )
+            return self.async_show_form(
+                step_id="add_device", data_schema=schema, errors=errors
+            )
+
+        phone_id = slugify(phone_name)
+        if phone_id in existing_phones:
+            errors["base"] = "already_exists"
+            schema = vol.Schema(
+                {
+                    vol.Required(CONF_PHONE_NAME): str,
+                    vol.Optional("mobile_app_device_id", default=None): vol.In(
+                        device_options
+                    ),
+                }
+            )
+            return self.async_show_form(
+                step_id="add_device", data_schema=schema, errors=errors
+            )
+
+        mobile_app_device_id = user_input.get("mobile_app_device_id")
+        if mobile_app_device_id == "None":
+            mobile_app_device_id = None
+
+        coordinator.add_phone(phone_id, phone_name, mobile_app_device_id)
+        await self.hass.config_entries.async_reload(self.config_entry.entry_id)
+        return await self.async_step_manage_devices()
+
+    async def async_step_edit_device(
+        self, user_input: dict[str, Any] | None = None
+    ) -> FlowResult:
+        errors: dict[str, str] = {}
+        coordinator = self._get_coordinator()
+        if coordinator is None:
+            return await self.async_step_init()
+
+        if self.selected_phone_id is None:
+            return await self.async_step_manage_devices()
+
+        phone = coordinator.get_phone(self.selected_phone_id)
+        if not phone:
+            return await self.async_step_manage_devices()
+
+        device_registry = dr.async_get(self.hass)
+        mobile_app_devices = [
+            device.id
+            for device in device_registry.devices.values()
+            if any(
+                entry.domain == mobile_app.DOMAIN
+                for entry_id in device.config_entries
+                if (entry := self.hass.config_entries.async_get_entry(entry_id))
+            )
+        ]
+
+        device_options = {None: "None"}
+        for device_id in mobile_app_devices:
+            device = device_registry.async_get(device_id)
+            if device:
+                device_options[device.id] = device.name
+
+        if user_input is None:
+            schema = vol.Schema(
+                {
+                    vol.Required(CONF_PHONE_NAME, default=phone.phone_name): str,
+                    vol.Optional(
+                        "mobile_app_device_id",
+                        default=phone.mobile_app_device_id or None,
+                    ): vol.In(device_options),
+                }
+            )
+            return self.async_show_form(
+                step_id="edit_device", data_schema=schema, errors=errors
+            )
+
+        phone_name = user_input.get(CONF_PHONE_NAME, "").strip()
+        if not phone_name:
+            errors["base"] = "required"
+            schema = vol.Schema(
+                {
+                    vol.Required(CONF_PHONE_NAME, default=phone.phone_name): str,
+                    vol.Optional(
+                        "mobile_app_device_id",
+                        default=phone.mobile_app_device_id or None,
+                    ): vol.In(device_options),
+                }
+            )
+            return self.async_show_form(
+                step_id="edit_device", data_schema=schema, errors=errors
+            )
+
+        mobile_app_device_id = user_input.get("mobile_app_device_id")
+        if mobile_app_device_id == "None":
+            mobile_app_device_id = None
+
+        coordinator.update_phone(
+            self.selected_phone_id, phone_name, mobile_app_device_id
+        )
+        await self.hass.config_entries.async_reload(self.config_entry.entry_id)
+        self.selected_phone_id = None
+        return await self.async_step_manage_devices()
+
+    async def async_step_delete_device(
+        self, user_input: dict[str, Any] | None = None
+    ) -> FlowResult:
+        coordinator = self._get_coordinator()
+        if coordinator is None:
+            return await self.async_step_init()
+
+        if self.selected_phone_id is None:
+            return await self.async_step_manage_devices()
+
+        phone = coordinator.get_phone(self.selected_phone_id)
+        if not phone:
+            return await self.async_step_manage_devices()
+
+        if user_input is None:
+            return self.async_show_form(
+                step_id="delete_device",
+                description_placeholders={"phone_name": phone.phone_name},
+            )
+
+        if user_input.get("confirm"):
+            coordinator.delete_phone(self.selected_phone_id)
+            await self.hass.config_entries.async_reload(self.config_entry.entry_id)
+        self.selected_phone_id = None
+        return await self.async_step_manage_devices()
 
     async def async_step_overview(
         self, user_input: dict[str, Any] | None = None
     ) -> FlowResult:
-        coordinator = self.config_entry.runtime_data.coordinator
-        alarms = coordinator.get_all_alarms()
-        last_sync = max(
-            (alarm.synced_at for alarm in alarms.values() if alarm.synced_at),
-            default=None,
-        )
+        coordinator = self._get_coordinator()
+        if coordinator is None:
+            return await self.async_step_init()
+        phones = coordinator.get_all_phones()
+        all_alarms = coordinator.get_all_alarms()
         recent_events = coordinator.get_events(limit=10)
+
+        last_sync = None
+        for phone in phones.values():
+            for alarm in phone.alarms.values():
+                if alarm.synced_at:
+                    if last_sync is None or alarm.synced_at > last_sync:
+                        last_sync = alarm.synced_at
+
+        phone_count = len(phones)
+        alarm_count = len(all_alarms)
 
         return self.async_show_form(
             step_id="overview",
             description_placeholders={
-                "phone_name": self.config_entry.data[CONF_PHONE_NAME],
-                "alarm_count": str(len(alarms)),
+                "phone_count": str(phone_count),
+                "alarm_count": str(alarm_count),
                 "last_sync": last_sync or "Never",
                 "recent_events": str(len(recent_events)),
             },
         )
 
-    async def async_step_alarms(
-        self, user_input: dict[str, Any] | None = None
-    ) -> FlowResult:
-        coordinator = self.config_entry.runtime_data.coordinator
-        alarms = coordinator.get_all_alarms()
-
-        if user_input is None:
-            if alarms:
-                alarm_list = "\n".join(
-                    f"- {alarm.label} ({alarm_id})"
-                    for alarm_id, alarm in alarms.items()
-                )
-            else:
-                alarm_list = (
-                    "No alarms synced yet. "
-                    "Use the shortcut on your iPhone/iPad to sync alarms."
-                )
-            return self.async_show_form(
-                step_id="alarms",
-                description_placeholders={"alarm_list": alarm_list},
-            )
-
-        return await self.async_step_init()
-
     async def async_step_events(
         self, user_input: dict[str, Any] | None = None
     ) -> FlowResult:
-        coordinator = self.config_entry.runtime_data.coordinator
+        coordinator = self._get_coordinator()
+        if coordinator is None:
+            return await self.async_step_init()
         events = coordinator.get_events(limit=20)
 
         if user_input is None:
             if events:
                 event_list = "\n".join(
-                    f"- {event.occurred_at}: {event.event} (alarm: {event.alarm_id})"
+                    f"- {event.occurred_at}: {event.event} "
+                    f"(phone: {event.phone_id}, alarm: {event.alarm_id})"
                     for event in events
                 )
             else:
@@ -294,57 +348,19 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
 
         return await self.async_step_init()
 
-    async def async_step_settings(
-        self, user_input: dict[str, Any] | None = None
-    ) -> FlowResult:
-        if user_input is None:
-            device_registry = dr.async_get(self.hass)
-            mobile_app_devices = {
-                device.id: device.name
-                for device in device_registry.devices.values()
-                if any(
-                    entry.domain == mobile_app.DOMAIN
-                    for entry_id in device.config_entries
-                    if (entry := self.hass.config_entries.async_get_entry(entry_id))
-                )
-            }
-
-            schema = vol.Schema(
-                {
-                    vol.Required(
-                        CONF_PHONE_NAME, default=self.config_entry.data[CONF_PHONE_NAME]
-                    ): str,
-                    vol.Optional(CONF_MOBILE_APP_DEVICE): vol.In(mobile_app_devices),
-                }
-            )
-
-            return self.async_show_form(step_id="settings", data_schema=schema)
-
-        updates = {CONF_PHONE_NAME: user_input[CONF_PHONE_NAME]}
-        if CONF_MOBILE_APP_DEVICE in user_input:
-            updates["mobile_app_device_id"] = user_input[CONF_MOBILE_APP_DEVICE]
-
-        self.hass.config_entries.async_update_entry(self.config_entry, data=updates)
-        return await self.async_step_init()
-
     async def async_step_shortcuts(
         self, user_input: dict[str, Any] | None = None
     ) -> FlowResult:
+        coordinator = self._get_coordinator()
+        if coordinator is None:
+            return await self.async_step_init()
+        phones = coordinator.get_all_phones()
+        phone_ids = "\n".join(
+            f"- {phone.phone_name}: `{phone_id}`" for phone_id, phone in phones.items()
+        )
         return self.async_show_form(
             step_id="shortcuts",
             description_placeholders={
-                "phone_id": self.config_entry.data[CONF_PHONE_ID],
+                "phone_ids": phone_ids or "No devices added yet."
             },
         )
-
-    async def async_step_delete(
-        self, user_input: dict[str, Any] | None = None
-    ) -> FlowResult:
-        if user_input is None:
-            return self.async_show_form(step_id="delete")
-
-        if user_input.get("confirm"):
-            await self.hass.config_entries.async_remove(self.config_entry.entry_id)
-            return self.async_create_entry(title="", data={})
-
-        return await self.async_step_init()

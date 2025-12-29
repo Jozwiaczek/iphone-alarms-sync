@@ -1,29 +1,29 @@
-# Lista kontrolna gotowości do instalacji przez HACS
+# HACS Installation Readiness Checklist
 
-## ✅ Wymagane pliki i struktura
+## ✅ Required files and structure
 
-### Struktura katalogów
-- ✅ `custom_components/iphone_alarms_sync/` - główny folder integracji
-- ✅ `custom_components/iphone_alarms_sync/__init__.py` - główny plik integracji
-- ✅ `custom_components/iphone_alarms_sync/manifest.json` - manifest z metadanymi
+### Directory structure
+- ✅ `custom_components/iphone_alarms_sync/` - main integration folder
+- ✅ `custom_components/iphone_alarms_sync/__init__.py` - main integration file
+- ✅ `custom_components/iphone_alarms_sync/manifest.json` - manifest with metadata
 - ✅ `custom_components/iphone_alarms_sync/config_flow.py` - config flow
-- ✅ `custom_components/iphone_alarms_sync/strings.json` - tłumaczenia (en)
-- ✅ `custom_components/iphone_alarms_sync/translations/en.json` - tłumaczenia
-- ✅ `custom_components/iphone_alarms_sync/services.yaml` - definicje serwisów
+- ✅ `custom_components/iphone_alarms_sync/strings.json` - translations (en)
+- ✅ `custom_components/iphone_alarms_sync/translations/en.json` - translations
+- ✅ `custom_components/iphone_alarms_sync/services.yaml` - service definitions
 - ✅ `custom_components/iphone_alarms_sync/coordinator.py` - coordinator
-- ✅ `custom_components/iphone_alarms_sync/sensor.py` - platforma sensor
-- ✅ `custom_components/iphone_alarms_sync/binary_sensor.py` - platforma binary_sensor
+- ✅ `custom_components/iphone_alarms_sync/sensor.py` - sensor platform
+- ✅ `custom_components/iphone_alarms_sync/binary_sensor.py` - binary_sensor platform
 - ✅ `custom_components/iphone_alarms_sync/device_trigger.py` - device triggers
-- ✅ `custom_components/iphone_alarms_sync/const.py` - stałe
+- ✅ `custom_components/iphone_alarms_sync/const.py` - constants
 
-### Pliki konfiguracyjne
-- ✅ `hacs.json` - konfiguracja HACS
-- ✅ `README.md` - dokumentacja
-- ✅ `.github/workflows/hacs.yml` - workflow walidacji HACS
-- ✅ `.github/workflows/validate.yml` - workflow walidacji hassfest
-- ✅ `.gitignore` - wykluczenia Git
+### Configuration files
+- ✅ `hacs.json` - HACS configuration
+- ✅ `README.md` - documentation
+- ✅ `.github/workflows/hacs.yml` - HACS validation workflow
+- ✅ `.github/workflows/validate.yml` - hassfest validation workflow
+- ✅ `.gitignore` - Git exclusions
 
-## ✅ Weryfikacja manifest.json
+## ✅ manifest.json verification
 
 ```json
 {
@@ -39,7 +39,7 @@
 }
 ```
 
-## ✅ Weryfikacja hacs.json
+## ✅ hacs.json verification
 
 ```json
 {
@@ -50,76 +50,75 @@
 }
 ```
 
-## ⚠️ Wymagania przed instalacją
+## ⚠️ Requirements before installation
 
-### Repozytorium GitHub
-- [x] Repozytorium jest **publiczne** (HACS nie obsługuje prywatnych)
-- [ ] Repozytorium ma **description** (w ustawieniach GitHub)
-- [ ] Repozytorium ma **topics** (np. `home-assistant`, `hacs`, `integration`)
-- [ ] Branch główny to `main` (lub `master`)
+### GitHub Repository
+- [x] Repository is **public** (HACS doesn't support private repositories)
+- [ ] Repository has **description** (in GitHub settings)
+- [ ] Repository has **topics** (e.g., `home-assistant`, `hacs`, `integration`)
+- [ ] Main branch is `main` (or `master`)
 
 ### GitHub Actions
-- [ ] Workflow `.github/workflows/hacs.yml` przechodzi ✅
-- [ ] Workflow `.github/workflows/validate.yml` przechodzi ✅
-- [ ] `hassfest` walidacja przechodzi ✅
+- [ ] Workflow `.github/workflows/hacs.yml` passes ✅
+- [ ] Workflow `.github/workflows/validate.yml` passes ✅
+- [ ] `hassfest` validation passes ✅
 
-### Testy lokalne (opcjonalne, ale zalecane)
-- [ ] `ruff check` - brak błędów lintingu
-- [ ] `mypy` - brak błędów typów (opcjonalne)
-- [ ] Kod działa lokalnie w HA
+### Local tests (optional, but recommended)
+- [ ] `ruff check` - no linting errors
+- [ ] `mypy` - no type errors (optional)
+- [ ] Code works locally in HA
 
-## 📋 Instrukcja instalacji przez HACS
+## 📋 HACS installation instructions
 
-1. **Commit i push na GitHub:**
+1. **Commit and push to GitHub:**
    ```bash
    git add .
    git commit -m "Ready for HACS installation"
    git push origin main
    ```
 
-2. **W Home Assistant:**
-   - Otwórz HACS → Integrations
-   - Kliknij ⋮ (trzy kropki) → Custom repositories
-   - Dodaj: `Jozwiaczek/iphone-alarms-sync`
+2. **In Home Assistant:**
+   - Open HACS → Integrations
+   - Click ⋮ (three dots) → Custom repositories
+   - Add: `Jozwiaczek/iphone-alarms-sync`
    - Category: `Integration`
-   - Kliknij Add
+   - Click Add
 
-3. **Instalacja:**
-   - W HACS → Integrations znajdź "iPhone Alarms Sync"
-   - Kliknij Download
+3. **Installation:**
+   - In HACS → Integrations, find "iPhone Alarms Sync"
+   - Click Download
    - Restart Home Assistant
 
-4. **Konfiguracja:**
+4. **Configuration:**
    - Settings → Devices & Services → Add Integration
-   - Wyszukaj "iPhone Alarms Sync"
-   - Postępuj zgodnie z instrukcjami w README
+   - Search for "iPhone Alarms Sync"
+   - Follow the instructions in README
 
-## 🔍 Co sprawdzić po instalacji
+## 🔍 What to check after installation
 
-- [ ] Integracja pojawia się w HACS
-- [ ] Można dodać przez Config Flow
-- [ ] Brak błędów w logach HA
-- [ ] Serwisy są dostępne w Developer Tools
-- [ ] Encje są tworzone poprawnie
+- [ ] Integration appears in HACS
+- [ ] Can be added via Config Flow
+- [ ] No errors in HA logs
+- [ ] Services are available in Developer Tools
+- [ ] Entities are created correctly
 
-## 🚨 Potencjalne problemy
+## 🚨 Potential issues
 
-1. **HACS nie widzi repozytorium:**
-   - Sprawdź czy repozytorium jest publiczne
-   - Sprawdź czy GitHub Actions przechodzą
-   - Sprawdź czy `hacs.json` jest w root
+1. **HACS doesn't see the repository:**
+   - Check if repository is public
+   - Check if GitHub Actions pass
+   - Check if `hacs.json` is in root
 
-2. **Błędy podczas instalacji:**
-   - Sprawdź logi HA: `Settings → System → Logs`
-   - Sprawdź czy wszystkie pliki są w `custom_components/iphone_alarms_sync/`
-   - Sprawdź czy `manifest.json` jest poprawny
+2. **Errors during installation:**
+   - Check HA logs: `Settings → System → Logs`
+   - Check if all files are in `custom_components/iphone_alarms_sync/`
+   - Check if `manifest.json` is correct
 
-3. **Integracja nie działa:**
-   - Sprawdź logi HA
-   - Sprawdź czy Config Flow działa
-   - Sprawdź czy serwisy są zarejestrowane
+3. **Integration doesn't work:**
+   - Check HA logs
+   - Check if Config Flow works
+   - Check if services are registered
 
-## ✅ Status: GOTOWE DO INSTALACJI
+## ✅ Status: READY FOR INSTALLATION
 
-Projekt spełnia wszystkie wymagania HACS i Home Assistant!
-
+The project meets all HACS and Home Assistant requirements!

@@ -53,16 +53,19 @@ async def async_setup_entry(
     coordinator = entry.runtime_data.coordinator
     entities = []
 
-    for alarm_id, alarm in coordinator.get_all_alarms().items():
-        for description in SENSOR_TYPES:
-            entities.append(
-                IPhoneAlarmsSyncSensor(
-                    coordinator,
-                    entry,
-                    alarm_id,
-                    description,
+    phones = coordinator.get_all_phones()
+    for phone_id, phone in phones.items():
+        for alarm_id, alarm in phone.alarms.items():
+            for description in SENSOR_TYPES:
+                entities.append(
+                    IPhoneAlarmsSyncSensor(
+                        coordinator,
+                        entry,
+                        phone_id,
+                        alarm_id,
+                        description,
+                    )
                 )
-            )
 
     async_add_entities(entities)
 
@@ -74,27 +77,34 @@ class IPhoneAlarmsSyncSensor(
         self,
         coordinator: IPhoneAlarmsSyncCoordinator,
         entry: IPhoneAlarmsSyncConfigEntry,
+        phone_id: str,
         alarm_id: str,
         description: SensorEntityDescription,
     ) -> None:
         super().__init__(coordinator)
         self._entry = entry
+        self._phone_id = phone_id
         self._alarm_id = alarm_id
         self._description = description
-        self._attr_unique_id = f"{entry.entry_id}_{alarm_id}_{description.key}"
-        alarm = coordinator.get_alarm(alarm_id)
+        self._attr_unique_id = (
+            f"{entry.entry_id}_{phone_id}_{alarm_id}_{description.key}"
+        )
+        alarm = coordinator.get_alarm(phone_id, alarm_id)
         if alarm is None:
             raise ValueError(f"Alarm {alarm_id} not found")
-        self._attr_name = f"{coordinator.phone_name} {alarm.label} {description.name}"
+        phone = coordinator.get_phone(phone_id)
+        if phone is None:
+            raise ValueError(f"Phone {phone_id} not found")
+        self._attr_name = f"{phone.phone_name} {alarm.label} {description.name}"
         self._attr_device_info = DeviceInfo(
-            identifiers={(DOMAIN, coordinator.phone_id, alarm_id)},
-            name=f"{coordinator.phone_name} {alarm.label}",
-            via_device=(DOMAIN, coordinator.phone_id),
+            identifiers={(DOMAIN, phone_id, alarm_id)},
+            name=f"{phone.phone_name} {alarm.label}",
+            via_device=(DOMAIN, phone_id),
         )
 
     @property
     def native_value(self) -> str | None:
-        alarm = self.coordinator.get_alarm(self._alarm_id)
+        alarm = self.coordinator.get_alarm(self._phone_id, self._alarm_id)
         if not alarm:
             return None
 
@@ -116,7 +126,7 @@ class IPhoneAlarmsSyncSensor(
         if self._description.key == "shortcut_snippet":
             payloads = {
                 "sync_alarms": {
-                    "phone_id": self.coordinator.phone_id,
+                    "phone_id": self._phone_id,
                     "alarms": [
                         {
                             "alarm_id": alarm.alarm_id,
@@ -131,7 +141,7 @@ class IPhoneAlarmsSyncSensor(
                     ],
                 },
                 "report_alarm_event": {
-                    "phone_id": self.coordinator.phone_id,
+                    "phone_id": self._phone_id,
                     "alarm_id": alarm.alarm_id,
                     "event": "goes_off",
                 },
