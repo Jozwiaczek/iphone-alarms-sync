@@ -1,7 +1,7 @@
 [project]
 name = "iphone-alarms-sync"
 version = "0.1.0"
-description = "Home Assistant custom integration for iPhone alarms sync"
+description = "Home Assistant custom integration for iPhone and iPad alarms sync"
 requires-python = ">=3.13"
 dependencies = []
 

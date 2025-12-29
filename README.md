@@ -2,7 +2,7 @@
 
 [![Open your Home Assistant instance and open the iPhone Alarms Sync integration inside the Home Assistant Community Store.](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=Jozwiaczek&repository=iphone-alarms-sync&category=integration)
 
-Home Assistant custom integration for one-way synchronization of iPhone alarms. Sync alarm states and track alarm events (goes off, snoozed, stopped) from your iPhone to Home Assistant.
+Home Assistant custom integration for one-way synchronization of iPhone alarms (also works with iPad). Sync alarm states and track alarm events (goes off, snoozed, stopped) from your iPhone or iPad to Home Assistant.
 
 ## Features
 
@@ -37,18 +37,18 @@ Home Assistant custom integration for one-way synchronization of iPhone alarms. 
 
 1. Go to Settings → Devices & Services → Add Integration
 2. Search for "iPhone Alarms Sync"
-3. Enter phone name (e.g., "John's iPhone") or select Mobile App device
+3. Enter device name (e.g., "John's iPhone" or "John's iPad") or select Mobile App device
 4. Phone ID will be auto-generated (e.g., "johns_iphone")
 
 ### Step 2: Setup Shortcuts
 
-1. Import shortcuts on your iPhone (see Shortcuts Setup below)
+1. Import shortcuts on your iPhone or iPad (see Shortcuts Setup below)
 2. Enter your `phone_id` in each shortcut
 3. Enable Personal Automations in iOS Settings
 
 ### Step 3: Wait for First Sync
 
-1. Open Clock app on iPhone
+1. Open Clock app on iPhone or iPad
 2. Exit Clock app (triggers sync shortcut)
 3. Integration will auto-create alarm devices
 
@@ -244,9 +244,9 @@ Settings → Devices & Services → iPhone Alarms Sync → Configure
 1. **Overview** - Dashboard with sync status, alarm count, recent events
 2. **Alarms** - List all synced alarms, edit labels/icons, delete alarms
 3. **Events History** - View chronological list of all alarm events
-4. **Phone Settings** - Edit phone name, link/unlink Mobile App device
+4. **Device Settings** - Edit device name, link/unlink Mobile App device
 5. **Shortcuts Setup** - View phone_id and shortcuts instructions
-6. **Delete Phone** - Remove phone and all alarms
+6. **Delete Device** - Remove device and all alarms
 
 ## Troubleshooting
 
