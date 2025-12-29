@@ -1,12 +1,12 @@
 {
   "domain": "iphone_alarms_sync",
   "name": "iPhone Alarms Sync",
-  "version": "1.0.0",
-  "documentation": "https://github.com/Jozwiaczek/iphone-alarms-sync",
-  "issue_tracker": "https://github.com/Jozwiaczek/iphone-alarms-sync/issues",
+  "after_dependencies": ["mobile_app"],
   "codeowners": ["@Jozwiaczek"],
   "config_flow": true,
+  "documentation": "https://github.com/Jozwiaczek/iphone-alarms-sync",
   "iot_class": "cloud_push",
+  "issue_tracker": "https://github.com/Jozwiaczek/iphone-alarms-sync/issues",
   "requirements": [],
-  "after_dependencies": ["mobile_app"]
+  "version": "1.0.0"
 }
