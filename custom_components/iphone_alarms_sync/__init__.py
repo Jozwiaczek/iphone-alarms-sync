@@ -137,4 +137,3 @@ async def async_unload_entry(
         hass.services.async_remove(DOMAIN, "sync_alarms")
         hass.services.async_remove(DOMAIN, "report_alarm_event")
     return unload_ok
-

@@ -16,9 +16,9 @@ from .const import (
     CONF_PHONE_NAME,
     DOMAIN,
 )
+from .coordinator import IPhoneAlarmsSyncConfigEntry
 
 CUSTOM_NAME_OPTION = "__custom_name__"
-from .coordinator import IPhoneAlarmsSyncConfigEntry
 
 STEP_USER_DATA_SCHEMA = vol.Schema(
     {
@@ -47,7 +47,7 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):  # type: ignore[call
         self, user_input: dict[str, Any] | None = None
     ) -> FlowResult:
         errors: dict[str, str] = {}
-        
+
         device_registry = dr.async_get(self.hass)
         mobile_app_devices = [
             device.id
@@ -88,32 +88,36 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):  # type: ignore[call
             )
 
         selected_option = user_input[CONF_PHONE_NAME]
-        
+
         if selected_option == CUSTOM_NAME_OPTION:
             if "custom_name" not in user_input:
                 schema = vol.Schema(
                     {
-                        vol.Required(CONF_PHONE_NAME, default=CUSTOM_NAME_OPTION): vol.In(device_options),
+                        vol.Required(
+                            CONF_PHONE_NAME, default=CUSTOM_NAME_OPTION
+                        ): vol.In(device_options),
                         vol.Required("custom_name"): str,
                     }
                 )
                 return self.async_show_form(
                     step_id="user", data_schema=schema, errors=errors
                 )
-            
+
             custom_name = user_input.get("custom_name", "").strip()
             if not custom_name:
                 errors["custom_name"] = "required"
                 schema = vol.Schema(
                     {
-                        vol.Required(CONF_PHONE_NAME, default=CUSTOM_NAME_OPTION): vol.In(device_options),
+                        vol.Required(
+                            CONF_PHONE_NAME, default=CUSTOM_NAME_OPTION
+                        ): vol.In(device_options),
                         vol.Required("custom_name"): str,
                     }
                 )
                 return self.async_show_form(
                     step_id="user", data_schema=schema, errors=errors
                 )
-            
+
             self.phone_name = custom_name
             self.mobile_app_device_id = None
         else:
@@ -124,10 +128,13 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):  # type: ignore[call
                     self.mobile_app_device_id = device_id
                     self.phone_name = device.name
                     break
-            
+
             if not self.mobile_app_device_id:
                 self.phone_name = selected_option
-        
+
+        if self.phone_name is None:
+            return self.async_abort(reason="phone_name_not_set")
+
         self.phone_id = slugify(self.phone_name)
 
         await self.async_set_unique_id(self.phone_id)
@@ -308,4 +315,3 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
             return self.async_create_entry(title="", data={})
 
         return await self.async_step_init()
-

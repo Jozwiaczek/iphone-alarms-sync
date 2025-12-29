@@ -76,4 +76,3 @@ async def async_attach_trigger(
     return await event_trigger.async_attach_trigger(
         hass, event_config, action, trigger_info, platform_type="device"
     )
-

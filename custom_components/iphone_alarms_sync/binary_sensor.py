@@ -68,9 +68,7 @@ class IPhoneAlarmsSyncBinarySensor(
         alarm = coordinator.get_alarm(alarm_id)
         if alarm is None:
             raise ValueError(f"Alarm {alarm_id} not found")
-        self._attr_name = (
-            f"{coordinator.phone_name} {alarm.label} {description.name}"
-        )
+        self._attr_name = f"{coordinator.phone_name} {alarm.label} {description.name}"
         self._attr_device_info = DeviceInfo(
             identifiers={(DOMAIN, coordinator.phone_id, alarm_id)},
             name=f"{coordinator.phone_name} {alarm.label}",
@@ -89,4 +87,3 @@ class IPhoneAlarmsSyncBinarySensor(
         if self._description.key == "allows_snooze":
             return bool(alarm.allows_snooze)
         return None
-

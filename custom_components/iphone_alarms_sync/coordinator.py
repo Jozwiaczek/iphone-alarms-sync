@@ -190,4 +190,3 @@ class IPhoneAlarmsSyncCoordinator(DataUpdateCoordinator[dict[str, AlarmData]]):
             self.entry,
             options={CONF_ALARMS: alarms_dict},
         )
-
