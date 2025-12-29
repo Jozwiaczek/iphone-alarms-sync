@@ -11,7 +11,7 @@ from homeassistant.util import dt as dt_util
 if TYPE_CHECKING:
     from homeassistant.config_entries import ConfigEntry
 else:
-    from typing import Any as ConfigEntry
+    ConfigEntry = Any
 
 from .const import (
     CONF_ALARM_ID,
@@ -63,7 +63,7 @@ class IPhoneAlarmsSyncData:
 if TYPE_CHECKING:
     IPhoneAlarmsSyncConfigEntry = ConfigEntry[IPhoneAlarmsSyncData]
 else:
-    from typing import Any as IPhoneAlarmsSyncConfigEntry  # noqa: F401
+    IPhoneAlarmsSyncConfigEntry = Any
 
 
 class IPhoneAlarmsSyncCoordinator(DataUpdateCoordinator[dict[str, AlarmData]]):

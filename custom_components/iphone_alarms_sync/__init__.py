@@ -25,33 +25,6 @@ CONFIG_SCHEMA = cv.config_entry_only_config_schema(DOMAIN)
 
 async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
     hass.data.setdefault(DOMAIN, {})
-    return True
-
-
-async def async_setup_entry(
-    hass: HomeAssistant, entry: IPhoneAlarmsSyncConfigEntry
-) -> bool:
-    coordinator = IPhoneAlarmsSyncCoordinator(hass, entry)
-    await coordinator.async_config_entry_first_refresh()
-
-    entry.runtime_data = IPhoneAlarmsSyncData(coordinator=coordinator)
-
-    device_registry = dr.async_get(hass)
-    device_registry.async_get_or_create(
-        config_entry_id=entry.entry_id,
-        identifiers={(DOMAIN, coordinator.phone_id)},
-        name=coordinator.phone_name,
-        via_device=(
-            (DOMAIN, coordinator.mobile_app_device_id)
-            if coordinator.mobile_app_device_id
-            else None
-        ),
-    )
-
-    for platform in PLATFORMS:
-        hass.async_create_task(
-            hass.config_entries.async_forward_entry_setup(entry, platform)
-        )
 
     async def handle_sync_alarms(call: ServiceCall) -> None:
         phone_id = call.data[CONF_PHONE_ID]
@@ -127,13 +100,38 @@ async def async_setup_entry(
     return True
 
 
+async def async_setup_entry(
+    hass: HomeAssistant, entry: IPhoneAlarmsSyncConfigEntry
+) -> bool:
+    coordinator = IPhoneAlarmsSyncCoordinator(hass, entry)
+    await coordinator.async_config_entry_first_refresh()
+
+    entry.runtime_data = IPhoneAlarmsSyncData(coordinator=coordinator)
+
+    device_registry = dr.async_get(hass)
+    device_registry.async_get_or_create(
+        config_entry_id=entry.entry_id,
+        identifiers={(DOMAIN, coordinator.phone_id)},
+        name=coordinator.phone_name,
+        via_device=(
+            (DOMAIN, coordinator.mobile_app_device_id)
+            if coordinator.mobile_app_device_id
+            else None
+        ),
+    )
+
+    for platform in PLATFORMS:
+        hass.async_create_task(
+            hass.config_entries.async_forward_entry_setup(entry, platform)
+        )
+
+    return True
+
+
 async def async_unload_entry(
     hass: HomeAssistant, entry: IPhoneAlarmsSyncConfigEntry
 ) -> bool:
     unload_ok: bool = await hass.config_entries.async_unload_platforms(  # type: ignore[no-any-return]
         entry, PLATFORMS
     )
-    if unload_ok:
-        hass.services.async_remove(DOMAIN, "sync_alarms")
-        hass.services.async_remove(DOMAIN, "report_alarm_event")
     return unload_ok

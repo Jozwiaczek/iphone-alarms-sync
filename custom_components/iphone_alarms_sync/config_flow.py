@@ -172,43 +172,30 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):  # type: ignore[call
         await self.async_set_unique_id(self.phone_id)
         self._abort_if_unique_id_configured()
 
-        return await self.async_step_shortcuts()
+        return await self.async_step_confirm()
 
-    async def async_step_shortcuts(
+    async def async_step_confirm(
         self, user_input: dict[str, Any] | None = None
     ) -> FlowResult:
+        if self.phone_id is None or self.phone_name is None:
+            return self.async_abort(reason="phone_name_not_set")
+
         if user_input is None:
             return self.async_show_form(
-                step_id="shortcuts",
+                step_id="confirm",
                 description_placeholders={
                     "phone_id": self.phone_id,
                 },
             )
 
-        return await self.async_step_wait_sync()
-
-    async def async_step_wait_sync(
-        self, user_input: dict[str, Any] | None = None
-    ) -> FlowResult:
-        if user_input is None:
-            return self.async_show_form(
-                step_id="wait_sync",
-                description_placeholders={
-                    "phone_id": self.phone_id,
-                },
-            )
-
-        if user_input.get("skip"):
-            return self.async_create_entry(
-                title=self.phone_name,
-                data={
-                    CONF_PHONE_NAME: self.phone_name,
-                    CONF_PHONE_ID: self.phone_id,
-                    "mobile_app_device_id": self.mobile_app_device_id,
-                },
-            )
-
-        return self.async_abort(reason="waiting_for_sync")
+        return self.async_create_entry(
+            title=self.phone_name,
+            data={
+                CONF_PHONE_NAME: self.phone_name,
+                CONF_PHONE_ID: self.phone_id,
+                "mobile_app_device_id": self.mobile_app_device_id,
+            },
+        )
 
     @staticmethod
     @callback
@@ -265,12 +252,19 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
         alarms = coordinator.get_all_alarms()
 
         if user_input is None:
-            alarm_list = "\n".join(
-                f"- {alarm.label} ({alarm_id})" for alarm_id, alarm in alarms.items()
-            )
+            if alarms:
+                alarm_list = "\n".join(
+                    f"- {alarm.label} ({alarm_id})"
+                    for alarm_id, alarm in alarms.items()
+                )
+            else:
+                alarm_list = (
+                    "No alarms synced yet. "
+                    "Use the shortcut on your iPhone/iPad to sync alarms."
+                )
             return self.async_show_form(
                 step_id="alarms",
-                description_placeholders={"alarm_list": alarm_list or "No alarms"},
+                description_placeholders={"alarm_list": alarm_list},
             )
 
         return await self.async_step_init()
@@ -279,16 +273,23 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
         self, user_input: dict[str, Any] | None = None
     ) -> FlowResult:
         coordinator = self.config_entry.runtime_data.coordinator
-        events = coordinator.get_events()
+        events = coordinator.get_events(limit=20)
 
         if user_input is None:
-            event_list = "\n".join(
-                f"- {event.occurred_at}: {event.event} (alarm: {event.alarm_id})"
-                for event in events[-20:]
-            )
+            if events:
+                event_list = "\n".join(
+                    f"- {event.occurred_at}: {event.event} (alarm: {event.alarm_id})"
+                    for event in events
+                )
+            else:
+                event_list = (
+                    "No events recorded yet. "
+                    "Events will appear here when alarms go off, "
+                    "are snoozed, or stopped."
+                )
             return self.async_show_form(
                 step_id="events",
-                description_placeholders={"event_list": event_list or "No events"},
+                description_placeholders={"event_list": event_list},
             )
 
         return await self.async_step_init()
