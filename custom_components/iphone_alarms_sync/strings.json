@@ -8,11 +8,6 @@
           "name_source": "Name Source",
           "mobile_app_device_id": "Mobile App Device",
           "custom_name": "Custom Name"
-        },
-        "error": {
-          "no_mobile_app_devices": "No Mobile App devices found. Please use custom name instead.",
-          "device_not_found": "Selected device not found",
-          "required": "This field is required"
         }
       },
       "confirm": {
@@ -23,7 +18,10 @@
     "error": {
       "cannot_connect": "Unable to connect",
       "invalid_auth": "Invalid authentication",
-      "unknown": "Unexpected error"
+      "unknown": "Unexpected error",
+      "no_mobile_app_devices": "No Mobile App devices found. Please use custom name instead.",
+      "device_not_found": "Selected device not found",
+      "required": "This field is required"
     },
     "abort": {
       "already_configured": "Device is already configured",

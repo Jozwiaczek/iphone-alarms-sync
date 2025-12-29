@@ -88,7 +88,7 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):  # type: ignore[call
 
         if name_source == NAME_SOURCE_MOBILE_APP:
             if not mobile_app_devices:
-                errors["name_source"] = "no_mobile_app_devices"
+                errors["base"] = "no_mobile_app_devices"
                 schema = vol.Schema(
                     {
                         vol.Required("name_source", default=NAME_SOURCE_CUSTOM): vol.In(
@@ -119,7 +119,7 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):  # type: ignore[call
                 self.mobile_app_device_id = device_id
                 self.phone_name = device.name
             else:
-                errors["mobile_app_device_id"] = "device_not_found"
+                errors["base"] = "device_not_found"
                 schema = vol.Schema(
                     {
                         vol.Required(
@@ -148,7 +148,7 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):  # type: ignore[call
 
             custom_name = user_input.get("custom_name", "").strip()
             if not custom_name:
-                errors["custom_name"] = "required"
+                errors["base"] = "required"
                 schema = vol.Schema(
                     {
                         vol.Required("name_source", default=NAME_SOURCE_CUSTOM): vol.In(
