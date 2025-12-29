@@ -3,7 +3,10 @@
     "step": {
       "user": {
         "title": "iPhone Alarms Sync",
-        "description": "Set up iPhone Alarms Sync integration. You can add and manage your iPhone/iPad devices in the Configure menu after setup."
+        "description": "Set up iPhone Alarms Sync integration. Enter a name for your iPhone/iPad device. This name will be used to generate a device ID that you'll need when setting up iOS shortcuts.",
+        "data": {
+          "phone_name": "Device Name"
+        }
       }
     },
     "error": {
@@ -14,7 +17,8 @@
       "already_exists": "A device with this name already exists"
     },
     "abort": {
-      "single_instance_allowed": "Only one instance of this integration is allowed"
+      "single_instance_allowed": "Only one instance of this integration is allowed",
+      "integration_not_ready": "Integration is not ready. Please reload the integration and try again."
     }
   },
   "options": {

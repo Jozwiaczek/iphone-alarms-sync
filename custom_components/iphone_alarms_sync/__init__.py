@@ -11,6 +11,8 @@ from .const import (
     CONF_ALARM_ID,
     CONF_ALARMS,
     CONF_EVENT,
+    CONF_LABEL,
+    CONF_MOBILE_APP_DEVICE_ID,
     CONF_PHONE_ID,
     CONF_PHONE_NAME,
     DOMAIN,
@@ -70,12 +72,11 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
             device_registry.async_get_or_create(
                 config_entry_id=entry.entry_id,
                 identifiers={(DOMAIN, phone_id, alarm_id)},
-                name=f"{phone.phone_name} {alarm_dict.get('label', alarm_id)}",
+                name=f"{phone.phone_name} {alarm_dict.get(CONF_LABEL, alarm_id)}",
                 via_device=(DOMAIN, phone_id),
             )
 
-        for platform in PLATFORMS:
-            await hass.config_entries.async_reload(entry.entry_id)
+        await hass.config_entries.async_reload(entry.entry_id)
 
     async def handle_report_alarm_event(call: ServiceCall) -> None:
         phone_id = call.data[CONF_PHONE_ID]
@@ -131,14 +132,14 @@ async def async_migrate_entry(
         if CONF_PHONE_ID in config_entry.data:
             phone_id = config_entry.data[CONF_PHONE_ID]
             phone_name = config_entry.data.get(CONF_PHONE_NAME, phone_id)
-            mobile_app_device_id = config_entry.data.get("mobile_app_device_id")
+            mobile_app_device_id = config_entry.data.get(CONF_MOBILE_APP_DEVICE_ID)
             alarms_data = config_entry.options.get(CONF_ALARMS, {})
 
             phones_dict = {
                 phone_id: {
                     CONF_PHONE_ID: phone_id,
                     CONF_PHONE_NAME: phone_name,
-                    "mobile_app_device_id": mobile_app_device_id,
+                    CONF_MOBILE_APP_DEVICE_ID: mobile_app_device_id,
                     "alarms": alarms_data,
                 }
             }
@@ -153,7 +154,7 @@ async def async_migrate_entry(
                 other_phone_id = other_entry.data[CONF_PHONE_ID]
                 other_phone_name = other_entry.data.get(CONF_PHONE_NAME, other_phone_id)
                 other_mobile_app_device_id = other_entry.data.get(
-                    "mobile_app_device_id"
+                    CONF_MOBILE_APP_DEVICE_ID
                 )
                 other_alarms_data = other_entry.options.get(CONF_ALARMS, {})
 
@@ -161,7 +162,7 @@ async def async_migrate_entry(
                     phones_dict[other_phone_id] = {
                         CONF_PHONE_ID: other_phone_id,
                         CONF_PHONE_NAME: other_phone_name,
-                        "mobile_app_device_id": other_mobile_app_device_id,
+                        CONF_MOBILE_APP_DEVICE_ID: other_mobile_app_device_id,
                         "alarms": other_alarms_data,
                     }
 
@@ -200,10 +201,7 @@ async def async_setup_entry(
             ),
         )
 
-    for platform in PLATFORMS:
-        hass.async_create_task(
-            hass.config_entries.async_forward_entry_setup(entry, platform)
-        )
+    await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
 
     return True
 

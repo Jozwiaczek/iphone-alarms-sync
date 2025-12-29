@@ -11,6 +11,8 @@ from homeassistant.data_entry_flow import FlowResult
 from homeassistant.helpers import device_registry as dr
 
 from .const import (
+    CONF_MOBILE_APP_DEVICE_ID,
+    CONF_PHONE_ID,
     CONF_PHONE_NAME,
     DOMAIN,
 )
@@ -36,9 +38,47 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):  # type: ignore[call
         if self._async_current_entries():
             return self.async_abort(reason="single_instance_allowed")
 
+        errors: dict[str, str] = {}
+
+        if user_input is None:
+            return self.async_show_form(
+                step_id="user",
+                data_schema=vol.Schema(
+                    {
+                        vol.Required(CONF_PHONE_NAME): str,
+                    }
+                ),
+                errors=errors,
+            )
+
+        phone_name = user_input.get(CONF_PHONE_NAME, "").strip()
+        if not phone_name:
+            errors["base"] = "required"
+            return self.async_show_form(
+                step_id="user",
+                data_schema=vol.Schema(
+                    {
+                        vol.Required(CONF_PHONE_NAME): str,
+                    }
+                ),
+                errors=errors,
+            )
+
+        phone_id = slugify(phone_name)
+        phones_dict = {
+            phone_id: {
+                CONF_PHONE_ID: phone_id,
+                CONF_PHONE_NAME: phone_name,
+                CONF_MOBILE_APP_DEVICE_ID: None,
+                "alarms": {},
+            }
+        }
+
         return self.async_create_entry(
             title="iPhone Alarms Sync",
             data={},
+            options={"phones": phones_dict},
+            description_placeholders={"phone_id": phone_id},
         )
 
     @staticmethod
@@ -46,12 +86,12 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):  # type: ignore[call
     def async_get_options_flow(
         config_entry: IPhoneAlarmsSyncConfigEntry,
     ) -> OptionsFlowHandler:
-        return OptionsFlowHandler(config_entry)
+        return OptionsFlowHandler()
 
 
-class OptionsFlowHandler(config_entries.OptionsFlow):
-    def __init__(self, config_entry: IPhoneAlarmsSyncConfigEntry) -> None:
-        self.config_entry = config_entry
+class OptionsFlowHandler(config_entries.OptionsFlowWithConfigEntry):
+    def __init__(self) -> None:
+        super().__init__()
         self.selected_phone_id: str | None = None
 
     def _get_coordinator(self) -> IPhoneAlarmsSyncCoordinator | None:
@@ -65,6 +105,9 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
     async def async_step_init(
         self, user_input: dict[str, Any] | None = None
     ) -> FlowResult:
+        coordinator = self._get_coordinator()
+        if coordinator is None:
+            return self.async_abort(reason="integration_not_ready")
         return self.async_show_menu(
             step_id="init",
             menu_options=[
@@ -80,7 +123,7 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
     ) -> FlowResult:
         coordinator = self._get_coordinator()
         if coordinator is None:
-            return await self.async_step_init()
+            return self.async_abort(reason="integration_not_ready")
         phones = coordinator.get_all_phones()
 
         if not phones:
@@ -120,7 +163,7 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
         errors: dict[str, str] = {}
         coordinator = self._get_coordinator()
         if coordinator is None:
-            return await self.async_step_init()
+            return self.async_abort(reason="integration_not_ready")
         existing_phones = coordinator.get_all_phones()
 
         device_registry = dr.async_get(self.hass)
@@ -144,7 +187,7 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
             schema = vol.Schema(
                 {
                     vol.Required(CONF_PHONE_NAME): str,
-                    vol.Optional("mobile_app_device_id", default=None): vol.In(
+                    vol.Optional(CONF_MOBILE_APP_DEVICE_ID, default=None): vol.In(
                         device_options
                     ),
                 }
@@ -159,7 +202,7 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
             schema = vol.Schema(
                 {
                     vol.Required(CONF_PHONE_NAME): str,
-                    vol.Optional("mobile_app_device_id", default=None): vol.In(
+                    vol.Optional(CONF_MOBILE_APP_DEVICE_ID, default=None): vol.In(
                         device_options
                     ),
                 }
@@ -174,7 +217,7 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
             schema = vol.Schema(
                 {
                     vol.Required(CONF_PHONE_NAME): str,
-                    vol.Optional("mobile_app_device_id", default=None): vol.In(
+                    vol.Optional(CONF_MOBILE_APP_DEVICE_ID, default=None): vol.In(
                         device_options
                     ),
                 }
@@ -183,7 +226,7 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
                 step_id="add_device", data_schema=schema, errors=errors
             )
 
-        mobile_app_device_id = user_input.get("mobile_app_device_id")
+        mobile_app_device_id = user_input.get(CONF_MOBILE_APP_DEVICE_ID)
         if mobile_app_device_id == "None":
             mobile_app_device_id = None
 
@@ -197,7 +240,7 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
         errors: dict[str, str] = {}
         coordinator = self._get_coordinator()
         if coordinator is None:
-            return await self.async_step_init()
+            return self.async_abort(reason="integration_not_ready")
 
         if self.selected_phone_id is None:
             return await self.async_step_manage_devices()
@@ -228,7 +271,7 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
                 {
                     vol.Required(CONF_PHONE_NAME, default=phone.phone_name): str,
                     vol.Optional(
-                        "mobile_app_device_id",
+                        CONF_MOBILE_APP_DEVICE_ID,
                         default=phone.mobile_app_device_id or None,
                     ): vol.In(device_options),
                 }
@@ -244,7 +287,7 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
                 {
                     vol.Required(CONF_PHONE_NAME, default=phone.phone_name): str,
                     vol.Optional(
-                        "mobile_app_device_id",
+                        CONF_MOBILE_APP_DEVICE_ID,
                         default=phone.mobile_app_device_id or None,
                     ): vol.In(device_options),
                 }
@@ -253,7 +296,7 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
                 step_id="edit_device", data_schema=schema, errors=errors
             )
 
-        mobile_app_device_id = user_input.get("mobile_app_device_id")
+        mobile_app_device_id = user_input.get(CONF_MOBILE_APP_DEVICE_ID)
         if mobile_app_device_id == "None":
             mobile_app_device_id = None
 
@@ -269,7 +312,7 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
     ) -> FlowResult:
         coordinator = self._get_coordinator()
         if coordinator is None:
-            return await self.async_step_init()
+            return self.async_abort(reason="integration_not_ready")
 
         if self.selected_phone_id is None:
             return await self.async_step_manage_devices()
@@ -295,7 +338,7 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
     ) -> FlowResult:
         coordinator = self._get_coordinator()
         if coordinator is None:
-            return await self.async_step_init()
+            return self.async_abort(reason="integration_not_ready")
         phones = coordinator.get_all_phones()
         all_alarms = coordinator.get_all_alarms()
         recent_events = coordinator.get_events(limit=10)
@@ -325,7 +368,7 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
     ) -> FlowResult:
         coordinator = self._get_coordinator()
         if coordinator is None:
-            return await self.async_step_init()
+            return self.async_abort(reason="integration_not_ready")
         events = coordinator.get_events(limit=20)
 
         if user_input is None:
@@ -353,7 +396,7 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
     ) -> FlowResult:
         coordinator = self._get_coordinator()
         if coordinator is None:
-            return await self.async_step_init()
+            return self.async_abort(reason="integration_not_ready")
         phones = coordinator.get_all_phones()
         phone_ids = "\n".join(
             f"- {phone.phone_name}: `{phone_id}`" for phone_id, phone in phones.items()

@@ -18,10 +18,12 @@ from .const import (
     CONF_ALLOWS_SNOOZE,
     CONF_ENABLED,
     CONF_HOUR,
+    CONF_ICON,
     CONF_LABEL,
     CONF_LAST_EVENT,
     CONF_LAST_EVENT_AT,
     CONF_MINUTE,
+    CONF_MOBILE_APP_DEVICE_ID,
     CONF_PHONE_ID,
     CONF_PHONE_NAME,
     CONF_REPEAT_DAYS,
@@ -96,7 +98,7 @@ class IPhoneAlarmsSyncCoordinator(DataUpdateCoordinator[dict[str, PhoneData]]):
             self._phones[phone_id] = PhoneData(
                 phone_id=phone_id,
                 phone_name=phone_dict[CONF_PHONE_NAME],
-                mobile_app_device_id=phone_dict.get("mobile_app_device_id"),
+                mobile_app_device_id=phone_dict.get(CONF_MOBILE_APP_DEVICE_ID),
                 alarms=alarms,
             )
 
@@ -276,12 +278,12 @@ class IPhoneAlarmsSyncCoordinator(DataUpdateCoordinator[dict[str, PhoneData]]):
                     CONF_SYNCED_AT: alarm.synced_at,
                     CONF_LAST_EVENT: alarm.last_event,
                     CONF_LAST_EVENT_AT: alarm.last_event_at,
-                    "icon": alarm.icon,
+                    CONF_ICON: alarm.icon,
                 }
             phones_dict[phone_id] = {
                 CONF_PHONE_ID: phone.phone_id,
                 CONF_PHONE_NAME: phone.phone_name,
-                "mobile_app_device_id": phone.mobile_app_device_id,
+                CONF_MOBILE_APP_DEVICE_ID: phone.mobile_app_device_id,
                 "alarms": alarms_dict,
             }
         self.hass.config_entries.async_update_entry(
