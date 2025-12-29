@@ -7,5 +7,6 @@
   "codeowners": ["@Jozwiaczek"],
   "config_flow": true,
   "iot_class": "cloud_push",
-  "requirements": []
+  "requirements": [],
+  "after_dependencies": ["mobile_app"]
 }

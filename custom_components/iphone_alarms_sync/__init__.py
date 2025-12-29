@@ -1,7 +1,9 @@
 from __future__ import annotations
 
+import voluptuous as vol
+
 from homeassistant.core import HomeAssistant, ServiceCall
-from homeassistant.helpers import device_registry as dr
+from homeassistant.helpers import config_validation as cv, device_registry as dr
 from homeassistant.helpers.typing import ConfigType
 
 from .const import (
@@ -18,6 +20,8 @@ from .coordinator import (
     IPhoneAlarmsSyncCoordinator,
     IPhoneAlarmsSyncData,
 )
+
+CONFIG_SCHEMA = cv.config_entry_only_config_schema(DOMAIN)
 
 
 async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
