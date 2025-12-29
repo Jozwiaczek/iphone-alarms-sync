@@ -3,10 +3,29 @@
     "step": {
       "user": {
         "title": "iPhone Alarms Sync",
-        "description": "Set up iPhone Alarms Sync integration. Enter a name for your iPhone/iPad device. This name will be used to generate a device ID that you'll need when setting up iOS shortcuts.",
+        "description": "Choose how you want to add your iPhone/iPad device:\n\n**Device Name** is a friendly name for your device (e.g., \"Kuba iPhone\", \"iPad Mini\"). This name will be used to generate a **Phone ID** (e.g., \"kuba_iphone\", \"ipad_mini\") that you'll need when setting up iOS shortcuts.\n\nYou can either:\n- Select from existing Mobile App devices (if you have the Home Assistant mobile app installed)\n- Enter a custom device name",
+        "data": {
+          "method": "Method"
+        }
+      },
+      "select_mobile_app": {
+        "title": "Select Mobile App Device",
+        "description": "Select a device from your Mobile App integration. You can optionally edit the device name below.\n\nThe device name will be used to generate a **Phone ID** that you'll need for iOS shortcuts setup.",
+        "data": {
+          "mobile_app_device_id": "Mobile App Device",
+          "phone_name": "Device Name (optional)"
+        }
+      },
+      "custom_name": {
+        "title": "Enter Device Name",
+        "description": "Enter a name for your iPhone/iPad device.\n\nThis name will be used to generate a **Phone ID** (e.g., \"Kuba iPhone\" becomes \"kuba_iphone\"). You'll need this Phone ID when setting up the iOS shortcut.",
         "data": {
           "phone_name": "Device Name"
         }
+      },
+      "confirm": {
+        "title": "Confirm Device Setup",
+        "description": "**Device Name:** {phone_name}\n**Phone ID:** `{phone_id}`\n\n⚠️ **Important:** Save this Phone ID! You'll need it when setting up the iOS shortcut.\n\nThe Phone ID is generated from the device name and is used to identify your device when syncing alarms.\n\nAlarms will be automatically synchronized when you run the shortcut for the first time."
       }
     },
     "error": {
@@ -14,11 +33,14 @@
       "invalid_auth": "Invalid authentication",
       "unknown": "Unexpected error",
       "required": "This field is required",
-      "already_exists": "A device with this name already exists"
+      "device_not_found": "Selected device not found",
+      "phone_id_exists": "A device with this Phone ID already exists. Please choose a different name."
     },
     "abort": {
-      "single_instance_allowed": "Only one instance of this integration is allowed",
-      "integration_not_ready": "Integration is not ready. Please reload the integration and try again."
+      "no_mobile_app_devices": "No Mobile App devices found. Please install the Home Assistant mobile app and add your device, or use the custom name option.",
+      "integration_not_ready": "Integration is not ready. Please reload the integration and try again.",
+      "invalid_import_data": "Invalid import data",
+      "unknown": "Unknown error occurred"
     }
   },
   "options": {
@@ -26,42 +48,23 @@
       "init": {
         "title": "iPhone Alarms Sync Options",
         "menu_options": {
-          "manage_devices": "Manage Devices",
+          "edit_device": "Edit Device",
           "overview": "Overview",
           "events": "Events History",
           "shortcuts": "Shortcuts Setup"
         }
       },
-      "manage_devices": {
-        "title": "Manage Devices",
-        "description": "Devices:\n{phone_list}\n\nUse the options below to add, edit, or delete devices."
-      },
-      "add_device": {
-        "title": "Add Device",
-        "description": "Add a new iPhone/iPad device to sync alarms from.",
-        "data": {
-          "phone_name": "Device Name",
-          "mobile_app_device_id": "Mobile App Device (optional)"
-        }
-      },
       "edit_device": {
         "title": "Edit Device",
-        "description": "Edit device settings.",
+        "description": "Edit your device settings.\n\n⚠️ **Note:** Changing the device name will generate a new Phone ID. Make sure to update your iOS shortcut with the new Phone ID if you change the name.",
         "data": {
           "phone_name": "Device Name",
           "mobile_app_device_id": "Mobile App Device (optional)"
-        }
-      },
-      "delete_device": {
-        "title": "Delete Device",
-        "description": "Are you sure you want to delete **{phone_name}** and all its alarms?",
-        "data": {
-          "confirm": "Confirm deletion"
         }
       },
       "overview": {
         "title": "Overview",
-        "description": "Devices: {phone_count}\nAlarms: {alarm_count}\nLast Sync: {last_sync}\nRecent Events: {recent_events}"
+        "description": "**Device:** {phone_name}\n**Phone ID:** `{phone_id}`\n**Alarms:** {alarm_count}\n**Last Sync:** {last_sync}\n**Recent Events:** {recent_events}"
       },
       "events": {
         "title": "Events History",
@@ -69,8 +72,13 @@
       },
       "shortcuts": {
         "title": "Shortcuts Setup",
-        "description": "**Phone IDs:**\n{phone_ids}\n\nCopy the ID for your device - you'll need it when setting up the shortcut on your iPhone/iPad.\n\nThe service `iphone_alarms_sync.sync_alarms` is available. You can create a shortcut that calls this service with your phone_id and alarms data."
+        "description": "**Device:** {phone_name}\n**Phone ID:** `{phone_id}`\n\n⚠️ **Important:** Copy this Phone ID - you'll need it when setting up the shortcut on your iPhone/iPad.\n\nThe service `iphone_alarms_sync.sync_alarms` is available. Create a shortcut that calls this service with:\n- `phone_id`: `{phone_id}`\n- `alarms`: Array of alarm objects\n\nAlarms will be automatically synchronized when you run the shortcut for the first time."
       }
+    },
+    "error": {
+      "required": "This field is required",
+      "phone_id_exists": "A device with this Phone ID already exists. Please choose a different name.",
+      "phone_not_found": "Phone not found"
     }
   }
 }

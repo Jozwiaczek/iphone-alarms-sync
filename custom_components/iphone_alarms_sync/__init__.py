@@ -36,14 +36,19 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
         alarms = call.data[CONF_ALARMS]
 
         entries = hass.config_entries.async_entries(DOMAIN)
-        if not entries:
+        entry = None
+        for e in entries:
+            if e.unique_id == phone_id:
+                entry = e
+                break
+
+        if not entry:
             return
 
-        entry = entries[0]
         if not hasattr(entry, "runtime_data") or not entry.runtime_data:
             return
         coordinator = entry.runtime_data.coordinator
-        phone = coordinator.get_phone(phone_id)
+        phone = coordinator.get_phone()
         if not phone:
             return
 
@@ -64,7 +69,7 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
                 ),
             )
 
-        coordinator.sync_alarms(phone_id, alarms)
+        coordinator.sync_alarms(alarms)
         await coordinator.async_request_refresh()
 
         for alarm_dict in alarms:
@@ -84,14 +89,19 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
         event = call.data[CONF_EVENT]
 
         entries = hass.config_entries.async_entries(DOMAIN)
-        if not entries:
+        entry = None
+        for e in entries:
+            if e.unique_id == phone_id:
+                entry = e
+                break
+
+        if not entry:
             return
 
-        entry = entries[0]
         if not hasattr(entry, "runtime_data") or not entry.runtime_data:
             return
         coordinator = entry.runtime_data.coordinator
-        event_obj = coordinator.report_alarm_event(phone_id, alarm_id, event)
+        event_obj = coordinator.report_alarm_event(alarm_id, event)
         await coordinator.async_request_refresh()
 
         hass.bus.async_fire(
@@ -176,6 +186,54 @@ async def async_migrate_entry(
             for other_entry in other_entries:
                 await hass.config_entries.async_remove(other_entry.entry_id)
 
+    if config_entry.version == 2:
+        phones_dict = config_entry.options.get("phones", {})
+        if not phones_dict:
+            hass.config_entries.async_update_entry(config_entry, version=3)
+            return True
+
+        first_phone_id = next(iter(phones_dict))
+        first_phone = phones_dict[first_phone_id]
+
+        hass.config_entries.async_update_entry(
+            config_entry,
+            unique_id=first_phone_id,
+            title=first_phone[CONF_PHONE_NAME],
+            data={
+                CONF_PHONE_ID: first_phone_id,
+                CONF_PHONE_NAME: first_phone[CONF_PHONE_NAME],
+                CONF_MOBILE_APP_DEVICE_ID: first_phone.get(CONF_MOBILE_APP_DEVICE_ID),
+            },
+            options={"alarms": first_phone.get("alarms", {})},
+            version=3,
+        )
+
+        for phone_id, phone_data in phones_dict.items():
+            if phone_id == first_phone_id:
+                continue
+
+            result = await hass.config_entries.flow.async_init(
+                DOMAIN,
+                context={"source": "import"},
+                data={
+                    CONF_PHONE_ID: phone_id,
+                    CONF_PHONE_NAME: phone_data[CONF_PHONE_NAME],
+                    CONF_MOBILE_APP_DEVICE_ID: phone_data.get(
+                        CONF_MOBILE_APP_DEVICE_ID
+                    ),
+                },
+            )
+            if (
+                hasattr(result, "type")
+                and result.type == "create_entry"  # type: ignore[attr-defined]
+                and hasattr(result, "result")
+            ):
+                new_entry = result.result  # type: ignore[attr-defined]
+                hass.config_entries.async_update_entry(
+                    new_entry,
+                    options={"alarms": phone_data.get("alarms", {})},
+                )
+
     return True
 
 
@@ -188,11 +246,11 @@ async def async_setup_entry(
     entry.runtime_data = IPhoneAlarmsSyncData(coordinator=coordinator)
 
     device_registry = dr.async_get(hass)
-    phones = coordinator.get_all_phones()
-    for phone_id, phone in phones.items():
+    phone = coordinator.get_phone()
+    if phone:
         device_registry.async_get_or_create(
             config_entry_id=entry.entry_id,
-            identifiers={(DOMAIN, phone_id)},
+            identifiers={(DOMAIN, phone.phone_id)},
             name=phone.phone_name,
             via_device=(
                 (DOMAIN, phone.mobile_app_device_id)
@@ -209,7 +267,5 @@ async def async_setup_entry(
 async def async_unload_entry(
     hass: HomeAssistant, entry: IPhoneAlarmsSyncConfigEntry
 ) -> bool:
-    unload_ok: bool = await hass.config_entries.async_unload_platforms(  # type: ignore[no-any-return]
-        entry, PLATFORMS
-    )
-    return unload_ok
+    unload_ok = await hass.config_entries.async_unload_platforms(entry, PLATFORMS)
+    return bool(unload_ok)

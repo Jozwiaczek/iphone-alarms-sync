@@ -36,19 +36,21 @@ async def async_setup_entry(
     coordinator = entry.runtime_data.coordinator
     entities = []
 
-    phones = coordinator.get_all_phones()
-    for phone_id, phone in phones.items():
-        for alarm_id, alarm in phone.alarms.items():
-            for description in BINARY_SENSOR_TYPES:
-                entities.append(
-                    IPhoneAlarmsSyncBinarySensor(
-                        coordinator,
-                        entry,
-                        phone_id,
-                        alarm_id,
-                        description,
-                    )
+    phone = coordinator.get_phone()
+    if not phone:
+        return
+
+    for alarm_id, alarm in phone.alarms.items():
+        for description in BINARY_SENSOR_TYPES:
+            entities.append(
+                IPhoneAlarmsSyncBinarySensor(
+                    coordinator,
+                    entry,
+                    phone.phone_id,
+                    alarm_id,
+                    description,
                 )
+            )
 
     async_add_entities(entities)
 
@@ -72,12 +74,12 @@ class IPhoneAlarmsSyncBinarySensor(
         self._attr_unique_id = (
             f"{entry.entry_id}_{phone_id}_{alarm_id}_{description.key}"
         )
-        alarm = coordinator.get_alarm(phone_id, alarm_id)
+        alarm = coordinator.get_alarm(alarm_id)
         if alarm is None:
             raise ValueError(f"Alarm {alarm_id} not found")
-        phone = coordinator.get_phone(phone_id)
+        phone = coordinator.get_phone()
         if phone is None:
-            raise ValueError(f"Phone {phone_id} not found")
+            raise ValueError("Phone not found")
         self._attr_name = f"{phone.phone_name} {alarm.label} {description.name}"
         self._attr_device_info = DeviceInfo(
             identifiers={(DOMAIN, phone_id, alarm_id)},
@@ -87,7 +89,7 @@ class IPhoneAlarmsSyncBinarySensor(
 
     @property
     def is_on(self) -> bool | None:
-        alarm = self.coordinator.get_alarm(self._phone_id, self._alarm_id)
+        alarm = self.coordinator.get_alarm(self._alarm_id)
         if not alarm:
             return None
         if self._description.key == "enabled":
