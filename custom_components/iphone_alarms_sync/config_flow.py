@@ -18,14 +18,8 @@ from .const import (
 )
 from .coordinator import IPhoneAlarmsSyncConfigEntry
 
-CUSTOM_NAME_OPTION = "__custom_name__"
-
-STEP_USER_DATA_SCHEMA = vol.Schema(
-    {
-        vol.Optional(CONF_MOBILE_APP_DEVICE): vol.In([]),
-        vol.Required(CONF_PHONE_NAME): str,
-    }
-)
+NAME_SOURCE_MOBILE_APP = "mobile_app"
+NAME_SOURCE_CUSTOM = "custom"
 
 
 def slugify(text: str) -> str:
@@ -60,42 +54,91 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):  # type: ignore[call
         ]
 
         device_options = {}
+        for device_id in mobile_app_devices:
+            device = device_registry.async_get(device_id)
+            if device:
+                device_options[device.id] = device.name
+
+        name_source_options = {
+            NAME_SOURCE_CUSTOM: "Use custom name",
+        }
         if mobile_app_devices:
-            for device_id in mobile_app_devices:
-                device = device_registry.async_get(device_id)
-                if device:
-                    device_options[device.name] = device.name
-            device_options[CUSTOM_NAME_OPTION] = "Enter custom name..."
+            name_source_options[
+                NAME_SOURCE_MOBILE_APP
+            ] = "Use Mobile App Device name (with reference)"
 
         if user_input is None:
-            if device_options:
-                schema = vol.Schema(
-                    {
-                        vol.Required(CONF_PHONE_NAME): vol.In(device_options),
-                    }
-                )
-            else:
-                schema = vol.Schema(
-                    {
-                        vol.Required(CONF_PHONE_NAME): str,
-                    }
-                )
-
+            schema = vol.Schema(
+                {
+                    vol.Required(
+                        "name_source",
+                        default=NAME_SOURCE_MOBILE_APP
+                        if mobile_app_devices
+                        else NAME_SOURCE_CUSTOM,
+                    ): vol.In(name_source_options),
+                }
+            )
             return self.async_show_form(
                 step_id="user",
                 data_schema=schema,
                 errors=errors,
             )
 
-        selected_option = user_input[CONF_PHONE_NAME]
+        name_source = user_input.get("name_source")
 
-        if selected_option == CUSTOM_NAME_OPTION:
-            if "custom_name" not in user_input:
+        if name_source == NAME_SOURCE_MOBILE_APP:
+            if not mobile_app_devices:
+                errors["name_source"] = "no_mobile_app_devices"
+                schema = vol.Schema(
+                    {
+                        vol.Required("name_source", default=NAME_SOURCE_CUSTOM): vol.In(
+                            name_source_options
+                        ),
+                    }
+                )
+                return self.async_show_form(
+                    step_id="user", data_schema=schema, errors=errors
+                )
+
+            if "mobile_app_device_id" not in user_input:
                 schema = vol.Schema(
                     {
                         vol.Required(
-                            CONF_PHONE_NAME, default=CUSTOM_NAME_OPTION
-                        ): vol.In(device_options),
+                            "name_source", default=NAME_SOURCE_MOBILE_APP
+                        ): vol.In(name_source_options),
+                        vol.Required("mobile_app_device_id"): vol.In(device_options),
+                    }
+                )
+                return self.async_show_form(
+                    step_id="user", data_schema=schema, errors=errors
+                )
+
+            device_id = user_input["mobile_app_device_id"]
+            device = device_registry.async_get(device_id)
+            if device:
+                self.mobile_app_device_id = device_id
+                self.phone_name = device.name
+            else:
+                errors["mobile_app_device_id"] = "device_not_found"
+                schema = vol.Schema(
+                    {
+                        vol.Required(
+                            "name_source", default=NAME_SOURCE_MOBILE_APP
+                        ): vol.In(name_source_options),
+                        vol.Required("mobile_app_device_id"): vol.In(device_options),
+                    }
+                )
+                return self.async_show_form(
+                    step_id="user", data_schema=schema, errors=errors
+                )
+
+        elif name_source == NAME_SOURCE_CUSTOM:
+            if "custom_name" not in user_input:
+                schema = vol.Schema(
+                    {
+                        vol.Required("name_source", default=NAME_SOURCE_CUSTOM): vol.In(
+                            name_source_options
+                        ),
                         vol.Required("custom_name"): str,
                     }
                 )
@@ -108,9 +151,9 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):  # type: ignore[call
                 errors["custom_name"] = "required"
                 schema = vol.Schema(
                     {
-                        vol.Required(
-                            CONF_PHONE_NAME, default=CUSTOM_NAME_OPTION
-                        ): vol.In(device_options),
+                        vol.Required("name_source", default=NAME_SOURCE_CUSTOM): vol.In(
+                            name_source_options
+                        ),
                         vol.Required("custom_name"): str,
                     }
                 )
@@ -120,17 +163,6 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):  # type: ignore[call
 
             self.phone_name = custom_name
             self.mobile_app_device_id = None
-        else:
-            self.mobile_app_device_id = None
-            for device_id in mobile_app_devices:
-                device = device_registry.async_get(device_id)
-                if device and device.name == selected_option:
-                    self.mobile_app_device_id = device_id
-                    self.phone_name = device.name
-                    break
-
-            if not self.mobile_app_device_id:
-                self.phone_name = selected_option
 
         if self.phone_name is None:
             return self.async_abort(reason="phone_name_not_set")

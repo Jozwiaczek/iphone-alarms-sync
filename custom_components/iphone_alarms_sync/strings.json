@@ -3,10 +3,16 @@
     "step": {
       "user": {
         "title": "Add iPhone/iPad",
-        "description": "Select your iPhone or iPad from the list below or choose 'Enter custom name...' to type your own name. You don't need to add the device separately - just select it from the list.",
+        "description": "Choose how you want to name your device:\n\n• **Use Mobile App Device name (with reference)**: Links this integration to an existing Mobile App device. The name will be taken from that device, and you'll have a reference connection between them.\n\n• **Use custom name**: Enter any name you want. This creates a standalone entry without linking to a Mobile App device.",
         "data": {
-          "phone_name": "Device Name",
+          "name_source": "Name Source",
+          "mobile_app_device_id": "Mobile App Device",
           "custom_name": "Custom Name"
+        },
+        "error": {
+          "no_mobile_app_devices": "No Mobile App devices found. Please use custom name instead.",
+          "device_not_found": "Selected device not found",
+          "required": "This field is required"
         }
       },
       "shortcuts": {
