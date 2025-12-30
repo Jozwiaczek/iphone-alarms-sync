@@ -262,7 +262,7 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):  # type: ignore[call
     def async_get_options_flow(
         config_entry: IPhoneAlarmsSyncConfigEntry,
     ) -> OptionsFlowHandler:
-        return OptionsFlowHandler()
+        return OptionsFlowHandler(config_entry)
 
 
 class OptionsFlowHandler(config_entries.OptionsFlowWithConfigEntry):
