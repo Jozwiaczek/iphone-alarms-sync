@@ -32,6 +32,12 @@ def slugify(text: str) -> str:
 class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):  # type: ignore[call-arg]
     VERSION = 3
 
+    def __init__(self):
+        super().__init__()
+        self._phone_id: str | None = None
+        self._phone_name: str | None = None
+        self._mobile_app_device_id: str | None = None
+
     async def async_step_user(
         self, user_input: dict[str, Any] | None = None
     ) -> FlowResult:
@@ -151,40 +157,79 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):  # type: ignore[call
     ) -> FlowResult:
         phone_id = slugify(phone_name)
 
-        await self.async_set_unique_id(phone_id)
-        self._abort_if_unique_id_configured()
+        self._phone_id = phone_id
+        self._phone_name = phone_name
+        self._mobile_app_device_id = mobile_app_device_id
 
-        return await self.async_step_confirm(
-            phone_id=phone_id,
-            phone_name=phone_name,
-            mobile_app_device_id=mobile_app_device_id,
-        )
+        await self.async_set_unique_id(phone_id)
+
+        existing_entries = self.hass.config_entries.async_entries(DOMAIN)
+        for entry in existing_entries:
+            if entry.unique_id == phone_id:
+                return await self.async_step_already_configured(entry)
+
+        return await self.async_step_confirm()
 
     async def async_step_confirm(
-        self,
-        phone_id: str,
-        phone_name: str,
-        mobile_app_device_id: str | None,
-        user_input: dict[str, Any] | None = None,
+        self, user_input: dict[str, Any] | None = None
     ) -> FlowResult:
+        if self._phone_id is None or self._phone_name is None:
+            return self.async_abort(reason="unknown")
+
         if user_input is None:
             return self.async_show_form(
                 step_id="confirm",
                 description_placeholders={
-                    "phone_name": phone_name,
-                    "phone_id": phone_id,
+                    "phone_name": self._phone_name,
+                    "phone_id": self._phone_id,
                 },
             )
 
         return self.async_create_entry(
-            title=phone_name,
+            title=self._phone_name,
             data={
-                CONF_PHONE_ID: phone_id,
-                CONF_PHONE_NAME: phone_name,
-                CONF_MOBILE_APP_DEVICE_ID: mobile_app_device_id,
+                CONF_PHONE_ID: self._phone_id,
+                CONF_PHONE_NAME: self._phone_name,
+                CONF_MOBILE_APP_DEVICE_ID: self._mobile_app_device_id,
             },
             options={"alarms": {}},
         )
+
+    async def async_step_already_configured(
+        self,
+        existing_entry: config_entries.ConfigEntry,
+        user_input: dict[str, Any] | None = None,
+    ) -> FlowResult:
+        if self._phone_id is None or self._phone_name is None:
+            return self.async_abort(reason="unknown")
+
+        if user_input is None:
+            return self.async_show_form(
+                step_id="already_configured",
+                data_schema=vol.Schema(
+                    {
+                        vol.Required("action"): vol.In(
+                            {
+                                "new_name": "Use different name",
+                            }
+                        ),
+                    }
+                ),
+                description_placeholders={
+                    "phone_name": self._phone_name,
+                    "phone_id": self._phone_id,
+                    "existing_title": existing_entry.title,
+                },
+            )
+
+        action = user_input.get("action")
+        if action == "new_name":
+            self._phone_id = None
+            self._phone_name = None
+            self._mobile_app_device_id = None
+            return await self.async_step_user()
+
+        return self.async_abort(reason="unknown")
 
     async def async_step_import(
         self, user_input: dict[str, Any] | None = None

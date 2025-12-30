@@ -26,6 +26,13 @@
       "confirm": {
         "title": "Confirm Device Setup",
         "description": "**Device Name:** {phone_name}\n**Phone ID:** `{phone_id}`\n\n⚠️ **Important:** Save this Phone ID! You'll need it when setting up the iOS shortcut.\n\nThe Phone ID is generated from the device name and is used to identify your device when syncing alarms.\n\nAlarms will be automatically synchronized when you run the shortcut for the first time."
+      },
+      "already_configured": {
+        "title": "Device Already Configured",
+        "description": "A device with this configuration already exists.\n\n**Device Name:** {phone_name}\n**Generated Phone ID:** `{phone_id}`\n**Existing Device:** {existing_title}\n\nThis Phone ID is already in use. If you want to edit the existing device, go to Settings → Integrations → iPhone Alarms Sync → {existing_title} → Configure.\n\nIf you want to add a new device, choose a different device name below.",
+        "data": {
+          "action": "Action"
+        }
       }
     },
     "error": {
@@ -40,6 +47,7 @@
       "no_mobile_app_devices": "No Mobile App devices found. Please install the Home Assistant mobile app and add your device, or use the custom name option.",
       "integration_not_ready": "Integration is not ready. Please reload the integration and try again.",
       "invalid_import_data": "Invalid import data",
+      "already_configured": "A device with Phone ID `{phone_id}` already exists as \"{existing_title}\". To edit it, go to Settings → Integrations → iPhone Alarms Sync → {existing_title} → Configure.",
       "unknown": "Unknown error occurred"
     }
   },
