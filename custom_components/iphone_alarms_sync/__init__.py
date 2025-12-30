@@ -62,12 +62,18 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
                 config_entry_id=entry.entry_id,
                 identifiers={(DOMAIN, phone_id)},
                 name=phone.phone_name,
-                via_device=(
-                    (DOMAIN, phone.mobile_app_device_id)
-                    if phone.mobile_app_device_id
-                    else None
-                ),
+                via_device_id=phone.mobile_app_device_id
+                if phone.mobile_app_device_id
+                else None,
             )
+        else:
+            if phone_device.via_device_id != phone.mobile_app_device_id:
+                device_registry.async_update_device(
+                    phone_device.id,
+                    via_device_id=phone.mobile_app_device_id
+                    if phone.mobile_app_device_id
+                    else None,
+                )
 
         coordinator.sync_alarms(alarms)
         await coordinator.async_request_refresh()
@@ -252,11 +258,9 @@ async def async_setup_entry(
             config_entry_id=entry.entry_id,
             identifiers={(DOMAIN, phone.phone_id)},
             name=phone.phone_name,
-            via_device=(
-                (DOMAIN, phone.mobile_app_device_id)
-                if phone.mobile_app_device_id
-                else None
-            ),
+            via_device_id=phone.mobile_app_device_id
+            if phone.mobile_app_device_id
+            else None,
         )
 
     await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)

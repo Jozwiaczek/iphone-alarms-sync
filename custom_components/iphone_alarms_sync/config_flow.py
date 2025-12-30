@@ -93,7 +93,6 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):  # type: ignore[call
             schema = vol.Schema(
                 {
                     vol.Required(CONF_MOBILE_APP_DEVICE_ID): vol.In(device_options),
-                    vol.Optional(CONF_PHONE_NAME): str,
                 }
             )
             return self.async_show_form(
@@ -101,7 +100,6 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):  # type: ignore[call
             )
 
         mobile_app_device_id = user_input.get(CONF_MOBILE_APP_DEVICE_ID)
-        phone_name = user_input.get(CONF_PHONE_NAME, "").strip()
 
         device = device_registry.async_get(mobile_app_device_id)
         if not device:
@@ -109,15 +107,13 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):  # type: ignore[call
             schema = vol.Schema(
                 {
                     vol.Required(CONF_MOBILE_APP_DEVICE_ID): vol.In(device_options),
-                    vol.Optional(CONF_PHONE_NAME): str,
                 }
             )
             return self.async_show_form(
                 step_id="select_mobile_app", data_schema=schema, errors=errors
             )
 
-        if not phone_name:
-            phone_name = device.name
+        phone_name = f"{device.name} Alarms"
 
         return await self._async_create_entry_from_name(
             phone_name, mobile_app_device_id
@@ -387,6 +383,16 @@ class OptionsFlowHandler(config_entries.OptionsFlowWithConfigEntry):
                 unique_id=new_phone_id,
                 title=phone_name,
                 data=new_data,
+            )
+
+        device_registry = dr.async_get(self.hass)
+        phone_device = device_registry.async_get_device(
+            identifiers={(DOMAIN, old_phone_id)}
+        )
+        if phone_device:
+            device_registry.async_update_device(
+                phone_device.id,
+                via_device_id=mobile_app_device_id,
             )
         await self.hass.config_entries.async_reload(self.config_entry.entry_id)
         return await self.async_step_init()
