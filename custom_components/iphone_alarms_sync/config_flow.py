@@ -390,9 +390,14 @@ class OptionsFlowHandler(config_entries.OptionsFlowWithConfigEntry):
             identifiers={(DOMAIN, old_phone_id)}
         )
         if phone_device:
+            via_device = None
+            if mobile_app_device_id:
+                mobile_app_device = device_registry.async_get(mobile_app_device_id)
+                if mobile_app_device and mobile_app_device.identifiers:
+                    via_device = next(iter(mobile_app_device.identifiers))
             device_registry.async_update_device(
                 phone_device.id,
-                via_device_id=mobile_app_device_id,
+                via_device=via_device,
             )
         await self.hass.config_entries.async_reload(self.config_entry.entry_id)
         return await self.async_step_init()
@@ -436,8 +441,7 @@ class OptionsFlowHandler(config_entries.OptionsFlowWithConfigEntry):
         if user_input is None:
             if events:
                 event_list = "\n".join(
-                    f"- {event.occurred_at}: {event.event} "
-                    f"(alarm: {event.alarm_id})"
+                    f"- {event.occurred_at}: {event.event} (alarm: {event.alarm_id})"
                     for event in events
                 )
             else:

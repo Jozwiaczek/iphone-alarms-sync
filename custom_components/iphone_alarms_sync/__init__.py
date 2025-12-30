@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Any
+from typing import Any, cast
 
 from homeassistant.core import HomeAssistant, ServiceCall
 from homeassistant.helpers import config_validation as cv
@@ -26,6 +26,18 @@ from .coordinator import (
 )
 
 CONFIG_SCHEMA = cv.config_entry_only_config_schema(DOMAIN)
+
+
+def _get_via_device_from_device_id(
+    device_registry: dr.DeviceRegistry, device_id: str | None
+) -> tuple[str, ...] | None:
+    if not device_id:
+        return None
+    device = device_registry.async_get(device_id)
+    if not device or not device.identifiers:
+        return None
+    identifier = next(iter(device.identifiers))
+    return cast(tuple[str, ...], identifier)
 
 
 async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
@@ -57,22 +69,30 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
             identifiers={(DOMAIN, phone_id)}
         )
 
+        via_device = _get_via_device_from_device_id(
+            device_registry, phone.mobile_app_device_id
+        )
+
         if not phone_device:
             phone_device = device_registry.async_get_or_create(
                 config_entry_id=entry.entry_id,
                 identifiers={(DOMAIN, phone_id)},
                 name=phone.phone_name,
-                via_device_id=phone.mobile_app_device_id
-                if phone.mobile_app_device_id
-                else None,
+                via_device=via_device,
             )
         else:
-            if phone_device.via_device_id != phone.mobile_app_device_id:
+            current_via_device = (
+                _get_via_device_from_device_id(
+                    device_registry,
+                    phone_device.via_device_id,
+                )
+                if phone_device.via_device_id
+                else None
+            )
+            if current_via_device != via_device:
                 device_registry.async_update_device(
                     phone_device.id,
-                    via_device_id=phone.mobile_app_device_id
-                    if phone.mobile_app_device_id
-                    else None,
+                    via_device=via_device,
                 )
 
         coordinator.sync_alarms(alarms)
@@ -254,13 +274,14 @@ async def async_setup_entry(
     device_registry = dr.async_get(hass)
     phone = coordinator.get_phone()
     if phone:
+        via_device = _get_via_device_from_device_id(
+            device_registry, phone.mobile_app_device_id
+        )
         device_registry.async_get_or_create(
             config_entry_id=entry.entry_id,
             identifiers={(DOMAIN, phone.phone_id)},
             name=phone.phone_name,
-            via_device_id=phone.mobile_app_device_id
-            if phone.mobile_app_device_id
-            else None,
+            via_device=via_device,
         )
 
     await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)

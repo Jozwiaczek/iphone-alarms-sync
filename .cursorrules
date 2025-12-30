@@ -1,0 +1,69 @@
+# Code Quality & Development Guidelines
+
+## Clean Code Principles
+
+### Naming & Structure
+- **Meaningful Names**: Variables, functions, and classes should reveal their purpose
+- **Constants Over Magic Numbers**: Replace hard-coded values with named constants at the top of the file
+- **Single Responsibility**: Each function does exactly one thing and is small and focused
+- **Clean Structure**: Keep related code together in a logical hierarchy
+- **Encapsulation**: Hide implementation details, expose clear interfaces
+
+### File Organization
+- **Small Files**: Prefer splitting files into multiple smaller ones, keeping each at ~100 lines maximum
+- **The smaller, the better**: Generally, fewer lines per file makes code easier to navigate and understand
+- **Utils & Hooks**: Keep utilities and hooks especially small - ideally ~50 lines maximum
+- **Extract Components/Utils**: If a file grows beyond limits, extract components, utilities, or hooks into separate files
+- **Single Responsibility per File**: Each file should have a clear, focused purpose
+
+### Code Quality
+- **DRY (Don't Repeat Yourself)**: Extract repeated code into reusable functions
+- **No Comments**: Code should be self-documenting through clear naming. Never add comments - neither obvious ones that describe what code does (e.g., "// render button", "// loop through items") nor explanatory ones. If code needs explanation, refactor it to be clearer
+- **Refactor Continuously**: Fix technical debt early, leave code cleaner than you found it
+
+## Development Workflow
+
+### Code Changes
+- **Verify Information**: Always verify before presenting. No assumptions or speculation
+- **File-by-File**: Make changes file by file for easier review
+- **Single Chunk Edits**: Provide all edits for a file in one chunk
+- **Preserve Existing Code**: Don't remove unrelated code or functionalities
+
+### Communication Style
+- Never use apologies
+- Don't summarize changes or give understanding feedback
+- Don't show current implementation unless requested
+- Don't ask for confirmation of info already in context
+- Don't suggest whitespace changes or unnecessary updates
+- Provide real file links, not x.md
+
+### What NOT to Do
+- Don't invent changes beyond explicit requests
+- Don't ask user to verify implementations visible in context
+- Don't suggest updates when no modifications needed
+
+## Solution & Architecture
+
+### Simplicity First
+- **Prefer simple solutions**: Straightforward > clever
+- **Readability over cleverness**: Code should be obvious to other developers
+- **When in doubt**: Choose the simpler approach
+
+### Dependency Management
+- Remove unused dependencies from `package.json`
+- Verify if existing code can achieve the goal before adding new dependency
+- Clean up both code AND `package.json` when removing package
+
+## Testing
+
+### When to Test
+- ✅ Add tests for complex logic (array/object manipulation, calculations, conditions)
+- ❌ Skip tests for simple logic, configurations, React components
+
+### Test Principles
+- Keep tests extremely short, simple, focused on key functionality
+- Apply DRY and KISS to tests
+- Extract setup functions, utils, mock data to beginning of file
+- **Minimize mocking**: Extract logic to testable utilities
+- **Component extraction**: Extract logic from components to utilities
+

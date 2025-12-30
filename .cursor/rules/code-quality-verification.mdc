@@ -1,0 +1,41 @@
+---
+alwaysApply: true
+---
+# Code Quality Verification (MANDATORY)
+
+**BEFORE declaring any code changes complete, ALWAYS run all three quality checks:**
+
+1. **Linting**: `uv run ruff check custom_components/iphone_alarms_sync/`
+   - Must show: "All checks passed!"
+   - Fix any errors before proceeding
+
+2. **Formatting**: `uv run ruff format --check custom_components/iphone_alarms_sync/`
+   - Must show: "X files already formatted" (no files needing reformatting)
+   - If reformatting needed: run `uv run ruff format custom_components/iphone_alarms_sync/` then verify again
+
+3. **Type Checking**: `uv run mypy custom_components/iphone_alarms_sync/`
+   - Must show: "Success: no issues found in X source files"
+   - Notes about untyped functions are acceptable, but actual errors must be fixed
+
+**Verification Command:**
+```bash
+uv run ruff check custom_components/iphone_alarms_sync/ && \
+uv run ruff format --check custom_components/iphone_alarms_sync/ && \
+uv run mypy custom_components/iphone_alarms_sync/
+```
+
+**All three commands MUST pass successfully. Only then can code be considered ready.**
+
+**Exception:** Only skip when explicitly asked or when working on non-Python files that don't require these checks.
+
+## Commit Message Generation
+
+**AFTER all quality checks pass and code is ready, ALWAYS generate a commit message using `/generate-commit-message` command.**
+
+The commit message must follow the Gitmoji standard:
+- Simple changes: `<emoji> <message>` (max 50 chars)
+- Multiple major changes: Add body with `*` bullet points
+- Use appropriate gitmoji (✨ feature, 🐛 bug fix, ♻️ refactor, etc.)
+- Keep it SIMPLE and SHORT
+
+
