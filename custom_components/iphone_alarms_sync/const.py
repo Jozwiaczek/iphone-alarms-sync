@@ -19,8 +19,14 @@ CONF_EVENT = "event"
 CONF_EVENT_ID = "event_id"
 CONF_OCCURRED_AT = "occurred_at"
 CONF_LAST_SYNC = "last_sync"
-CONF_LAST_EVENT = "last_event"
-CONF_LAST_EVENT_AT = "last_event_at"
+CONF_LAST_EVENT_GOES_OFF_AT = "last_event_goes_off_at"
+CONF_LAST_EVENT_SNOOZED_AT = "last_event_snoozed_at"
+CONF_LAST_EVENT_STOPPED_AT = "last_event_stopped_at"
+CONF_TOTAL_ALARMS = "total_alarms"
+CONF_ENABLED_ALARMS = "enabled_alarms"
+CONF_DISABLED_ALARMS = "disabled_alarms"
+CONF_NEXT_ALARM_TIME = "next_alarm_time"
+CONF_NEXT_ALARM_LABEL = "next_alarm_label"
 
 EVENT_ALARM_EVENT = "iphone_alarms_sync_alarm_event"
 
@@ -30,4 +36,4 @@ EVENT_STOPPED = "stopped"
 
 DEFAULT_ICON = "mdi:alarm"
 
-PLATFORMS = ["binary_sensor", "sensor"]
+PLATFORMS = ["binary_sensor", "sensor", "time"]

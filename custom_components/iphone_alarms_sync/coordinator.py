@@ -20,8 +20,9 @@ from .const import (
     CONF_HOUR,
     CONF_ICON,
     CONF_LABEL,
-    CONF_LAST_EVENT,
-    CONF_LAST_EVENT_AT,
+    CONF_LAST_EVENT_GOES_OFF_AT,
+    CONF_LAST_EVENT_SNOOZED_AT,
+    CONF_LAST_EVENT_STOPPED_AT,
     CONF_MINUTE,
     CONF_MOBILE_APP_DEVICE_ID,
     CONF_PHONE_ID,
@@ -29,6 +30,9 @@ from .const import (
     CONF_REPEAT_DAYS,
     CONF_REPEATS,
     CONF_SYNCED_AT,
+    EVENT_GOES_OFF,
+    EVENT_SNOOZED,
+    EVENT_STOPPED,
 )
 
 
@@ -42,9 +46,9 @@ class AlarmData:
     repeats: bool
     repeat_days: list[str]
     allows_snooze: bool
-    synced_at: str | None = None
-    last_event: str | None = None
-    last_event_at: str | None = None
+    last_event_goes_off_at: str | None = None
+    last_event_snoozed_at: str | None = None
+    last_event_stopped_at: str | None = None
     icon: str = "mdi:alarm"
 
 
@@ -63,6 +67,7 @@ class PhoneData:
     phone_name: str
     mobile_app_device_id: str | None
     alarms: dict[str, AlarmData]
+    synced_at: str | None = None
 
 
 @dataclass
@@ -106,17 +111,20 @@ class IPhoneAlarmsSyncCoordinator(DataUpdateCoordinator[PhoneData]):
                 repeats=alarm_dict.get(CONF_REPEATS, False),
                 repeat_days=alarm_dict.get(CONF_REPEAT_DAYS, []),
                 allows_snooze=alarm_dict.get(CONF_ALLOWS_SNOOZE, False),
-                synced_at=alarm_dict.get(CONF_SYNCED_AT),
-                last_event=alarm_dict.get(CONF_LAST_EVENT),
-                last_event_at=alarm_dict.get(CONF_LAST_EVENT_AT),
+                last_event_goes_off_at=alarm_dict.get(CONF_LAST_EVENT_GOES_OFF_AT),
+                last_event_snoozed_at=alarm_dict.get(CONF_LAST_EVENT_SNOOZED_AT),
+                last_event_stopped_at=alarm_dict.get(CONF_LAST_EVENT_STOPPED_AT),
                 icon=alarm_dict.get(CONF_ICON, "mdi:alarm"),
             )
+
+        synced_at = self.entry.options.get(CONF_SYNCED_AT)
 
         self._phone = PhoneData(
             phone_id=phone_id,
             phone_name=phone_name,
             mobile_app_device_id=mobile_app_device_id,
             alarms=alarms,
+            synced_at=synced_at,
         )
 
     async def _async_update_data(self) -> PhoneData:
@@ -145,10 +153,28 @@ class IPhoneAlarmsSyncCoordinator(DataUpdateCoordinator[PhoneData]):
             return {}
         return {self._phone.phone_id: self._phone}
 
+    def _alarm_data_changed(
+        self,
+        existing: AlarmData,
+        new_dict: dict[str, Any],
+    ) -> bool:
+        return (
+            existing.label != new_dict.get(CONF_LABEL)
+            or existing.enabled != new_dict.get(CONF_ENABLED)
+            or existing.hour != new_dict.get(CONF_HOUR)
+            or existing.minute != new_dict.get(CONF_MINUTE)
+            or existing.repeats != new_dict.get(CONF_REPEATS)
+            or existing.repeat_days != new_dict.get(CONF_REPEAT_DAYS, [])
+            or existing.allows_snooze != new_dict.get(CONF_ALLOWS_SNOOZE)
+        )
+
     def sync_alarms(self, alarms: list[dict[str, Any]]) -> None:
         if self._phone is None:
             raise ValueError("Phone not initialized")
+
+        has_changes = False
         synced_at = dt_util.utcnow().isoformat()
+
         for alarm_dict in alarms:
             alarm_id = alarm_dict[CONF_ALARM_ID]
             if alarm_id not in self._phone.alarms:
@@ -161,21 +187,27 @@ class IPhoneAlarmsSyncCoordinator(DataUpdateCoordinator[PhoneData]):
                     repeats=alarm_dict.get(CONF_REPEATS, False),
                     repeat_days=alarm_dict.get(CONF_REPEAT_DAYS, []),
                     allows_snooze=alarm_dict.get(CONF_ALLOWS_SNOOZE, False),
-                    synced_at=synced_at,
                 )
+                has_changes = True
             else:
                 alarm = self._phone.alarms[alarm_id]
-                alarm.label = alarm_dict.get(CONF_LABEL, alarm.label)
-                alarm.enabled = alarm_dict.get(CONF_ENABLED, alarm.enabled)
-                alarm.hour = alarm_dict.get(CONF_HOUR, alarm.hour)
-                alarm.minute = alarm_dict.get(CONF_MINUTE, alarm.minute)
-                alarm.repeats = alarm_dict.get(CONF_REPEATS, alarm.repeats)
-                alarm.repeat_days = alarm_dict.get(CONF_REPEAT_DAYS, alarm.repeat_days)
-                alarm.allows_snooze = alarm_dict.get(
-                    CONF_ALLOWS_SNOOZE, alarm.allows_snooze
-                )
-                alarm.synced_at = synced_at
-        self._save_to_config()
+                if self._alarm_data_changed(alarm, alarm_dict):
+                    alarm.label = alarm_dict.get(CONF_LABEL, alarm.label)
+                    alarm.enabled = alarm_dict.get(CONF_ENABLED, alarm.enabled)
+                    alarm.hour = alarm_dict.get(CONF_HOUR, alarm.hour)
+                    alarm.minute = alarm_dict.get(CONF_MINUTE, alarm.minute)
+                    alarm.repeats = alarm_dict.get(CONF_REPEATS, alarm.repeats)
+                    alarm.repeat_days = alarm_dict.get(
+                        CONF_REPEAT_DAYS, alarm.repeat_days
+                    )
+                    alarm.allows_snooze = alarm_dict.get(
+                        CONF_ALLOWS_SNOOZE, alarm.allows_snooze
+                    )
+                    has_changes = True
+
+        if has_changes:
+            self._phone.synced_at = synced_at
+            self._save_to_config()
 
     def report_alarm_event(self, alarm_id: str, event: str) -> AlarmEvent:
         if self._phone is None:
@@ -191,8 +223,12 @@ class IPhoneAlarmsSyncCoordinator(DataUpdateCoordinator[PhoneData]):
         )
         self._events.append(event_obj)
         alarm = self._phone.alarms[alarm_id]
-        alarm.last_event = event
-        alarm.last_event_at = event_obj.occurred_at
+        if event == EVENT_GOES_OFF:
+            alarm.last_event_goes_off_at = event_obj.occurred_at
+        elif event == EVENT_SNOOZED:
+            alarm.last_event_snoozed_at = event_obj.occurred_at
+        elif event == EVENT_STOPPED:
+            alarm.last_event_stopped_at = event_obj.occurred_at
         self._save_to_config()
         return event_obj
 
@@ -245,9 +281,14 @@ class IPhoneAlarmsSyncCoordinator(DataUpdateCoordinator[PhoneData]):
     def _save_to_config(self) -> None:
         if self._phone is None:
             return
+
+        current_options = self.entry.options.copy()
+        current_alarms = current_options.get("alarms", {})
         alarms_dict = {}
+        has_changes = False
+
         for alarm_id, alarm in self._phone.alarms.items():
-            alarms_dict[alarm_id] = {
+            alarm_data = {
                 CONF_ALARM_ID: alarm.alarm_id,
                 CONF_LABEL: alarm.label,
                 CONF_ENABLED: alarm.enabled,
@@ -256,12 +297,26 @@ class IPhoneAlarmsSyncCoordinator(DataUpdateCoordinator[PhoneData]):
                 CONF_REPEATS: alarm.repeats,
                 CONF_REPEAT_DAYS: alarm.repeat_days,
                 CONF_ALLOWS_SNOOZE: alarm.allows_snooze,
-                CONF_SYNCED_AT: alarm.synced_at,
-                CONF_LAST_EVENT: alarm.last_event,
-                CONF_LAST_EVENT_AT: alarm.last_event_at,
+                CONF_LAST_EVENT_GOES_OFF_AT: alarm.last_event_goes_off_at,
+                CONF_LAST_EVENT_SNOOZED_AT: alarm.last_event_snoozed_at,
+                CONF_LAST_EVENT_STOPPED_AT: alarm.last_event_stopped_at,
                 CONF_ICON: alarm.icon,
             }
-        self.hass.config_entries.async_update_entry(
-            self.entry,
-            options={"alarms": alarms_dict},
-        )
+
+            if alarm_id not in current_alarms or current_alarms[alarm_id] != alarm_data:
+                has_changes = True
+
+            alarms_dict[alarm_id] = alarm_data
+
+        if current_alarms.keys() != alarms_dict.keys():
+            has_changes = True
+
+        if self._phone.synced_at != current_options.get(CONF_SYNCED_AT):
+            has_changes = True
+
+        if has_changes:
+            new_options = {"alarms": alarms_dict, CONF_SYNCED_AT: self._phone.synced_at}
+            self.hass.config_entries.async_update_entry(
+                self.entry,
+                options=new_options,
+            )

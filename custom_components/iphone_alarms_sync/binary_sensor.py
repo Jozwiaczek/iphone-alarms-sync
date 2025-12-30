@@ -25,6 +25,34 @@ BINARY_SENSOR_TYPES: tuple[BinarySensorEntityDescription, ...] = (
         key="allows_snooze",
         name="Allows Snooze",
     ),
+    BinarySensorEntityDescription(
+        key="repeats_monday",
+        name="Repeats Monday",
+    ),
+    BinarySensorEntityDescription(
+        key="repeats_tuesday",
+        name="Repeats Tuesday",
+    ),
+    BinarySensorEntityDescription(
+        key="repeats_wednesday",
+        name="Repeats Wednesday",
+    ),
+    BinarySensorEntityDescription(
+        key="repeats_thursday",
+        name="Repeats Thursday",
+    ),
+    BinarySensorEntityDescription(
+        key="repeats_friday",
+        name="Repeats Friday",
+    ),
+    BinarySensorEntityDescription(
+        key="repeats_saturday",
+        name="Repeats Saturday",
+    ),
+    BinarySensorEntityDescription(
+        key="repeats_sunday",
+        name="Repeats Sunday",
+    ),
 )
 
 
@@ -98,4 +126,18 @@ class IPhoneAlarmsSyncBinarySensor(
             return bool(alarm.repeats)
         if self._description.key == "allows_snooze":
             return bool(alarm.allows_snooze)
+        if self._description.key == "repeats_monday":
+            return "Monday" in alarm.repeat_days
+        if self._description.key == "repeats_tuesday":
+            return "Tuesday" in alarm.repeat_days
+        if self._description.key == "repeats_wednesday":
+            return "Wednesday" in alarm.repeat_days
+        if self._description.key == "repeats_thursday":
+            return "Thursday" in alarm.repeat_days
+        if self._description.key == "repeats_friday":
+            return "Friday" in alarm.repeat_days
+        if self._description.key == "repeats_saturday":
+            return "Saturday" in alarm.repeat_days
+        if self._description.key == "repeats_sunday":
+            return "Sunday" in alarm.repeat_days
         return None

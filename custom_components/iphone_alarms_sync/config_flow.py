@@ -404,11 +404,7 @@ class OptionsFlowHandler(config_entries.OptionsFlowWithConfigEntry):
         all_alarms = coordinator.get_all_alarms()
         recent_events = coordinator.get_events(limit=10)
 
-        last_sync = None
-        for alarm in phone.alarms.values():
-            if alarm.synced_at:
-                if last_sync is None or alarm.synced_at > last_sync:
-                    last_sync = alarm.synced_at
+        last_sync = phone.synced_at
 
         alarm_count = len(all_alarms)
 
