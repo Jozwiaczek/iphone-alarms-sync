@@ -24,7 +24,10 @@
       },
       "confirm": {
         "title": "Confirm Device Setup",
-        "description": "**Alarm Synchronization Device Name:** {phone_name}\n**Phone ID:** `{phone_id}`\n\n⚠️ **Important:** Save this Phone ID! You'll need it when setting up the iOS shortcut.\n\nThe Phone ID is generated from the device name and is used to identify your device when syncing alarms.\n\nAlarms will be automatically synchronized when you run the shortcut for the first time."
+        "description": "**Alarm Synchronization Device Name:** {phone_name}\n**Phone ID:** `{phone_id}`\n\n⚠️ **Important:** Save this Phone ID! You'll need it when setting up the iOS shortcut.\n\nThe Phone ID is generated from the device name and is used to identify your device when syncing alarms.\n\nAlarms will be automatically synchronized when you run the shortcut for the first time.\n\n⚠️ **Warning:** If you disable the option to sync disabled alarms, alarm entities will disappear from Home Assistant when you disable them on your iPhone. Entities will reappear when you enable the alarm again.",
+        "data": {
+          "sync_disabled_alarms": "Synchronizuj wyłączone alarmy"
+        }
       },
       "already_configured": {
         "title": "Device Already Configured",
@@ -63,10 +66,11 @@
       },
       "edit_device": {
         "title": "Edit Device",
-        "description": "Edit your alarm synchronization device settings.\n\n⚠️ **Note:** Changing the device name will generate a new Phone ID. Make sure to update your iOS shortcut with the new Phone ID if you change the name.",
+        "description": "Edit your alarm synchronization device settings.\n\n⚠️ **Note:** Changing the device name will generate a new Phone ID. Make sure to update your iOS shortcut with the new Phone ID if you change the name.\n\n⚠️ **Warning:** If you disable the option to sync disabled alarms, alarm entities will disappear from Home Assistant when you disable them on your iPhone. Entities will reappear when you enable the alarm again.",
         "data": {
           "phone_name": "Device Name",
-          "mobile_app_device_id": "Mobile App Device (optional)"
+          "mobile_app_device_id": "Mobile App Device (optional)",
+          "sync_disabled_alarms": "Synchronizuj wyłączone alarmy"
         }
       },
       "overview": {

@@ -14,6 +14,7 @@ from .const import (
     CONF_MOBILE_APP_DEVICE_ID,
     CONF_PHONE_ID,
     CONF_PHONE_NAME,
+    CONF_SYNC_DISABLED_ALARMS,
     DOMAIN,
 )
 from .coordinator import (
@@ -173,13 +174,21 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):  # type: ignore[call
             return self.async_abort(reason="unknown")
 
         if user_input is None:
+            schema = vol.Schema(
+                {
+                    vol.Required(CONF_SYNC_DISABLED_ALARMS, default=True): bool,
+                }
+            )
             return self.async_show_form(
                 step_id="confirm",
+                data_schema=schema,
                 description_placeholders={
                     "phone_name": self._phone_name,
                     "phone_id": self._phone_id,
                 },
             )
+
+        sync_disabled_alarms = user_input.get(CONF_SYNC_DISABLED_ALARMS, True)
 
         return self.async_create_entry(
             title=self._phone_name,
@@ -187,6 +196,7 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):  # type: ignore[call
                 CONF_PHONE_ID: self._phone_id,
                 CONF_PHONE_NAME: self._phone_name,
                 CONF_MOBILE_APP_DEVICE_ID: self._mobile_app_device_id,
+                CONF_SYNC_DISABLED_ALARMS: sync_disabled_alarms,
             },
             options={"alarms": {}},
         )
@@ -236,6 +246,7 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):  # type: ignore[call
         phone_id = user_input.get(CONF_PHONE_ID)
         phone_name = user_input.get(CONF_PHONE_NAME)
         mobile_app_device_id = user_input.get(CONF_MOBILE_APP_DEVICE_ID)
+        sync_disabled_alarms = user_input.get(CONF_SYNC_DISABLED_ALARMS, True)
 
         if not phone_id or not phone_name:
             return self.async_abort(reason="invalid_import_data")
@@ -249,6 +260,7 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):  # type: ignore[call
                 CONF_PHONE_ID: phone_id,
                 CONF_PHONE_NAME: phone_name,
                 CONF_MOBILE_APP_DEVICE_ID: mobile_app_device_id,
+                CONF_SYNC_DISABLED_ALARMS: sync_disabled_alarms,
             },
             options={"alarms": {}},
         )
@@ -323,6 +335,10 @@ class OptionsFlowHandler(config_entries.OptionsFlowWithConfigEntry):
                         CONF_MOBILE_APP_DEVICE_ID,
                         default=phone.mobile_app_device_id or None,
                     ): vol.In(device_options),
+                    vol.Required(
+                        CONF_SYNC_DISABLED_ALARMS,
+                        default=phone.sync_disabled_alarms,
+                    ): bool,
                 }
             )
             return self.async_show_form(
@@ -339,6 +355,10 @@ class OptionsFlowHandler(config_entries.OptionsFlowWithConfigEntry):
                         CONF_MOBILE_APP_DEVICE_ID,
                         default=phone.mobile_app_device_id or None,
                     ): vol.In(device_options),
+                    vol.Required(
+                        CONF_SYNC_DISABLED_ALARMS,
+                        default=phone.sync_disabled_alarms,
+                    ): bool,
                 }
             )
             return self.async_show_form(
@@ -367,17 +387,27 @@ class OptionsFlowHandler(config_entries.OptionsFlowWithConfigEntry):
                                 CONF_MOBILE_APP_DEVICE_ID,
                                 default=mobile_app_device_id or None,
                             ): vol.In(device_options),
+                            vol.Required(
+                                CONF_SYNC_DISABLED_ALARMS,
+                                default=phone.sync_disabled_alarms,
+                            ): bool,
                         }
                     )
                     return self.async_show_form(
                         step_id="edit_device", data_schema=schema, errors=errors
                     )
 
-        coordinator.update_phone(phone_name, mobile_app_device_id)
-        if new_phone_id != old_phone_id:
+        sync_disabled_alarms = user_input.get(CONF_SYNC_DISABLED_ALARMS, True)
+
+        coordinator.update_phone(phone_name, mobile_app_device_id, sync_disabled_alarms)
+        if (
+            new_phone_id != old_phone_id
+            or sync_disabled_alarms != phone.sync_disabled_alarms
+        ):
             new_data = dict(self.config_entry.data)
             new_data[CONF_PHONE_ID] = new_phone_id
             new_data[CONF_PHONE_NAME] = phone_name
+            new_data[CONF_SYNC_DISABLED_ALARMS] = sync_disabled_alarms
             self.hass.config_entries.async_update_entry(
                 self.config_entry,
                 unique_id=new_phone_id,

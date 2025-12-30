@@ -27,6 +27,7 @@ CONF_ENABLED_ALARMS = "enabled_alarms"
 CONF_DISABLED_ALARMS = "disabled_alarms"
 CONF_NEXT_ALARM_TIME = "next_alarm_time"
 CONF_NEXT_ALARM_LABEL = "next_alarm_label"
+CONF_SYNC_DISABLED_ALARMS = "sync_disabled_alarms"
 
 EVENT_ALARM_EVENT = "iphone_alarms_sync_alarm_event"
 

@@ -29,6 +29,7 @@ from .const import (
     CONF_PHONE_NAME,
     CONF_REPEAT_DAYS,
     CONF_REPEATS,
+    CONF_SYNC_DISABLED_ALARMS,
     CONF_SYNCED_AT,
     EVENT_GOES_OFF,
     EVENT_SNOOZED,
@@ -68,6 +69,7 @@ class PhoneData:
     mobile_app_device_id: str | None
     alarms: dict[str, AlarmData]
     synced_at: str | None = None
+    sync_disabled_alarms: bool = True
 
 
 @dataclass
@@ -98,6 +100,7 @@ class IPhoneAlarmsSyncCoordinator(DataUpdateCoordinator[PhoneData]):
         phone_id = self.entry.data.get(CONF_PHONE_ID, "")
         phone_name = self.entry.data.get(CONF_PHONE_NAME, "")
         mobile_app_device_id = self.entry.data.get(CONF_MOBILE_APP_DEVICE_ID)
+        sync_disabled_alarms = self.entry.data.get(CONF_SYNC_DISABLED_ALARMS, True)
 
         alarms_data = self.entry.options.get("alarms", {})
         alarms = {}
@@ -125,6 +128,7 @@ class IPhoneAlarmsSyncCoordinator(DataUpdateCoordinator[PhoneData]):
             mobile_app_device_id=mobile_app_device_id,
             alarms=alarms,
             synced_at=synced_at,
+            sync_disabled_alarms=sync_disabled_alarms,
         )
 
     async def _async_update_data(self) -> PhoneData:
@@ -136,6 +140,7 @@ class IPhoneAlarmsSyncCoordinator(DataUpdateCoordinator[PhoneData]):
         self,
         phone_name: str | None = None,
         mobile_app_device_id: str | None = None,
+        sync_disabled_alarms: bool | None = None,
     ) -> None:
         if self._phone is None:
             raise ValueError("Phone not initialized")
@@ -143,6 +148,8 @@ class IPhoneAlarmsSyncCoordinator(DataUpdateCoordinator[PhoneData]):
             self._phone.phone_name = phone_name
         if mobile_app_device_id is not None:
             self._phone.mobile_app_device_id = mobile_app_device_id
+        if sync_disabled_alarms is not None:
+            self._phone.sync_disabled_alarms = sync_disabled_alarms
         self._save_to_config()
 
     def get_phone(self) -> PhoneData | None:
@@ -175,8 +182,13 @@ class IPhoneAlarmsSyncCoordinator(DataUpdateCoordinator[PhoneData]):
         has_changes = False
         synced_at = dt_util.utcnow().isoformat()
 
+        if not self._phone.sync_disabled_alarms:
+            alarms = [a for a in alarms if a.get(CONF_ENABLED, False)]
+
+        synced_alarm_ids = set()
         for alarm_dict in alarms:
             alarm_id = alarm_dict[CONF_ALARM_ID]
+            synced_alarm_ids.add(alarm_id)
             if alarm_id not in self._phone.alarms:
                 self._phone.alarms[alarm_id] = AlarmData(
                     alarm_id=alarm_id,
@@ -204,6 +216,16 @@ class IPhoneAlarmsSyncCoordinator(DataUpdateCoordinator[PhoneData]):
                         CONF_ALLOWS_SNOOZE, alarm.allows_snooze
                     )
                     has_changes = True
+
+        if not self._phone.sync_disabled_alarms:
+            alarms_to_remove = [
+                alarm_id
+                for alarm_id in self._phone.alarms.keys()
+                if alarm_id not in synced_alarm_ids
+            ]
+            for alarm_id in alarms_to_remove:
+                del self._phone.alarms[alarm_id]
+                has_changes = True
 
         if has_changes:
             self._phone.synced_at = synced_at
