@@ -8,13 +8,16 @@ from homeassistant.components.sensor import (
     SensorEntity,
     SensorEntityDescription,
 )
-from homeassistant.core import HomeAssistant
+from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers.entity import DeviceInfo
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
+from homeassistant.helpers.event import async_track_point_in_time
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
+from homeassistant.util import dt as dt_util
 
 from .const import DOMAIN
 from .coordinator import IPhoneAlarmsSyncConfigEntry, IPhoneAlarmsSyncCoordinator
+from .utils import calculate_next_alarm_datetime, calculate_next_occurrence
 
 ALARM_SENSOR_TYPES: tuple[SensorEntityDescription, ...] = (
     SensorEntityDescription(
@@ -30,6 +33,16 @@ ALARM_SENSOR_TYPES: tuple[SensorEntityDescription, ...] = (
     SensorEntityDescription(
         key="last_event_stopped_at",
         name="Last Event Stopped At",
+        device_class=SensorDeviceClass.TIMESTAMP,
+    ),
+    SensorEntityDescription(
+        key="next_occurrence_datetime",
+        name="Next Occurrence DateTime",
+        device_class=SensorDeviceClass.TIMESTAMP,
+    ),
+    SensorEntityDescription(
+        key="last_occurrence_datetime",
+        name="Last Occurrence DateTime",
         device_class=SensorDeviceClass.TIMESTAMP,
     ),
 )
@@ -55,6 +68,16 @@ PHONE_SENSOR_TYPES: tuple[SensorEntityDescription, ...] = (
     SensorEntityDescription(
         key="next_alarm_label",
         name="Next Alarm Label",
+    ),
+    SensorEntityDescription(
+        key="next_alarm_datetime",
+        name="Next Alarm DateTime",
+        device_class=SensorDeviceClass.TIMESTAMP,
+    ),
+    SensorEntityDescription(
+        key="last_alarm_datetime",
+        name="Last Alarm DateTime",
+        device_class=SensorDeviceClass.TIMESTAMP,
     ),
 )
 
@@ -115,6 +138,7 @@ class IPhoneAlarmsSyncAlarmSensor(
         self._attr_unique_id = (
             f"{entry.entry_id}_{phone_id}_{alarm_id}_{description.key}"
         )
+        self._unsub_refresh: callback.CALLBACK_TYPE | None = None
         alarm = coordinator.get_alarm(alarm_id)
         if alarm is None:
             raise ValueError(f"Alarm {alarm_id} not found")
@@ -127,6 +151,57 @@ class IPhoneAlarmsSyncAlarmSensor(
             name=f"{phone.phone_name} {alarm.label}",
             via_device=(DOMAIN, phone_id),
         )
+
+    async def async_added_to_hass(self) -> None:
+        await super().async_added_to_hass()
+        if self._description.key == "next_occurrence_datetime":
+            self._setup_refresh_timer()
+
+    async def async_will_remove_from_hass(self) -> None:
+        if self._unsub_refresh:
+            self._unsub_refresh()
+            self._unsub_refresh = None
+        await super().async_will_remove_from_hass()
+
+    def _get_next_occurrence_datetime(self) -> datetime | None:
+        alarm = self.coordinator.get_alarm(self._alarm_id)
+        if not alarm:
+            return None
+        return calculate_next_occurrence(alarm)
+
+    def _setup_refresh_timer(self) -> None:
+        if self._unsub_refresh:
+            self._unsub_refresh()
+            self._unsub_refresh = None
+
+        next_dt = self._get_next_occurrence_datetime()
+        if next_dt is None:
+            return
+
+        now = dt_util.utcnow()
+        if next_dt <= now:
+            self._update_last_occurrence(next_dt)
+            self.async_write_ha_state()
+            self._setup_refresh_timer()
+            return
+
+        self._unsub_refresh = async_track_point_in_time(
+            self.hass,
+            self._refresh_callback,
+            next_dt,
+        )
+
+    @callback
+    def _refresh_callback(self, now: datetime) -> None:
+        self._update_last_occurrence(now)
+        self.async_write_ha_state()
+        self._setup_refresh_timer()
+
+    def _update_last_occurrence(self, alarm_time: datetime) -> None:
+        alarm = self.coordinator.get_alarm(self._alarm_id)
+        if alarm:
+            alarm.last_occurrence_datetime = alarm_time.isoformat()
+            self.coordinator._save_to_config()
 
     @property
     def native_value(self) -> str | None:
@@ -142,6 +217,15 @@ class IPhoneAlarmsSyncAlarmSensor(
 
         if self._description.key == "last_event_stopped_at":
             return cast(str | None, alarm.last_event_stopped_at)
+
+        if self._description.key == "next_occurrence_datetime":
+            next_dt = self._get_next_occurrence_datetime()
+            if next_dt:
+                self._setup_refresh_timer()
+            return next_dt.isoformat() if next_dt else None
+
+        if self._description.key == "last_occurrence_datetime":
+            return cast(str | None, alarm.last_occurrence_datetime)
 
         return None
 
@@ -161,6 +245,9 @@ class IPhoneAlarmsSyncPhoneSensor(
         self._phone_id = phone_id
         self._description = description
         self._attr_unique_id = f"{entry.entry_id}_{phone_id}_{description.key}"
+        self._unsub_refresh: callback.CALLBACK_TYPE | None = None
+        self._scheduled_alarm_datetime: datetime | None = None
+        self._scheduled_alarm_id: str | None = None
         phone = coordinator.get_phone()
         if phone is None:
             raise ValueError("Phone not found")
@@ -170,12 +257,67 @@ class IPhoneAlarmsSyncPhoneSensor(
             name=phone.phone_name,
         )
 
+    async def async_added_to_hass(self) -> None:
+        await super().async_added_to_hass()
+        if self._description.key == "next_alarm_datetime":
+            self._setup_refresh_timer()
+
+    async def async_will_remove_from_hass(self) -> None:
+        if self._unsub_refresh:
+            self._unsub_refresh()
+            self._unsub_refresh = None
+        await super().async_will_remove_from_hass()
+
+    def _get_next_alarm_datetime(self) -> tuple[datetime | None, str | None]:
+        phone = self.coordinator.get_phone()
+        if not phone:
+            return None, None
+        return calculate_next_alarm_datetime(phone)
+
+    def _setup_refresh_timer(self) -> None:
+        if self._unsub_refresh:
+            self._unsub_refresh()
+            self._unsub_refresh = None
+
+        next_dt, next_alarm_id = self._get_next_alarm_datetime()
+        if next_dt is None:
+            return
+
+        now = dt_util.utcnow()
+        if next_dt <= now:
+            phone = self.coordinator.get_phone()
+            if phone and next_alarm_id:
+                phone.last_alarm_datetime = next_dt.isoformat()
+                phone.last_alarm_id = next_alarm_id
+                self.coordinator._save_to_config()
+            self.async_write_ha_state()
+            self._setup_refresh_timer()
+            return
+
+        self._scheduled_alarm_datetime = next_dt
+        self._scheduled_alarm_id = next_alarm_id
+        self._unsub_refresh = async_track_point_in_time(
+            self.hass,
+            self._refresh_callback,
+            next_dt,
+        )
+
+    @callback
+    def _refresh_callback(self, now: datetime) -> None:
+        phone = self.coordinator.get_phone()
+        if phone and self._scheduled_alarm_id and self._scheduled_alarm_datetime:
+            phone.last_alarm_datetime = self._scheduled_alarm_datetime.isoformat()
+            phone.last_alarm_id = self._scheduled_alarm_id
+            self.coordinator._save_to_config()
+        self.async_write_ha_state()
+        self._setup_refresh_timer()
+
     def _get_next_alarm(self) -> tuple[time | None, str | None]:
         phone = self.coordinator.get_phone()
         if not phone:
             return None, None
 
-        now = datetime.now()
+        now = dt_util.utcnow()
         current_time = now.time()
         current_weekday = now.weekday()
 
@@ -251,5 +393,14 @@ class IPhoneAlarmsSyncPhoneSensor(
         if self._description.key == "next_alarm_label":
             _, label = self._get_next_alarm()
             return label
+
+        if self._description.key == "next_alarm_datetime":
+            next_dt, _ = self._get_next_alarm_datetime()
+            if next_dt:
+                self._setup_refresh_timer()
+            return next_dt.isoformat() if next_dt else None
+
+        if self._description.key == "last_alarm_datetime":
+            return cast(str | None, phone.last_alarm_datetime)
 
         return None

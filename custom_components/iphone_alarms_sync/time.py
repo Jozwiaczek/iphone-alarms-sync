@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from datetime import datetime, time
+from datetime import time
 
 from homeassistant.components.time import TimeEntity
 from homeassistant.core import HomeAssistant
@@ -10,6 +10,7 @@ from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
 from .const import DOMAIN
 from .coordinator import IPhoneAlarmsSyncConfigEntry, IPhoneAlarmsSyncCoordinator
+from .utils import calculate_next_alarm_datetime
 
 
 async def async_setup_entry(
@@ -60,6 +61,7 @@ class IPhoneAlarmsSyncAlarmTime(
         self._phone_id = phone_id
         self._alarm_id = alarm_id
         self._attr_unique_id = f"{entry.entry_id}_{phone_id}_{alarm_id}_time"
+        self._attr_assumed_state = False
         alarm = coordinator.get_alarm(alarm_id)
         if alarm is None:
             raise ValueError(f"Alarm {alarm_id} not found")
@@ -94,6 +96,7 @@ class IPhoneAlarmsSyncPhoneNextAlarmTime(
         self._entry = entry
         self._phone_id = phone_id
         self._attr_unique_id = f"{entry.entry_id}_{phone_id}_next_alarm_time"
+        self._attr_assumed_state = False
         phone = coordinator.get_phone()
         if phone is None:
             raise ValueError("Phone not found")
@@ -108,47 +111,11 @@ class IPhoneAlarmsSyncPhoneNextAlarmTime(
         if not phone:
             return None
 
-        now = datetime.now()
-        current_time = now.time()
-        current_weekday = now.weekday()
+        next_dt, _ = calculate_next_alarm_datetime(phone)
+        if next_dt is None:
+            return None
 
-        next_alarm_time: time | None = None
-
-        for alarm in phone.alarms.values():
-            if not alarm.enabled:
-                continue
-
-            alarm_time = time(hour=alarm.hour, minute=alarm.minute)
-
-            if alarm.repeats and alarm.repeat_days:
-                weekday_map = {
-                    "Monday": 0,
-                    "Tuesday": 1,
-                    "Wednesday": 2,
-                    "Thursday": 3,
-                    "Friday": 4,
-                    "Saturday": 5,
-                    "Sunday": 6,
-                }
-
-                for day_name in alarm.repeat_days:
-                    day_num = weekday_map.get(day_name)
-                    if day_num is None:
-                        continue
-
-                    days_ahead = (day_num - current_weekday) % 7
-                    if days_ahead == 0 and alarm_time > current_time:
-                        if next_alarm_time is None or alarm_time < next_alarm_time:
-                            next_alarm_time = alarm_time
-                    elif days_ahead > 0:
-                        if next_alarm_time is None:
-                            next_alarm_time = alarm_time
-            else:
-                if alarm_time > current_time:
-                    if next_alarm_time is None or alarm_time < next_alarm_time:
-                        next_alarm_time = alarm_time
-
-        return next_alarm_time
+        return next_dt.time()
 
     @property
     def native_value(self) -> time | None:

@@ -28,9 +28,11 @@ uv run mypy custom_components/iphone_alarms_sync/
 
 **Exception:** Only skip when explicitly asked or when working on non-Python files that don't require these checks.
 
-## Commit Message Generation
+## Commit Message Generation (MANDATORY FINAL STEP)
 
-**AFTER all quality checks pass and code is ready, ALWAYS generate a commit message using `/generate-commit-message` command.**
+**AFTER all quality checks pass and code is ready, ZAWSZE na końcu wprowadzania zmian generuj commit message używając komendy `/generate-commit-message`.**
+
+**To jest OSTATECZNY, OBOWIĄZKOWY krok po zakończeniu wszystkich zmian w kodzie. NIE pomijaj tego kroku.**
 
 The commit message must follow the Gitmoji standard:
 - Simple changes: `<emoji> <message>` (max 50 chars)

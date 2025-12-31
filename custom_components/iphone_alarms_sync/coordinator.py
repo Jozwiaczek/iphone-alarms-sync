@@ -20,9 +20,12 @@ from .const import (
     CONF_HOUR,
     CONF_ICON,
     CONF_LABEL,
+    CONF_LAST_ALARM_DATETIME,
+    CONF_LAST_ALARM_ID,
     CONF_LAST_EVENT_GOES_OFF_AT,
     CONF_LAST_EVENT_SNOOZED_AT,
     CONF_LAST_EVENT_STOPPED_AT,
+    CONF_LAST_OCCURRENCE_DATETIME,
     CONF_MINUTE,
     CONF_MOBILE_APP_DEVICE_ID,
     CONF_PHONE_ID,
@@ -50,6 +53,7 @@ class AlarmData:
     last_event_goes_off_at: str | None = None
     last_event_snoozed_at: str | None = None
     last_event_stopped_at: str | None = None
+    last_occurrence_datetime: str | None = None
     icon: str = "mdi:alarm"
 
 
@@ -70,6 +74,8 @@ class PhoneData:
     alarms: dict[str, AlarmData]
     synced_at: str | None = None
     sync_disabled_alarms: bool = True
+    last_alarm_datetime: str | None = None
+    last_alarm_id: str | None = None
 
 
 @dataclass
@@ -117,6 +123,7 @@ class IPhoneAlarmsSyncCoordinator(DataUpdateCoordinator[PhoneData]):
                 last_event_goes_off_at=alarm_dict.get(CONF_LAST_EVENT_GOES_OFF_AT),
                 last_event_snoozed_at=alarm_dict.get(CONF_LAST_EVENT_SNOOZED_AT),
                 last_event_stopped_at=alarm_dict.get(CONF_LAST_EVENT_STOPPED_AT),
+                last_occurrence_datetime=alarm_dict.get(CONF_LAST_OCCURRENCE_DATETIME),
                 icon=alarm_dict.get(CONF_ICON, "mdi:alarm"),
             )
 
@@ -129,6 +136,8 @@ class IPhoneAlarmsSyncCoordinator(DataUpdateCoordinator[PhoneData]):
             alarms=alarms,
             synced_at=synced_at,
             sync_disabled_alarms=sync_disabled_alarms,
+            last_alarm_datetime=self.entry.options.get(CONF_LAST_ALARM_DATETIME),
+            last_alarm_id=self.entry.options.get(CONF_LAST_ALARM_ID),
         )
 
     async def _async_update_data(self) -> PhoneData:
@@ -322,6 +331,7 @@ class IPhoneAlarmsSyncCoordinator(DataUpdateCoordinator[PhoneData]):
                 CONF_LAST_EVENT_GOES_OFF_AT: alarm.last_event_goes_off_at,
                 CONF_LAST_EVENT_SNOOZED_AT: alarm.last_event_snoozed_at,
                 CONF_LAST_EVENT_STOPPED_AT: alarm.last_event_stopped_at,
+                CONF_LAST_OCCURRENCE_DATETIME: alarm.last_occurrence_datetime,
                 CONF_ICON: alarm.icon,
             }
 
@@ -336,8 +346,21 @@ class IPhoneAlarmsSyncCoordinator(DataUpdateCoordinator[PhoneData]):
         if self._phone.synced_at != current_options.get(CONF_SYNCED_AT):
             has_changes = True
 
+        if self._phone.last_alarm_datetime != current_options.get(
+            CONF_LAST_ALARM_DATETIME
+        ):
+            has_changes = True
+
+        if self._phone.last_alarm_id != current_options.get(CONF_LAST_ALARM_ID):
+            has_changes = True
+
         if has_changes:
-            new_options = {"alarms": alarms_dict, CONF_SYNCED_AT: self._phone.synced_at}
+            new_options = {
+                "alarms": alarms_dict,
+                CONF_SYNCED_AT: self._phone.synced_at,
+                CONF_LAST_ALARM_DATETIME: self._phone.last_alarm_datetime,
+                CONF_LAST_ALARM_ID: self._phone.last_alarm_id,
+            }
             self.hass.config_entries.async_update_entry(
                 self.entry,
                 options=new_options,
