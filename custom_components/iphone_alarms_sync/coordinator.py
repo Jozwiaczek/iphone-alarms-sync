@@ -44,6 +44,7 @@ from .const import (
     EVENT_SNOOZED,
     EVENT_STOPPED,
 )
+from .utils import extract_alarm_uuid
 
 
 @dataclass
@@ -122,9 +123,12 @@ class IPhoneAlarmsSyncCoordinator(DataUpdateCoordinator[PhoneData]):
 
         alarms_data = self.entry.options.get("alarms", {})
         alarms = {}
-        for alarm_id, alarm_dict in alarms_data.items():
+        for original_alarm_id, alarm_dict in alarms_data.items():
+            alarm_id = extract_alarm_uuid(original_alarm_id)
+            stored_alarm_id = alarm_dict.get(CONF_ALARM_ID, original_alarm_id)
+            parsed_stored_id = extract_alarm_uuid(stored_alarm_id)
             alarms[alarm_id] = AlarmData(
-                alarm_id=alarm_dict.get(CONF_ALARM_ID, alarm_id),
+                alarm_id=parsed_stored_id,
                 label=alarm_dict.get(CONF_LABEL, ""),
                 enabled=alarm_dict.get(CONF_ENABLED, False),
                 hour=alarm_dict.get(CONF_HOUR, 0),
