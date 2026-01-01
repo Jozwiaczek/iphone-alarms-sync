@@ -24,7 +24,7 @@
       },
       "confirm": {
         "title": "Confirm Device Setup",
-        "description": "**Alarm Synchronization Device Name:** {phone_name}\n**Phone ID:** `{phone_id}`\n\n⚠️ **Important:** Save this Phone ID! You'll need it when setting up the iOS shortcut.\n\nThe Phone ID is generated from the device name and is used to identify your device when syncing alarms.\n\nAlarms will be automatically synchronized when you run the shortcut for the first time.\n\n⚠️ **Warning:** If you disable the option to sync disabled alarms, alarm entities will disappear from Home Assistant when you disable them on your iPhone. Entities will reappear when you enable the alarm again.",
+        "description": "**Alarm Synchronization Device Name:** {phone_name}\n**Phone ID:** `{phone_id}`\n\n⚠️ **Important:** Save this Phone ID! You'll need it when setting up the iOS shortcuts.\n\nThe Phone ID is generated from the device name and is used to identify your device when syncing alarms.\n\nAlarms will be automatically synchronized when you run the sync shortcut for the first time.\n\n💡 **Tip:** You can also create event shortcuts to track when alarms go off, are snoozed, or stopped. After setup, go to the device configuration to find detailed instructions and all alarm IDs.\n\n⚠️ **Warning:** If you disable the option to sync disabled alarms, alarm entities will disappear from Home Assistant when you disable them on your iPhone. Entities will reappear when you enable the alarm again.",
         "data": {
           "sync_disabled_alarms": "Synchronizuj wyłączone alarmy"
         }
@@ -61,7 +61,8 @@
           "edit_device": "Edit Device",
           "overview": "Overview",
           "events": "Events History",
-          "shortcuts": "Shortcuts Setup"
+          "sync_shortcut": "Sync Shortcut Setup",
+          "event_shortcuts": "Event Shortcuts Setup"
         }
       },
       "edit_device": {
@@ -81,9 +82,13 @@
         "title": "Events History",
         "description": "Events:\n{event_list}"
       },
-      "shortcuts": {
-        "title": "Shortcuts Setup",
+      "sync_shortcut": {
+        "title": "Sync Shortcut Setup",
         "description": "**Alarm Synchronization Device:** {phone_name}\n**Phone ID:** `{phone_id}`\n\n⚠️ **Important:** Copy this Phone ID - you'll need it when setting up the shortcut on your iPhone/iPad.\n\nThe service `iphone_alarms_sync.sync_alarms` is available. Create a shortcut that calls this service with:\n- `phone_id`: `{phone_id}`\n- `alarms`: Array of alarm objects\n\nAlarms will be automatically synchronized when you run the shortcut for the first time."
+      },
+      "event_shortcuts": {
+        "title": "Event Shortcuts Setup",
+        "description": "**Phone ID:** `{phone_id}`\n\n**Special Alarm IDs:**\n- **Wake-Up Alarm:** `wakeup`\n- **Any Alarm:** `any`\n\n**Synchronized Alarms:**\n{alarms_list}\n\n**Instructions:**\n1. Create a new Shortcut on your iPhone/iPad\n2. Add \"Call Home Assistant Service\" action\n3. Select service: `iphone_alarms_sync.report_alarm_event`\n4. Set `phone_id`: `{phone_id}`\n5. Set `alarm_id`: (use one of the IDs above - specific alarm UUID, `wakeup`, or `any`)\n6. Set `event`: `goes_off` / `snoozed` / `stopped`\n7. Create a Personal Automation to trigger this shortcut when an alarm event occurs\n\n💡 **Tip:** You can create separate shortcuts for different alarm events (goes off, snoozed, stopped) and different alarms. The sensor entities for these events will appear automatically after the first event is reported."
       }
     },
     "error": {

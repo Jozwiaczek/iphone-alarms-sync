@@ -27,7 +27,7 @@ report_alarm_event:
         text:
     alarm_id:
       name: Alarm ID
-      description: The alarm identifier
+      description: The alarm identifier. Use a specific alarm UUID, "wakeup" for Apple's native Wake-Up alarm, or "any" for any alarm.
       required: true
       selector:
         text:
@@ -41,4 +41,5 @@ report_alarm_event:
             - goes_off
             - snoozed
             - stopped
+
 

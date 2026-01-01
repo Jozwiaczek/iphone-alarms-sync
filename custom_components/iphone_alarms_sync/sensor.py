@@ -30,6 +30,9 @@ ALARM_SENSOR_TYPES: tuple[SensorEntityDescription, ...] = (
         name="Last Occurrence",
         device_class=SensorDeviceClass.TIMESTAMP,
     ),
+)
+
+ALARM_EVENT_SENSOR_TYPES: tuple[SensorEntityDescription, ...] = (
     SensorEntityDescription(
         key="last_event_goes_off_at",
         name="Last Goes Off At",
@@ -43,6 +46,39 @@ ALARM_SENSOR_TYPES: tuple[SensorEntityDescription, ...] = (
     SensorEntityDescription(
         key="last_event_stopped_at",
         name="Last Stopped At",
+        device_class=SensorDeviceClass.TIMESTAMP,
+    ),
+)
+
+PHONE_EVENT_SENSOR_TYPES: tuple[SensorEntityDescription, ...] = (
+    SensorEntityDescription(
+        key="wakeup_last_event_goes_off_at",
+        name="Wake-Up Last Goes Off At",
+        device_class=SensorDeviceClass.TIMESTAMP,
+    ),
+    SensorEntityDescription(
+        key="wakeup_last_event_snoozed_at",
+        name="Wake-Up Last Snoozed At",
+        device_class=SensorDeviceClass.TIMESTAMP,
+    ),
+    SensorEntityDescription(
+        key="wakeup_last_event_stopped_at",
+        name="Wake-Up Last Stopped At",
+        device_class=SensorDeviceClass.TIMESTAMP,
+    ),
+    SensorEntityDescription(
+        key="any_last_event_goes_off_at",
+        name="Any Last Goes Off At",
+        device_class=SensorDeviceClass.TIMESTAMP,
+    ),
+    SensorEntityDescription(
+        key="any_last_event_snoozed_at",
+        name="Any Last Snoozed At",
+        device_class=SensorDeviceClass.TIMESTAMP,
+    ),
+    SensorEntityDescription(
+        key="any_last_event_stopped_at",
+        name="Any Last Stopped At",
         device_class=SensorDeviceClass.TIMESTAMP,
     ),
 )
@@ -99,6 +135,35 @@ def _create_alarm_sensor_entities(
                 description,
             )
         )
+    alarm = coordinator.get_alarm(alarm_id)
+    if alarm:
+        for description in ALARM_EVENT_SENSOR_TYPES:
+            has_value = False
+            if (
+                description.key == "last_event_goes_off_at"
+                and alarm.last_event_goes_off_at
+            ):
+                has_value = True
+            elif (
+                description.key == "last_event_snoozed_at"
+                and alarm.last_event_snoozed_at
+            ):
+                has_value = True
+            elif (
+                description.key == "last_event_stopped_at"
+                and alarm.last_event_stopped_at
+            ):
+                has_value = True
+            if has_value:
+                entities.append(
+                    IPhoneAlarmsSyncAlarmSensor(
+                        coordinator,
+                        entry,
+                        phone_id,
+                        alarm_id,
+                        description,
+                    )
+                )
     return entities
 
 
@@ -117,6 +182,59 @@ def _create_phone_sensor_entities(
                 description,
             )
         )
+    return entities
+
+
+def _create_phone_event_sensor_entities(
+    coordinator: IPhoneAlarmsSyncCoordinator,
+    entry: IPhoneAlarmsSyncConfigEntry,
+    phone_id: str,
+) -> list[IPhoneAlarmsSyncPhoneSensor]:
+    entities: list[IPhoneAlarmsSyncPhoneSensor] = []
+    phone = coordinator.get_phone()
+    if not phone:
+        return entities
+    for description in PHONE_EVENT_SENSOR_TYPES:
+        has_value = False
+        if (
+            description.key == "wakeup_last_event_goes_off_at"
+            and phone.wakeup_last_event_goes_off_at
+        ):
+            has_value = True
+        elif (
+            description.key == "wakeup_last_event_snoozed_at"
+            and phone.wakeup_last_event_snoozed_at
+        ):
+            has_value = True
+        elif (
+            description.key == "wakeup_last_event_stopped_at"
+            and phone.wakeup_last_event_stopped_at
+        ):
+            has_value = True
+        elif (
+            description.key == "any_last_event_goes_off_at"
+            and phone.any_last_event_goes_off_at
+        ):
+            has_value = True
+        elif (
+            description.key == "any_last_event_snoozed_at"
+            and phone.any_last_event_snoozed_at
+        ):
+            has_value = True
+        elif (
+            description.key == "any_last_event_stopped_at"
+            and phone.any_last_event_stopped_at
+        ):
+            has_value = True
+        if has_value:
+            entities.append(
+                IPhoneAlarmsSyncPhoneSensor(
+                    coordinator,
+                    entry,
+                    phone_id,
+                    description,
+                )
+            )
     return entities
 
 
@@ -142,6 +260,9 @@ async def async_setup_entry(
         )
 
     entities.extend(_create_phone_sensor_entities(coordinator, entry, phone.phone_id))
+    entities.extend(
+        _create_phone_event_sensor_entities(coordinator, entry, phone.phone_id)
+    )
 
     async_add_entities(entities)
 
@@ -429,5 +550,23 @@ class IPhoneAlarmsSyncPhoneSensor(
 
         if self._description.key == "last_alarm_datetime":
             return cast(str | None, phone.last_alarm_datetime)
+
+        if self._description.key == "wakeup_last_event_goes_off_at":
+            return cast(str | None, phone.wakeup_last_event_goes_off_at)
+
+        if self._description.key == "wakeup_last_event_snoozed_at":
+            return cast(str | None, phone.wakeup_last_event_snoozed_at)
+
+        if self._description.key == "wakeup_last_event_stopped_at":
+            return cast(str | None, phone.wakeup_last_event_stopped_at)
+
+        if self._description.key == "any_last_event_goes_off_at":
+            return cast(str | None, phone.any_last_event_goes_off_at)
+
+        if self._description.key == "any_last_event_snoozed_at":
+            return cast(str | None, phone.any_last_event_snoozed_at)
+
+        if self._description.key == "any_last_event_stopped_at":
+            return cast(str | None, phone.any_last_event_stopped_at)
 
         return None

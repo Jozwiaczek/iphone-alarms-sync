@@ -171,6 +171,124 @@ This directory should contain template `.shortcut` files for import into iOS Sho
      }
      ```
 
+### 5. Manual Event Report (Menu Selection)
+
+Shortcut z menu wyboru, który pozwala ręcznie wyemitować jeden z trzech eventów (`goes_off`, `snoozed`, `stopped`).
+
+**Trigger:**
+- Manual (run from Shortcuts app or widget)
+- Lub Personal Automation → "App" → "Shortcuts" → "Run Shortcut"
+
+**Actions (step by step):**
+
+1. **Choose from Menu**
+   - Action: "Choose from Menu"
+   - Options:
+     - **"Goes Off"** → przejście do akcji dla `goes_off`
+     - **"Snoozed"** → przejście do akcji dla `snoozed`
+     - **"Stopped"** → przejście do akcji dla `stopped`
+
+2. **Dla każdej opcji menu:**
+
+   **2.1. Find Alarms** (opcjonalnie, jeśli chcesz wybrać alarm z listy)
+   - Action: "Find Alarms"
+   - Condition: "Is Enabled" (opcjonalnie)
+   
+   **2.2. Choose from List** (opcjonalnie)
+   - Action: "Choose from List"
+   - Input: "Alarms" (z "Find Alarms")
+   - Wyświetli listę alarmów do wyboru
+   - Zapisz wybrany alarm do zmiennej (np. "Selected Alarm")
+   
+   **Alternatywnie:** Możesz użyć **Ask for Input** zamiast wyboru z listy:
+   - Action: "Ask for Input"
+   - Input Type: "Text"
+   - Prompt: "Enter Alarm ID"
+   - Zapisz do zmiennej (np. "Alarm ID")
+
+3. **Get Alarm ID**
+   - Jeśli używasz "Choose from List":
+     - Action: "Get Value for Key"
+     - Dictionary: "Selected Alarm"
+     - Key: `URL` (lub `UUID` w zależności od wersji iOS)
+     - Zapisz do zmiennej "Alarm ID"
+   - Jeśli używasz "Ask for Input":
+     - Użyj zmiennej "Alarm ID" bezpośrednio
+
+4. **Set Variable: Event Type**
+   - Action: "Set Variable"
+   - Variable Name: "Event Type"
+   - Value: tekst odpowiedni dla wybranej opcji menu:
+     - Dla "Goes Off": `goes_off`
+     - Dla "Snoozed": `snoozed`
+     - Dla "Stopped": `stopped`
+
+5. **Call Service**
+   - Action: "Call Service" (from Home Assistant Companion App)
+   - Server: Select your Home Assistant server
+   - Service: `iphone_alarms_sync.report_alarm_event`
+   - Data (Dictionary):
+     - `phone_id`: enter your phone_id (e.g., "kuba_iphone_15_pro")
+     - `alarm_id`: select the "Alarm ID" variable
+     - `event`: select the "Event Type" variable
+
+**Uproszczona wersja (bez wyboru alarmu):**
+
+Jeśli chcesz użyć stałego `alarm_id` lub przekazać go jako parametr:
+
+1. **Choose from Menu**
+   - Options: "Goes Off", "Snoozed", "Stopped"
+
+2. **Set Variable: Event Type**
+   - Ustaw odpowiednią wartość (`goes_off`, `snoozed`, `stopped`)
+
+3. **Ask for Input** (opcjonalnie)
+   - Input Type: "Text"
+   - Prompt: "Enter Alarm ID"
+   - Zapisz do zmiennej "Alarm ID"
+   
+   **Lub** użyj stałej wartości:
+   - Action: "Text"
+   - Enter your alarm_id (e.g., "x-apple-clock://alarm/UUID")
+   - Zapisz do zmiennej "Alarm ID"
+
+4. **Call Service**
+   - Service: `iphone_alarms_sync.report_alarm_event`
+   - Data:
+     - `phone_id`: "YOUR_PHONE_ID"
+     - `alarm_id`: "Alarm ID" variable
+     - `event`: "Event Type" variable
+
+**Przykład struktury shortcut:**
+
+```
+1. Choose from Menu
+   ├─ Goes Off
+   │  ├─ Set Variable: Event Type = "goes_off"
+   │  └─ [Continue to Call Service]
+   ├─ Snoozed
+   │  ├─ Set Variable: Event Type = "snoozed"
+   │  └─ [Continue to Call Service]
+   └─ Stopped
+      ├─ Set Variable: Event Type = "stopped"
+      └─ [Continue to Call Service]
+
+2. Ask for Input: Alarm ID (Text)
+   └─ Save to variable "Alarm ID"
+
+3. Call Service
+   ├─ Service: iphone_alarms_sync.report_alarm_event
+   ├─ phone_id: "YOUR_PHONE_ID"
+   ├─ alarm_id: [Alarm ID variable]
+   └─ event: [Event Type variable]
+```
+
+**Uwagi:**
+- Możesz użyć tego shortcut jako widget na ekranie głównym
+- Możesz dodać go do automatyzacji Personal Automation
+- `phone_id` możesz również ustawić jako zmienną na początku shortcut lub użyć "Ask for Input"
+- Jeśli używasz "Find Alarms", upewnij się, że wybierasz pole `URL` jako `alarm_id` (zawiera pełny identyfikator alarmu)
+
 ## Creating Shortcuts
 
 Shortcuts must be created in the iOS Shortcuts app and exported as `.shortcut` files.

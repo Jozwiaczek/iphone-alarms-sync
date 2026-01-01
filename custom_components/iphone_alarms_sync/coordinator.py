@@ -14,8 +14,13 @@ else:
     ConfigEntry = Any
 
 from .const import (
+    ALARM_ID_ANY,
+    ALARM_ID_WAKEUP,
     CONF_ALARM_ID,
     CONF_ALLOWS_SNOOZE,
+    CONF_ANY_LAST_EVENT_GOES_OFF_AT,
+    CONF_ANY_LAST_EVENT_SNOOZED_AT,
+    CONF_ANY_LAST_EVENT_STOPPED_AT,
     CONF_ENABLED,
     CONF_HOUR,
     CONF_ICON,
@@ -34,6 +39,9 @@ from .const import (
     CONF_REPEATS,
     CONF_SYNC_DISABLED_ALARMS,
     CONF_SYNCED_AT,
+    CONF_WAKEUP_LAST_EVENT_GOES_OFF_AT,
+    CONF_WAKEUP_LAST_EVENT_SNOOZED_AT,
+    CONF_WAKEUP_LAST_EVENT_STOPPED_AT,
     EVENT_GOES_OFF,
     EVENT_SNOOZED,
     EVENT_STOPPED,
@@ -76,6 +84,12 @@ class PhoneData:
     sync_disabled_alarms: bool = True
     last_alarm_datetime: str | None = None
     last_alarm_id: str | None = None
+    wakeup_last_event_goes_off_at: str | None = None
+    wakeup_last_event_snoozed_at: str | None = None
+    wakeup_last_event_stopped_at: str | None = None
+    any_last_event_goes_off_at: str | None = None
+    any_last_event_snoozed_at: str | None = None
+    any_last_event_stopped_at: str | None = None
 
 
 @dataclass
@@ -138,6 +152,24 @@ class IPhoneAlarmsSyncCoordinator(DataUpdateCoordinator[PhoneData]):
             sync_disabled_alarms=sync_disabled_alarms,
             last_alarm_datetime=self.entry.options.get(CONF_LAST_ALARM_DATETIME),
             last_alarm_id=self.entry.options.get(CONF_LAST_ALARM_ID),
+            wakeup_last_event_goes_off_at=self.entry.options.get(
+                CONF_WAKEUP_LAST_EVENT_GOES_OFF_AT
+            ),
+            wakeup_last_event_snoozed_at=self.entry.options.get(
+                CONF_WAKEUP_LAST_EVENT_SNOOZED_AT
+            ),
+            wakeup_last_event_stopped_at=self.entry.options.get(
+                CONF_WAKEUP_LAST_EVENT_STOPPED_AT
+            ),
+            any_last_event_goes_off_at=self.entry.options.get(
+                CONF_ANY_LAST_EVENT_GOES_OFF_AT
+            ),
+            any_last_event_snoozed_at=self.entry.options.get(
+                CONF_ANY_LAST_EVENT_SNOOZED_AT
+            ),
+            any_last_event_stopped_at=self.entry.options.get(
+                CONF_ANY_LAST_EVENT_STOPPED_AT
+            ),
         )
 
     async def _async_update_data(self) -> PhoneData:
@@ -247,8 +279,6 @@ class IPhoneAlarmsSyncCoordinator(DataUpdateCoordinator[PhoneData]):
     def report_alarm_event(self, alarm_id: str, event: str) -> AlarmEvent:
         if self._phone is None:
             raise ValueError("Phone not initialized")
-        if alarm_id not in self._phone.alarms:
-            raise ValueError(f"Alarm {alarm_id} not found")
         event_obj = AlarmEvent(
             event_id=str(uuid.uuid4()),
             alarm_id=alarm_id,
@@ -257,13 +287,30 @@ class IPhoneAlarmsSyncCoordinator(DataUpdateCoordinator[PhoneData]):
             occurred_at=dt_util.utcnow().isoformat(),
         )
         self._events.append(event_obj)
-        alarm = self._phone.alarms[alarm_id]
-        if event == EVENT_GOES_OFF:
-            alarm.last_event_goes_off_at = event_obj.occurred_at
-        elif event == EVENT_SNOOZED:
-            alarm.last_event_snoozed_at = event_obj.occurred_at
-        elif event == EVENT_STOPPED:
-            alarm.last_event_stopped_at = event_obj.occurred_at
+        if alarm_id == ALARM_ID_WAKEUP:
+            if event == EVENT_GOES_OFF:
+                self._phone.wakeup_last_event_goes_off_at = event_obj.occurred_at
+            elif event == EVENT_SNOOZED:
+                self._phone.wakeup_last_event_snoozed_at = event_obj.occurred_at
+            elif event == EVENT_STOPPED:
+                self._phone.wakeup_last_event_stopped_at = event_obj.occurred_at
+        elif alarm_id == ALARM_ID_ANY:
+            if event == EVENT_GOES_OFF:
+                self._phone.any_last_event_goes_off_at = event_obj.occurred_at
+            elif event == EVENT_SNOOZED:
+                self._phone.any_last_event_snoozed_at = event_obj.occurred_at
+            elif event == EVENT_STOPPED:
+                self._phone.any_last_event_stopped_at = event_obj.occurred_at
+        else:
+            if alarm_id not in self._phone.alarms:
+                raise ValueError(f"Alarm {alarm_id} not found")
+            alarm = self._phone.alarms[alarm_id]
+            if event == EVENT_GOES_OFF:
+                alarm.last_event_goes_off_at = event_obj.occurred_at
+            elif event == EVENT_SNOOZED:
+                alarm.last_event_snoozed_at = event_obj.occurred_at
+            elif event == EVENT_STOPPED:
+                alarm.last_event_stopped_at = event_obj.occurred_at
         self._save_to_config()
         return event_obj
 
@@ -358,12 +405,56 @@ class IPhoneAlarmsSyncCoordinator(DataUpdateCoordinator[PhoneData]):
         if self._phone.last_alarm_id != current_options.get(CONF_LAST_ALARM_ID):
             has_changes = True
 
+        if self._phone.wakeup_last_event_goes_off_at != current_options.get(
+            CONF_WAKEUP_LAST_EVENT_GOES_OFF_AT
+        ):
+            has_changes = True
+
+        if self._phone.wakeup_last_event_snoozed_at != current_options.get(
+            CONF_WAKEUP_LAST_EVENT_SNOOZED_AT
+        ):
+            has_changes = True
+
+        if self._phone.wakeup_last_event_stopped_at != current_options.get(
+            CONF_WAKEUP_LAST_EVENT_STOPPED_AT
+        ):
+            has_changes = True
+
+        if self._phone.any_last_event_goes_off_at != current_options.get(
+            CONF_ANY_LAST_EVENT_GOES_OFF_AT
+        ):
+            has_changes = True
+
+        if self._phone.any_last_event_snoozed_at != current_options.get(
+            CONF_ANY_LAST_EVENT_SNOOZED_AT
+        ):
+            has_changes = True
+
+        if self._phone.any_last_event_stopped_at != current_options.get(
+            CONF_ANY_LAST_EVENT_STOPPED_AT
+        ):
+            has_changes = True
+
         if has_changes:
             new_options = {
                 "alarms": alarms_dict,
                 CONF_SYNCED_AT: self._phone.synced_at,
                 CONF_LAST_ALARM_DATETIME: self._phone.last_alarm_datetime,
                 CONF_LAST_ALARM_ID: self._phone.last_alarm_id,
+                CONF_WAKEUP_LAST_EVENT_GOES_OFF_AT: (
+                    self._phone.wakeup_last_event_goes_off_at
+                ),
+                CONF_WAKEUP_LAST_EVENT_SNOOZED_AT: (
+                    self._phone.wakeup_last_event_snoozed_at
+                ),
+                CONF_WAKEUP_LAST_EVENT_STOPPED_AT: (
+                    self._phone.wakeup_last_event_stopped_at
+                ),
+                CONF_ANY_LAST_EVENT_GOES_OFF_AT: (
+                    self._phone.any_last_event_goes_off_at
+                ),
+                CONF_ANY_LAST_EVENT_SNOOZED_AT: (self._phone.any_last_event_snoozed_at),
+                CONF_ANY_LAST_EVENT_STOPPED_AT: (self._phone.any_last_event_stopped_at),
             }
             self.hass.config_entries.async_update_entry(
                 self.entry,

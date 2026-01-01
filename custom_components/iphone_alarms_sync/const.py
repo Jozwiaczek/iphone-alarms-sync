@@ -31,6 +31,15 @@ CONF_DISABLED_ALARMS = "disabled_alarms"
 CONF_NEXT_ALARM_TIME = "next_alarm_time"
 CONF_NEXT_ALARM_LABEL = "next_alarm_label"
 CONF_SYNC_DISABLED_ALARMS = "sync_disabled_alarms"
+CONF_WAKEUP_LAST_EVENT_GOES_OFF_AT = "wakeup_last_event_goes_off_at"
+CONF_WAKEUP_LAST_EVENT_SNOOZED_AT = "wakeup_last_event_snoozed_at"
+CONF_WAKEUP_LAST_EVENT_STOPPED_AT = "wakeup_last_event_stopped_at"
+CONF_ANY_LAST_EVENT_GOES_OFF_AT = "any_last_event_goes_off_at"
+CONF_ANY_LAST_EVENT_SNOOZED_AT = "any_last_event_snoozed_at"
+CONF_ANY_LAST_EVENT_STOPPED_AT = "any_last_event_stopped_at"
+
+ALARM_ID_WAKEUP = "wakeup"
+ALARM_ID_ANY = "any"
 
 EVENT_ALARM_EVENT = "iphone_alarms_sync_alarm_event"
 

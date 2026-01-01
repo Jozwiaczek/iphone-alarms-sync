@@ -294,7 +294,8 @@ class OptionsFlowHandler(config_entries.OptionsFlowWithConfigEntry):
                 "edit_device",
                 "overview",
                 "events",
-                "shortcuts",
+                "sync_shortcut",
+                "event_shortcuts",
             ],
         )
 
@@ -487,7 +488,7 @@ class OptionsFlowHandler(config_entries.OptionsFlowWithConfigEntry):
 
         return await self.async_step_init()
 
-    async def async_step_shortcuts(
+    async def async_step_sync_shortcut(
         self, user_input: dict[str, Any] | None = None
     ) -> FlowResult:
         coordinator = self._get_coordinator()
@@ -498,9 +499,36 @@ class OptionsFlowHandler(config_entries.OptionsFlowWithConfigEntry):
             return self.async_abort(reason="phone_not_found")
 
         return self.async_show_form(
-            step_id="shortcuts",
+            step_id="sync_shortcut",
             description_placeholders={
                 "phone_name": phone.phone_name,
                 "phone_id": phone.phone_id,
+            },
+        )
+
+    async def async_step_event_shortcuts(
+        self, user_input: dict[str, Any] | None = None
+    ) -> FlowResult:
+        coordinator = self._get_coordinator()
+        if coordinator is None:
+            return self.async_abort(reason="integration_not_ready")
+        phone = coordinator.get_phone()
+        if not phone:
+            return self.async_abort(reason="phone_not_found")
+
+        all_alarms = coordinator.get_all_alarms()
+        alarms_list = []
+        for alarm_id, alarm in all_alarms.items():
+            alarms_list.append(f"- {alarm.label}: `{alarm_id}`")
+
+        alarms_text = (
+            "\n".join(alarms_list) if alarms_list else "No alarms synchronized yet."
+        )
+
+        return self.async_show_form(
+            step_id="event_shortcuts",
+            description_placeholders={
+                "phone_id": phone.phone_id,
+                "alarms_list": alarms_text,
             },
         )
