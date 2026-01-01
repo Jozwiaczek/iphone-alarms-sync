@@ -21,63 +21,63 @@ from .utils import calculate_next_alarm_datetime, calculate_next_occurrence
 
 ALARM_SENSOR_TYPES: tuple[SensorEntityDescription, ...] = (
     SensorEntityDescription(
-        key="last_event_goes_off_at",
-        name="Last Event Goes Off At",
-        device_class=SensorDeviceClass.TIMESTAMP,
-    ),
-    SensorEntityDescription(
-        key="last_event_snoozed_at",
-        name="Last Event Snoozed At",
-        device_class=SensorDeviceClass.TIMESTAMP,
-    ),
-    SensorEntityDescription(
-        key="last_event_stopped_at",
-        name="Last Event Stopped At",
-        device_class=SensorDeviceClass.TIMESTAMP,
-    ),
-    SensorEntityDescription(
         key="next_occurrence_datetime",
-        name="Next Occurrence DateTime",
+        name="Next Occurrence",
         device_class=SensorDeviceClass.TIMESTAMP,
     ),
     SensorEntityDescription(
         key="last_occurrence_datetime",
-        name="Last Occurrence DateTime",
+        name="Last Occurrence",
+        device_class=SensorDeviceClass.TIMESTAMP,
+    ),
+    SensorEntityDescription(
+        key="last_event_goes_off_at",
+        name="Last Goes Off At",
+        device_class=SensorDeviceClass.TIMESTAMP,
+    ),
+    SensorEntityDescription(
+        key="last_event_snoozed_at",
+        name="Last Snoozed At",
+        device_class=SensorDeviceClass.TIMESTAMP,
+    ),
+    SensorEntityDescription(
+        key="last_event_stopped_at",
+        name="Last Stopped At",
         device_class=SensorDeviceClass.TIMESTAMP,
     ),
 )
 
 PHONE_SENSOR_TYPES: tuple[SensorEntityDescription, ...] = (
     SensorEntityDescription(
-        key="last_sync",
-        name="Last Sync",
+        key="next_alarm_datetime",
+        name="Next Alarm",
         device_class=SensorDeviceClass.TIMESTAMP,
-    ),
-    SensorEntityDescription(
-        key="total_alarms",
-        name="Total Alarms",
-    ),
-    SensorEntityDescription(
-        key="enabled_alarms",
-        name="Enabled Alarms",
-    ),
-    SensorEntityDescription(
-        key="disabled_alarms",
-        name="Disabled Alarms",
     ),
     SensorEntityDescription(
         key="next_alarm_label",
         name="Next Alarm Label",
     ),
     SensorEntityDescription(
-        key="next_alarm_datetime",
-        name="Next Alarm DateTime",
+        key="last_alarm_datetime",
+        name="Last Alarm",
         device_class=SensorDeviceClass.TIMESTAMP,
     ),
     SensorEntityDescription(
-        key="last_alarm_datetime",
-        name="Last Alarm DateTime",
+        key="last_sync",
+        name="Last Sync",
         device_class=SensorDeviceClass.TIMESTAMP,
+    ),
+    SensorEntityDescription(
+        key="enabled_alarms",
+        name="Enabled Alarms",
+    ),
+    SensorEntityDescription(
+        key="total_alarms",
+        name="Total Alarms",
+    ),
+    SensorEntityDescription(
+        key="disabled_alarms",
+        name="Disabled Alarms",
     ),
 )
 

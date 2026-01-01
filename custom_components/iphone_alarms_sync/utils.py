@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from datetime import datetime, time, timedelta
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, cast
 
 from homeassistant.util import dt as dt_util
 
@@ -47,7 +47,8 @@ def calculate_next_occurrence(
             if days_ahead == 0 and alarm_time <= current_time:
                 days_ahead = 7
             candidate_date = current_date + timedelta(days=days_ahead)
-            candidate_datetime = datetime.combine(candidate_date, alarm_time)
+            combined = datetime.combine(candidate_date, alarm_time)
+            candidate_datetime = dt_util.as_utc(combined)
 
             if days_ahead == 0:
                 if next_datetime is None or candidate_datetime < next_datetime:
@@ -69,13 +70,15 @@ def calculate_next_occurrence(
                 days_ahead = (day_num - current_weekday) % 7
                 if days_ahead > 0:
                     candidate_date = current_date + timedelta(days=days_ahead)
-                    candidate_datetime = datetime.combine(candidate_date, alarm_time)
+                    combined = datetime.combine(candidate_date, alarm_time)
+                    candidate_datetime = dt_util.as_utc(combined)
                     if next_datetime is None or candidate_datetime < next_datetime:
                         next_datetime = candidate_datetime
 
         return next_datetime
     else:
-        alarm_datetime = datetime.combine(current_date, alarm_time)
+        combined = datetime.combine(current_date, alarm_time)
+        alarm_datetime = cast(datetime, dt_util.as_utc(combined))
         if alarm_time > current_time:
             return alarm_datetime
         return None
@@ -109,7 +112,8 @@ def calculate_next_alarm_datetime(
 
                 days_ahead = (day_num - current_weekday) % 7
                 candidate_date = current_date + timedelta(days=days_ahead)
-                candidate_datetime = datetime.combine(candidate_date, alarm_time)
+                combined = datetime.combine(candidate_date, alarm_time)
+                candidate_datetime = dt_util.as_utc(combined)
 
                 if days_ahead == 0 and alarm_time > current_time:
                     if (
@@ -131,7 +135,7 @@ def calculate_next_alarm_datetime(
                         next_alarm_id = alarm.alarm_id
                         min_days_ahead = days_ahead
         else:
-            alarm_datetime = datetime.combine(current_date, alarm_time)
+            alarm_datetime = dt_util.as_utc(datetime.combine(current_date, alarm_time))
             if alarm_time > current_time:
                 if next_alarm_datetime is None or alarm_datetime < next_alarm_datetime:
                     next_alarm_datetime = alarm_datetime
