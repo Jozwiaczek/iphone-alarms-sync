@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import re
 from datetime import datetime, time, timedelta
 from typing import TYPE_CHECKING, cast
 
@@ -17,6 +18,11 @@ WEEKDAY_MAP = {
     "Saturday": 5,
     "Sunday": 6,
 }
+
+UUID_PATTERN = re.compile(
+    r"([0-9A-F]{8}-[0-9A-F]{4}-[0-9A-F]{4}-[0-9A-F]{4}-[0-9A-F]{12})",
+    re.IGNORECASE,
+)
 
 
 def calculate_next_occurrence(
@@ -143,3 +149,10 @@ def calculate_next_alarm_datetime(
                     min_days_ahead = 0
 
     return next_alarm_datetime, next_alarm_id
+
+
+def extract_alarm_uuid(alarm_id: str) -> str:
+    match = UUID_PATTERN.search(alarm_id)
+    if match:
+        return match.group(1).upper()
+    return alarm_id

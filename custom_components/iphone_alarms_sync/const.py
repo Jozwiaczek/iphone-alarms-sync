@@ -38,9 +38,6 @@ CONF_ANY_LAST_EVENT_GOES_OFF_AT = "any_last_event_goes_off_at"
 CONF_ANY_LAST_EVENT_SNOOZED_AT = "any_last_event_snoozed_at"
 CONF_ANY_LAST_EVENT_STOPPED_AT = "any_last_event_stopped_at"
 
-ALARM_ID_WAKEUP = "wakeup"
-ALARM_ID_ANY = "any"
-
 EVENT_ALARM_EVENT = "iphone_alarms_sync_alarm_event"
 
 EVENT_GOES_OFF = "goes_off"

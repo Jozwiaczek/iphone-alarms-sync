@@ -17,7 +17,7 @@ sync_alarms:
 
 report_alarm_event:
   name: Report alarm event
-  description: Report an alarm event (goes_off, snoozed, stopped)
+  description: Report an alarm event for a specific alarm (goes_off, snoozed, stopped)
   fields:
     phone_id:
       name: Phone ID
@@ -27,7 +27,49 @@ report_alarm_event:
         text:
     alarm_id:
       name: Alarm ID
-      description: The alarm identifier. Use a specific alarm UUID, "wakeup" for Apple's native Wake-Up alarm, or "any" for any alarm.
+      description: The alarm identifier (UUID). The UUID will be automatically extracted from formats like "x-apple-clock:alarm?id=UUID" or "x-apple-clock://alarm/UUID".
+      required: true
+      selector:
+        text:
+    event:
+      name: Event
+      description: Event type (goes_off, snoozed, stopped)
+      required: true
+      selector:
+        select:
+          options:
+            - goes_off
+            - snoozed
+            - stopped
+
+report_wakeup_event:
+  name: Report Wake-Up alarm event
+  description: Report an event for Apple's native Wake-Up alarm (goes_off, snoozed, stopped)
+  fields:
+    phone_id:
+      name: Phone ID
+      description: The phone identifier
+      required: true
+      selector:
+        text:
+    event:
+      name: Event
+      description: Event type (goes_off, snoozed, stopped)
+      required: true
+      selector:
+        select:
+          options:
+            - goes_off
+            - snoozed
+            - stopped
+
+report_any_event:
+  name: Report any alarm event
+  description: Report an event for any alarm (goes_off, snoozed, stopped)
+  fields:
+    phone_id:
+      name: Phone ID
+      description: The phone identifier
       required: true
       selector:
         text:

@@ -9,8 +9,6 @@ from homeassistant.helpers.typing import ConfigType
 
 from .binary_sensor import _create_binary_sensor_entities
 from .const import (
-    ALARM_ID_ANY,
-    ALARM_ID_WAKEUP,
     CONF_ALARM_ID,
     CONF_ALARMS,
     CONF_EVENT,
@@ -31,6 +29,7 @@ from .sensor import (
     _create_alarm_sensor_entities,
     _create_phone_event_sensor_entities,
 )
+from .utils import extract_alarm_uuid
 
 CONFIG_SCHEMA = cv.config_entry_only_config_schema(DOMAIN)
 
@@ -102,6 +101,10 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
                     via_device=via_device,
                 )
 
+        for alarm_dict in alarms:
+            original_alarm_id = alarm_dict[CONF_ALARM_ID]
+            alarm_dict[CONF_ALARM_ID] = extract_alarm_uuid(original_alarm_id)
+
         new_alarm_ids, has_changes = coordinator.sync_alarms(alarms)
 
         for alarm_dict in alarms:
@@ -134,7 +137,7 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
 
     async def handle_report_alarm_event(call: ServiceCall) -> None:
         phone_id = call.data[CONF_PHONE_ID]
-        alarm_id = call.data[CONF_ALARM_ID]
+        alarm_id = extract_alarm_uuid(call.data[CONF_ALARM_ID])
         event = call.data[CONF_EVENT]
 
         entries = hass.config_entries.async_entries(DOMAIN)
@@ -154,33 +157,15 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
         if not phone:
             return
 
-        is_special_alarm = alarm_id in (ALARM_ID_WAKEUP, ALARM_ID_ANY)
+        alarm = coordinator.get_alarm(alarm_id)
         was_first_event = False
-
-        if is_special_alarm:
-            if alarm_id == ALARM_ID_WAKEUP:
-                if event == "goes_off" and not phone.wakeup_last_event_goes_off_at:
-                    was_first_event = True
-                elif event == "snoozed" and not phone.wakeup_last_event_snoozed_at:
-                    was_first_event = True
-                elif event == "stopped" and not phone.wakeup_last_event_stopped_at:
-                    was_first_event = True
-            elif alarm_id == ALARM_ID_ANY:
-                if event == "goes_off" and not phone.any_last_event_goes_off_at:
-                    was_first_event = True
-                elif event == "snoozed" and not phone.any_last_event_snoozed_at:
-                    was_first_event = True
-                elif event == "stopped" and not phone.any_last_event_stopped_at:
-                    was_first_event = True
-        else:
-            alarm = coordinator.get_alarm(alarm_id)
-            if alarm:
-                if event == "goes_off" and not alarm.last_event_goes_off_at:
-                    was_first_event = True
-                elif event == "snoozed" and not alarm.last_event_snoozed_at:
-                    was_first_event = True
-                elif event == "stopped" and not alarm.last_event_stopped_at:
-                    was_first_event = True
+        if alarm:
+            if event == "goes_off" and not alarm.last_event_goes_off_at:
+                was_first_event = True
+            elif event == "snoozed" and not alarm.last_event_snoozed_at:
+                was_first_event = True
+            elif event == "stopped" and not alarm.last_event_stopped_at:
+                was_first_event = True
 
         event_obj = coordinator.report_alarm_event(alarm_id, event)
         phone = coordinator.get_phone()
@@ -189,28 +174,16 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
 
         if was_first_event:
             entry_data = hass.data.get(DOMAIN, {}).get(entry.entry_id, {})
-            if is_special_alarm:
-                if sensor_add := entry_data.get("sensor_add_entities"):
-                    sensor_entities = _create_phone_event_sensor_entities(
-                        coordinator, entry, phone_id
-                    )
-                    target_key = f"{alarm_id}_last_event_{event}_at"
-                    new_entities = [
-                        e for e in sensor_entities if e._description.key == target_key
-                    ]
-                    if new_entities:
-                        sensor_add(new_entities)
-            else:
-                if sensor_add := entry_data.get("sensor_add_entities"):
-                    sensor_entities = _create_alarm_sensor_entities(
-                        coordinator, entry, phone_id, alarm_id
-                    )
-                    target_key = f"last_event_{event}_at"
-                    new_entities = [
-                        e for e in sensor_entities if e._description.key == target_key
-                    ]
-                    if new_entities:
-                        sensor_add(new_entities)
+            if sensor_add := entry_data.get("sensor_add_entities"):
+                sensor_entities = _create_alarm_sensor_entities(
+                    coordinator, entry, phone_id, alarm_id
+                )
+                target_key = f"last_event_{event}_at"
+                new_entities = [
+                    e for e in sensor_entities if e._description.key == target_key
+                ]
+                if new_entities:
+                    sensor_add(new_entities)
 
         hass.bus.async_fire(
             EVENT_ALARM_EVENT,
@@ -224,12 +197,145 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
         )
 
         device_registry = dr.async_get(hass)
-        if is_special_alarm:
-            device = device_registry.async_get_device(identifiers={(DOMAIN, phone_id)})
-        else:
-            device = device_registry.async_get_device(
-                identifiers={(DOMAIN, phone_id, alarm_id)}
+        device = device_registry.async_get_device(
+            identifiers={(DOMAIN, phone_id, alarm_id)}
+        )
+        if device:
+            hass.bus.async_fire(
+                f"{DOMAIN}_{event}",
+                {
+                    "device_id": device.id,
+                },
             )
+
+    async def handle_report_wakeup_event(call: ServiceCall) -> None:
+        phone_id = call.data[CONF_PHONE_ID]
+        event = call.data[CONF_EVENT]
+
+        entries = hass.config_entries.async_entries(DOMAIN)
+        entry = None
+        for e in entries:
+            if e.unique_id == phone_id:
+                entry = e
+                break
+
+        if not entry:
+            return
+
+        if not hasattr(entry, "runtime_data") or not entry.runtime_data:
+            return
+        coordinator = entry.runtime_data.coordinator
+        phone = coordinator.get_phone()
+        if not phone:
+            return
+
+        was_first_event = False
+        if event == "goes_off" and not phone.wakeup_last_event_goes_off_at:
+            was_first_event = True
+        elif event == "snoozed" and not phone.wakeup_last_event_snoozed_at:
+            was_first_event = True
+        elif event == "stopped" and not phone.wakeup_last_event_stopped_at:
+            was_first_event = True
+
+        event_obj = coordinator.report_wakeup_event(event)
+        phone = coordinator.get_phone()
+        if phone:
+            coordinator.async_set_updated_data(phone)
+
+        if was_first_event:
+            entry_data = hass.data.get(DOMAIN, {}).get(entry.entry_id, {})
+            if sensor_add := entry_data.get("sensor_add_entities"):
+                sensor_entities = _create_phone_event_sensor_entities(
+                    coordinator, entry, phone_id
+                )
+                target_key = f"wakeup_last_event_{event}_at"
+                new_entities = [
+                    e for e in sensor_entities if e._description.key == target_key
+                ]
+                if new_entities:
+                    sensor_add(new_entities)
+
+        hass.bus.async_fire(
+            EVENT_ALARM_EVENT,
+            {
+                "phone_id": phone_id,
+                "alarm_id": "wakeup",
+                "event": event,
+                "event_id": event_obj.event_id,
+                "occurred_at": event_obj.occurred_at,
+            },
+        )
+
+        device_registry = dr.async_get(hass)
+        device = device_registry.async_get_device(identifiers={(DOMAIN, phone_id)})
+        if device:
+            hass.bus.async_fire(
+                f"{DOMAIN}_{event}",
+                {
+                    "device_id": device.id,
+                },
+            )
+
+    async def handle_report_any_event(call: ServiceCall) -> None:
+        phone_id = call.data[CONF_PHONE_ID]
+        event = call.data[CONF_EVENT]
+
+        entries = hass.config_entries.async_entries(DOMAIN)
+        entry = None
+        for e in entries:
+            if e.unique_id == phone_id:
+                entry = e
+                break
+
+        if not entry:
+            return
+
+        if not hasattr(entry, "runtime_data") or not entry.runtime_data:
+            return
+        coordinator = entry.runtime_data.coordinator
+        phone = coordinator.get_phone()
+        if not phone:
+            return
+
+        was_first_event = False
+        if event == "goes_off" and not phone.any_last_event_goes_off_at:
+            was_first_event = True
+        elif event == "snoozed" and not phone.any_last_event_snoozed_at:
+            was_first_event = True
+        elif event == "stopped" and not phone.any_last_event_stopped_at:
+            was_first_event = True
+
+        event_obj = coordinator.report_any_event(event)
+        phone = coordinator.get_phone()
+        if phone:
+            coordinator.async_set_updated_data(phone)
+
+        if was_first_event:
+            entry_data = hass.data.get(DOMAIN, {}).get(entry.entry_id, {})
+            if sensor_add := entry_data.get("sensor_add_entities"):
+                sensor_entities = _create_phone_event_sensor_entities(
+                    coordinator, entry, phone_id
+                )
+                target_key = f"any_last_event_{event}_at"
+                new_entities = [
+                    e for e in sensor_entities if e._description.key == target_key
+                ]
+                if new_entities:
+                    sensor_add(new_entities)
+
+        hass.bus.async_fire(
+            EVENT_ALARM_EVENT,
+            {
+                "phone_id": phone_id,
+                "alarm_id": "any",
+                "event": event,
+                "event_id": event_obj.event_id,
+                "occurred_at": event_obj.occurred_at,
+            },
+        )
+
+        device_registry = dr.async_get(hass)
+        device = device_registry.async_get_device(identifiers={(DOMAIN, phone_id)})
         if device:
             hass.bus.async_fire(
                 f"{DOMAIN}_{event}",
@@ -242,6 +348,10 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
     hass.services.async_register(
         DOMAIN, "report_alarm_event", handle_report_alarm_event
     )
+    hass.services.async_register(
+        DOMAIN, "report_wakeup_event", handle_report_wakeup_event
+    )
+    hass.services.async_register(DOMAIN, "report_any_event", handle_report_any_event)
 
     return True
 

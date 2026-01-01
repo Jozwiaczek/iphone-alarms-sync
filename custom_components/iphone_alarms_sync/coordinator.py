@@ -14,8 +14,6 @@ else:
     ConfigEntry = Any
 
 from .const import (
-    ALARM_ID_ANY,
-    ALARM_ID_WAKEUP,
     CONF_ALARM_ID,
     CONF_ALLOWS_SNOOZE,
     CONF_ANY_LAST_EVENT_GOES_OFF_AT,
@@ -279,6 +277,8 @@ class IPhoneAlarmsSyncCoordinator(DataUpdateCoordinator[PhoneData]):
     def report_alarm_event(self, alarm_id: str, event: str) -> AlarmEvent:
         if self._phone is None:
             raise ValueError("Phone not initialized")
+        if alarm_id not in self._phone.alarms:
+            raise ValueError(f"Alarm {alarm_id} not found")
         event_obj = AlarmEvent(
             event_id=str(uuid.uuid4()),
             alarm_id=alarm_id,
@@ -287,30 +287,53 @@ class IPhoneAlarmsSyncCoordinator(DataUpdateCoordinator[PhoneData]):
             occurred_at=dt_util.utcnow().isoformat(),
         )
         self._events.append(event_obj)
-        if alarm_id == ALARM_ID_WAKEUP:
-            if event == EVENT_GOES_OFF:
-                self._phone.wakeup_last_event_goes_off_at = event_obj.occurred_at
-            elif event == EVENT_SNOOZED:
-                self._phone.wakeup_last_event_snoozed_at = event_obj.occurred_at
-            elif event == EVENT_STOPPED:
-                self._phone.wakeup_last_event_stopped_at = event_obj.occurred_at
-        elif alarm_id == ALARM_ID_ANY:
-            if event == EVENT_GOES_OFF:
-                self._phone.any_last_event_goes_off_at = event_obj.occurred_at
-            elif event == EVENT_SNOOZED:
-                self._phone.any_last_event_snoozed_at = event_obj.occurred_at
-            elif event == EVENT_STOPPED:
-                self._phone.any_last_event_stopped_at = event_obj.occurred_at
-        else:
-            if alarm_id not in self._phone.alarms:
-                raise ValueError(f"Alarm {alarm_id} not found")
-            alarm = self._phone.alarms[alarm_id]
-            if event == EVENT_GOES_OFF:
-                alarm.last_event_goes_off_at = event_obj.occurred_at
-            elif event == EVENT_SNOOZED:
-                alarm.last_event_snoozed_at = event_obj.occurred_at
-            elif event == EVENT_STOPPED:
-                alarm.last_event_stopped_at = event_obj.occurred_at
+        alarm = self._phone.alarms[alarm_id]
+        if event == EVENT_GOES_OFF:
+            alarm.last_event_goes_off_at = event_obj.occurred_at
+        elif event == EVENT_SNOOZED:
+            alarm.last_event_snoozed_at = event_obj.occurred_at
+        elif event == EVENT_STOPPED:
+            alarm.last_event_stopped_at = event_obj.occurred_at
+        self._save_to_config()
+        return event_obj
+
+    def report_wakeup_event(self, event: str) -> AlarmEvent:
+        if self._phone is None:
+            raise ValueError("Phone not initialized")
+        event_obj = AlarmEvent(
+            event_id=str(uuid.uuid4()),
+            alarm_id="wakeup",
+            phone_id=self._phone.phone_id,
+            event=event,
+            occurred_at=dt_util.utcnow().isoformat(),
+        )
+        self._events.append(event_obj)
+        if event == EVENT_GOES_OFF:
+            self._phone.wakeup_last_event_goes_off_at = event_obj.occurred_at
+        elif event == EVENT_SNOOZED:
+            self._phone.wakeup_last_event_snoozed_at = event_obj.occurred_at
+        elif event == EVENT_STOPPED:
+            self._phone.wakeup_last_event_stopped_at = event_obj.occurred_at
+        self._save_to_config()
+        return event_obj
+
+    def report_any_event(self, event: str) -> AlarmEvent:
+        if self._phone is None:
+            raise ValueError("Phone not initialized")
+        event_obj = AlarmEvent(
+            event_id=str(uuid.uuid4()),
+            alarm_id="any",
+            phone_id=self._phone.phone_id,
+            event=event,
+            occurred_at=dt_util.utcnow().isoformat(),
+        )
+        self._events.append(event_obj)
+        if event == EVENT_GOES_OFF:
+            self._phone.any_last_event_goes_off_at = event_obj.occurred_at
+        elif event == EVENT_SNOOZED:
+            self._phone.any_last_event_snoozed_at = event_obj.occurred_at
+        elif event == EVENT_STOPPED:
+            self._phone.any_last_event_stopped_at = event_obj.occurred_at
         self._save_to_config()
         return event_obj
 
