@@ -7,6 +7,7 @@ from homeassistant.helpers import config_validation as cv
 from homeassistant.helpers import device_registry as dr
 from homeassistant.helpers.typing import ConfigType
 
+from .binary_sensor import _create_binary_sensor_entities
 from .const import (
     CONF_ALARM_ID,
     CONF_ALARMS,
@@ -23,6 +24,10 @@ from .coordinator import (
     IPhoneAlarmsSyncConfigEntry,
     IPhoneAlarmsSyncCoordinator,
     IPhoneAlarmsSyncData,
+)
+from .sensor import _create_alarm_sensor_entities
+from .time import (
+    _create_alarm_time_entity,
 )
 
 CONFIG_SCHEMA = cv.config_entry_only_config_schema(DOMAIN)
@@ -95,8 +100,7 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
                     via_device=via_device,
                 )
 
-        coordinator.sync_alarms(alarms)
-        await coordinator.async_request_refresh()
+        new_alarm_ids = coordinator.sync_alarms(alarms)
 
         for alarm_dict in alarms:
             alarm_id = alarm_dict[CONF_ALARM_ID]
@@ -107,7 +111,26 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
                 via_device=(DOMAIN, phone_id),
             )
 
-        await hass.config_entries.async_reload(entry.entry_id)
+        if new_alarm_ids:
+            entry_data = hass.data.get(DOMAIN, {}).get(entry.entry_id, {})
+            for alarm_id in new_alarm_ids:
+                if sensor_add := entry_data.get("sensor_add_entities"):
+                    sensor_entities = _create_alarm_sensor_entities(
+                        coordinator, entry, phone_id, alarm_id
+                    )
+                    sensor_add(sensor_entities)
+                if binary_sensor_add := entry_data.get("binary_sensor_add_entities"):
+                    binary_sensor_entities = _create_binary_sensor_entities(
+                        coordinator, entry, phone_id, alarm_id
+                    )
+                    binary_sensor_add(binary_sensor_entities)
+                if time_add := entry_data.get("time_add_entities"):
+                    time_entity = _create_alarm_time_entity(
+                        coordinator, entry, phone_id, alarm_id
+                    )
+                    time_add([time_entity])
+
+        await coordinator.async_request_refresh()
 
     async def handle_report_alarm_event(call: ServiceCall) -> None:
         phone_id = call.data[CONF_PHONE_ID]

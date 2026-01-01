@@ -13,6 +13,32 @@ from .coordinator import IPhoneAlarmsSyncConfigEntry, IPhoneAlarmsSyncCoordinato
 from .utils import calculate_next_alarm_datetime
 
 
+def _create_alarm_time_entity(
+    coordinator: IPhoneAlarmsSyncCoordinator,
+    entry: IPhoneAlarmsSyncConfigEntry,
+    phone_id: str,
+    alarm_id: str,
+) -> IPhoneAlarmsSyncAlarmTime:
+    return IPhoneAlarmsSyncAlarmTime(
+        coordinator,
+        entry,
+        phone_id,
+        alarm_id,
+    )
+
+
+def _create_phone_next_alarm_time_entity(
+    coordinator: IPhoneAlarmsSyncCoordinator,
+    entry: IPhoneAlarmsSyncConfigEntry,
+    phone_id: str,
+) -> IPhoneAlarmsSyncPhoneNextAlarmTime:
+    return IPhoneAlarmsSyncPhoneNextAlarmTime(
+        coordinator,
+        entry,
+        phone_id,
+    )
+
+
 async def async_setup_entry(
     hass: HomeAssistant,
     entry: IPhoneAlarmsSyncConfigEntry,
@@ -25,22 +51,17 @@ async def async_setup_entry(
     if not phone:
         return
 
+    hass.data.setdefault(DOMAIN, {})
+    hass.data[DOMAIN].setdefault(entry.entry_id, {})
+    hass.data[DOMAIN][entry.entry_id]["time_add_entities"] = async_add_entities
+
     for alarm_id, alarm in phone.alarms.items():
         entities.append(
-            IPhoneAlarmsSyncAlarmTime(
-                coordinator,
-                entry,
-                phone.phone_id,
-                alarm_id,
-            )
+            _create_alarm_time_entity(coordinator, entry, phone.phone_id, alarm_id)
         )
 
     entities.append(
-        IPhoneAlarmsSyncPhoneNextAlarmTime(
-            coordinator,
-            entry,
-            phone.phone_id,
-        )
+        _create_phone_next_alarm_time_entity(coordinator, entry, phone.phone_id)
     )
 
     async_add_entities(entities)

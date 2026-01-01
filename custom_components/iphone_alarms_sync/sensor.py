@@ -82,6 +82,44 @@ PHONE_SENSOR_TYPES: tuple[SensorEntityDescription, ...] = (
 )
 
 
+def _create_alarm_sensor_entities(
+    coordinator: IPhoneAlarmsSyncCoordinator,
+    entry: IPhoneAlarmsSyncConfigEntry,
+    phone_id: str,
+    alarm_id: str,
+) -> list[IPhoneAlarmsSyncAlarmSensor]:
+    entities = []
+    for description in ALARM_SENSOR_TYPES:
+        entities.append(
+            IPhoneAlarmsSyncAlarmSensor(
+                coordinator,
+                entry,
+                phone_id,
+                alarm_id,
+                description,
+            )
+        )
+    return entities
+
+
+def _create_phone_sensor_entities(
+    coordinator: IPhoneAlarmsSyncCoordinator,
+    entry: IPhoneAlarmsSyncConfigEntry,
+    phone_id: str,
+) -> list[IPhoneAlarmsSyncPhoneSensor]:
+    entities = []
+    for description in PHONE_SENSOR_TYPES:
+        entities.append(
+            IPhoneAlarmsSyncPhoneSensor(
+                coordinator,
+                entry,
+                phone_id,
+                description,
+            )
+        )
+    return entities
+
+
 async def async_setup_entry(
     hass: HomeAssistant,
     entry: IPhoneAlarmsSyncConfigEntry,
@@ -94,27 +132,16 @@ async def async_setup_entry(
     if not phone:
         return
 
-    for alarm_id, alarm in phone.alarms.items():
-        for description in ALARM_SENSOR_TYPES:
-            entities.append(
-                IPhoneAlarmsSyncAlarmSensor(
-                    coordinator,
-                    entry,
-                    phone.phone_id,
-                    alarm_id,
-                    description,
-                )
-            )
+    hass.data.setdefault(DOMAIN, {})
+    hass.data[DOMAIN].setdefault(entry.entry_id, {})
+    hass.data[DOMAIN][entry.entry_id]["sensor_add_entities"] = async_add_entities
 
-    for description in PHONE_SENSOR_TYPES:
-        entities.append(
-            IPhoneAlarmsSyncPhoneSensor(
-                coordinator,
-                entry,
-                phone.phone_id,
-                description,
-            )
+    for alarm_id, alarm in phone.alarms.items():
+        entities.extend(
+            _create_alarm_sensor_entities(coordinator, entry, phone.phone_id, alarm_id)
         )
+
+    entities.extend(_create_phone_sensor_entities(coordinator, entry, phone.phone_id))
 
     async_add_entities(entities)
 

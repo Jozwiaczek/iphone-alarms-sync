@@ -184,12 +184,13 @@ class IPhoneAlarmsSyncCoordinator(DataUpdateCoordinator[PhoneData]):
             or existing.allows_snooze != new_dict.get(CONF_ALLOWS_SNOOZE)
         )
 
-    def sync_alarms(self, alarms: list[dict[str, Any]]) -> None:
+    def sync_alarms(self, alarms: list[dict[str, Any]]) -> list[str]:
         if self._phone is None:
             raise ValueError("Phone not initialized")
 
         has_changes = False
         synced_at = dt_util.utcnow().isoformat()
+        new_alarm_ids: list[str] = []
 
         if not self._phone.sync_disabled_alarms:
             alarms = [a for a in alarms if a.get(CONF_ENABLED, False)]
@@ -209,6 +210,7 @@ class IPhoneAlarmsSyncCoordinator(DataUpdateCoordinator[PhoneData]):
                     repeat_days=alarm_dict.get(CONF_REPEAT_DAYS, []),
                     allows_snooze=alarm_dict.get(CONF_ALLOWS_SNOOZE, False),
                 )
+                new_alarm_ids.append(alarm_id)
                 has_changes = True
             else:
                 alarm = self._phone.alarms[alarm_id]
@@ -239,6 +241,8 @@ class IPhoneAlarmsSyncCoordinator(DataUpdateCoordinator[PhoneData]):
         if has_changes:
             self._phone.synced_at = synced_at
             self._save_to_config()
+
+        return new_alarm_ids
 
     def report_alarm_event(self, alarm_id: str, event: str) -> AlarmEvent:
         if self._phone is None:

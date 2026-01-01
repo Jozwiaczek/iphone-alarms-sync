@@ -56,6 +56,26 @@ BINARY_SENSOR_TYPES: tuple[BinarySensorEntityDescription, ...] = (
 )
 
 
+def _create_binary_sensor_entities(
+    coordinator: IPhoneAlarmsSyncCoordinator,
+    entry: IPhoneAlarmsSyncConfigEntry,
+    phone_id: str,
+    alarm_id: str,
+) -> list[IPhoneAlarmsSyncBinarySensor]:
+    entities = []
+    for description in BINARY_SENSOR_TYPES:
+        entities.append(
+            IPhoneAlarmsSyncBinarySensor(
+                coordinator,
+                entry,
+                phone_id,
+                alarm_id,
+                description,
+            )
+        )
+    return entities
+
+
 async def async_setup_entry(
     hass: HomeAssistant,
     entry: IPhoneAlarmsSyncConfigEntry,
@@ -68,17 +88,14 @@ async def async_setup_entry(
     if not phone:
         return
 
+    hass.data.setdefault(DOMAIN, {})
+    hass.data[DOMAIN].setdefault(entry.entry_id, {})
+    hass.data[DOMAIN][entry.entry_id]["binary_sensor_add_entities"] = async_add_entities
+
     for alarm_id, alarm in phone.alarms.items():
-        for description in BINARY_SENSOR_TYPES:
-            entities.append(
-                IPhoneAlarmsSyncBinarySensor(
-                    coordinator,
-                    entry,
-                    phone.phone_id,
-                    alarm_id,
-                    description,
-                )
-            )
+        entities.extend(
+            _create_binary_sensor_entities(coordinator, entry, phone.phone_id, alarm_id)
+        )
 
     async_add_entities(entities)
 
