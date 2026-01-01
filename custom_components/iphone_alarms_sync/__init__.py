@@ -97,7 +97,7 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
                     via_device=via_device,
                 )
 
-        new_alarm_ids = coordinator.sync_alarms(alarms)
+        new_alarm_ids, has_changes = coordinator.sync_alarms(alarms)
 
         for alarm_dict in alarms:
             alarm_id = alarm_dict[CONF_ALARM_ID]
@@ -122,7 +122,10 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
                     )
                     binary_sensor_add(binary_sensor_entities)
 
-        await coordinator.async_request_refresh()
+        if has_changes:
+            phone = coordinator.get_phone()
+            if phone:
+                coordinator.async_set_updated_data(phone)
 
     async def handle_report_alarm_event(call: ServiceCall) -> None:
         phone_id = call.data[CONF_PHONE_ID]
@@ -143,7 +146,9 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
             return
         coordinator = entry.runtime_data.coordinator
         event_obj = coordinator.report_alarm_event(alarm_id, event)
-        await coordinator.async_request_refresh()
+        phone = coordinator.get_phone()
+        if phone:
+            coordinator.async_set_updated_data(phone)
 
         hass.bus.async_fire(
             EVENT_ALARM_EVENT,

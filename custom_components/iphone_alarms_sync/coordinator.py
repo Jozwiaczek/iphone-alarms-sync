@@ -184,7 +184,7 @@ class IPhoneAlarmsSyncCoordinator(DataUpdateCoordinator[PhoneData]):
             or existing.allows_snooze != new_dict.get(CONF_ALLOWS_SNOOZE)
         )
 
-    def sync_alarms(self, alarms: list[dict[str, Any]]) -> list[str]:
+    def sync_alarms(self, alarms: list[dict[str, Any]]) -> tuple[list[str], bool]:
         if self._phone is None:
             raise ValueError("Phone not initialized")
 
@@ -242,7 +242,7 @@ class IPhoneAlarmsSyncCoordinator(DataUpdateCoordinator[PhoneData]):
             self._phone.synced_at = synced_at
             self._save_to_config()
 
-        return new_alarm_ids
+        return new_alarm_ids, has_changes
 
     def report_alarm_event(self, alarm_id: str, event: str) -> AlarmEvent:
         if self._phone is None:
