@@ -26,9 +26,6 @@ from .coordinator import (
     IPhoneAlarmsSyncData,
 )
 from .sensor import _create_alarm_sensor_entities
-from .time import (
-    _create_alarm_time_entity,
-)
 
 CONFIG_SCHEMA = cv.config_entry_only_config_schema(DOMAIN)
 
@@ -124,11 +121,6 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
                         coordinator, entry, phone_id, alarm_id
                     )
                     binary_sensor_add(binary_sensor_entities)
-                if time_add := entry_data.get("time_add_entities"):
-                    time_entity = _create_alarm_time_entity(
-                        coordinator, entry, phone_id, alarm_id
-                    )
-                    time_add([time_entity])
 
         await coordinator.async_request_refresh()
 

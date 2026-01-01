@@ -40,4 +40,4 @@ EVENT_STOPPED = "stopped"
 
 DEFAULT_ICON = "mdi:alarm"
 
-PLATFORMS = ["binary_sensor", "sensor", "time"]
+PLATFORMS = ["binary_sensor", "sensor"]

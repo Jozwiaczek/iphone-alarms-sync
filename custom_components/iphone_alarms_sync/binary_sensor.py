@@ -131,6 +131,17 @@ class IPhoneAlarmsSyncBinarySensor(
             name=f"{phone.phone_name} {alarm.label}",
             via_device=(DOMAIN, phone_id),
         )
+        if description.key in (
+            "repeats",
+            "repeats_monday",
+            "repeats_tuesday",
+            "repeats_wednesday",
+            "repeats_thursday",
+            "repeats_friday",
+            "repeats_saturday",
+            "repeats_sunday",
+        ):
+            self._attr_entity_registry_enabled_default = False
 
     @property
     def is_on(self) -> bool | None:
