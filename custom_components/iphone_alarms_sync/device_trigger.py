@@ -8,12 +8,23 @@ from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers import device_registry as dr
 from homeassistant.helpers.typing import ConfigType, VolSchemaType
 
-from .const import DOMAIN, EVENT_GOES_OFF, EVENT_SNOOZED, EVENT_STOPPED
+from .const import (
+    DOMAIN,
+    EVENT_BEDTIME_STARTS,
+    EVENT_GOES_OFF,
+    EVENT_SNOOZED,
+    EVENT_STOPPED,
+    EVENT_WAKING_UP,
+    EVENT_WIND_DOWN_STARTS,
+)
 
 TRIGGER_TYPES = {
     EVENT_GOES_OFF,
     EVENT_SNOOZED,
     EVENT_STOPPED,
+    EVENT_BEDTIME_STARTS,
+    EVENT_WAKING_UP,
+    EVENT_WIND_DOWN_STARTS,
 }
 
 TRIGGER_SCHEMA = DEVICE_TRIGGER_BASE_SCHEMA.extend(

@@ -37,12 +37,18 @@ CONF_WAKEUP_LAST_EVENT_STOPPED_AT = "wakeup_last_event_stopped_at"
 CONF_ANY_LAST_EVENT_GOES_OFF_AT = "any_last_event_goes_off_at"
 CONF_ANY_LAST_EVENT_SNOOZED_AT = "any_last_event_snoozed_at"
 CONF_ANY_LAST_EVENT_STOPPED_AT = "any_last_event_stopped_at"
+CONF_BEDTIME_LAST_EVENT_AT = "bedtime_last_event_at"
+CONF_WAKING_UP_LAST_EVENT_AT = "waking_up_last_event_at"
+CONF_WIND_DOWN_LAST_EVENT_AT = "wind_down_last_event_at"
 
 EVENT_ALARM_EVENT = "iphone_alarms_sync_alarm_event"
 
 EVENT_GOES_OFF = "goes_off"
 EVENT_SNOOZED = "snoozed"
 EVENT_STOPPED = "stopped"
+EVENT_BEDTIME_STARTS = "bedtime_starts"
+EVENT_WAKING_UP = "waking_up"
+EVENT_WIND_DOWN_STARTS = "wind_down_starts"
 
 DEFAULT_ICON = "mdi:alarm"
 

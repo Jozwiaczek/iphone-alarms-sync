@@ -84,4 +84,37 @@ report_any_event:
             - snoozed
             - stopped
 
+report_bedtime_event:
+  name: Report Bedtime starts event
+  description: Report when Bedtime starts on iPhone
+  fields:
+    phone_id:
+      name: Phone ID
+      description: The phone identifier
+      required: true
+      selector:
+        text:
+
+report_waking_up_event:
+  name: Report Waking Up event
+  description: Report when Waking Up occurs on iPhone
+  fields:
+    phone_id:
+      name: Phone ID
+      description: The phone identifier
+      required: true
+      selector:
+        text:
+
+report_wind_down_event:
+  name: Report Wind Down starts event
+  description: Report when Wind Down starts on iPhone
+  fields:
+    phone_id:
+      name: Phone ID
+      description: The phone identifier
+      required: true
+      selector:
+        text:
+
 

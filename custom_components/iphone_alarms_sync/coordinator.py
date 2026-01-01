@@ -19,6 +19,7 @@ from .const import (
     CONF_ANY_LAST_EVENT_GOES_OFF_AT,
     CONF_ANY_LAST_EVENT_SNOOZED_AT,
     CONF_ANY_LAST_EVENT_STOPPED_AT,
+    CONF_BEDTIME_LAST_EVENT_AT,
     CONF_ENABLED,
     CONF_HOUR,
     CONF_ICON,
@@ -40,6 +41,8 @@ from .const import (
     CONF_WAKEUP_LAST_EVENT_GOES_OFF_AT,
     CONF_WAKEUP_LAST_EVENT_SNOOZED_AT,
     CONF_WAKEUP_LAST_EVENT_STOPPED_AT,
+    CONF_WAKING_UP_LAST_EVENT_AT,
+    CONF_WIND_DOWN_LAST_EVENT_AT,
     EVENT_GOES_OFF,
     EVENT_SNOOZED,
     EVENT_STOPPED,
@@ -89,6 +92,9 @@ class PhoneData:
     any_last_event_goes_off_at: str | None = None
     any_last_event_snoozed_at: str | None = None
     any_last_event_stopped_at: str | None = None
+    bedtime_last_event_at: str | None = None
+    waking_up_last_event_at: str | None = None
+    wind_down_last_event_at: str | None = None
 
 
 @dataclass
@@ -171,6 +177,13 @@ class IPhoneAlarmsSyncCoordinator(DataUpdateCoordinator[PhoneData]):
             ),
             any_last_event_stopped_at=self.entry.options.get(
                 CONF_ANY_LAST_EVENT_STOPPED_AT
+            ),
+            bedtime_last_event_at=self.entry.options.get(CONF_BEDTIME_LAST_EVENT_AT),
+            waking_up_last_event_at=self.entry.options.get(
+                CONF_WAKING_UP_LAST_EVENT_AT
+            ),
+            wind_down_last_event_at=self.entry.options.get(
+                CONF_WIND_DOWN_LAST_EVENT_AT
             ),
         )
 
@@ -341,6 +354,51 @@ class IPhoneAlarmsSyncCoordinator(DataUpdateCoordinator[PhoneData]):
         self._save_to_config()
         return event_obj
 
+    def report_bedtime_event(self) -> AlarmEvent:
+        if self._phone is None:
+            raise ValueError("Phone not initialized")
+        event_obj = AlarmEvent(
+            event_id=str(uuid.uuid4()),
+            alarm_id="bedtime",
+            phone_id=self._phone.phone_id,
+            event="bedtime_starts",
+            occurred_at=dt_util.utcnow().isoformat(),
+        )
+        self._events.append(event_obj)
+        self._phone.bedtime_last_event_at = event_obj.occurred_at
+        self._save_to_config()
+        return event_obj
+
+    def report_waking_up_event(self) -> AlarmEvent:
+        if self._phone is None:
+            raise ValueError("Phone not initialized")
+        event_obj = AlarmEvent(
+            event_id=str(uuid.uuid4()),
+            alarm_id="waking_up",
+            phone_id=self._phone.phone_id,
+            event="waking_up",
+            occurred_at=dt_util.utcnow().isoformat(),
+        )
+        self._events.append(event_obj)
+        self._phone.waking_up_last_event_at = event_obj.occurred_at
+        self._save_to_config()
+        return event_obj
+
+    def report_wind_down_event(self) -> AlarmEvent:
+        if self._phone is None:
+            raise ValueError("Phone not initialized")
+        event_obj = AlarmEvent(
+            event_id=str(uuid.uuid4()),
+            alarm_id="wind_down",
+            phone_id=self._phone.phone_id,
+            event="wind_down_starts",
+            occurred_at=dt_util.utcnow().isoformat(),
+        )
+        self._events.append(event_obj)
+        self._phone.wind_down_last_event_at = event_obj.occurred_at
+        self._save_to_config()
+        return event_obj
+
     def get_alarm(self, alarm_id: str) -> AlarmData | None:
         if self._phone is None:
             return None
@@ -462,6 +520,21 @@ class IPhoneAlarmsSyncCoordinator(DataUpdateCoordinator[PhoneData]):
         ):
             has_changes = True
 
+        if self._phone.bedtime_last_event_at != current_options.get(
+            CONF_BEDTIME_LAST_EVENT_AT
+        ):
+            has_changes = True
+
+        if self._phone.waking_up_last_event_at != current_options.get(
+            CONF_WAKING_UP_LAST_EVENT_AT
+        ):
+            has_changes = True
+
+        if self._phone.wind_down_last_event_at != current_options.get(
+            CONF_WIND_DOWN_LAST_EVENT_AT
+        ):
+            has_changes = True
+
         if has_changes:
             new_options = {
                 "alarms": alarms_dict,
@@ -482,6 +555,9 @@ class IPhoneAlarmsSyncCoordinator(DataUpdateCoordinator[PhoneData]):
                 ),
                 CONF_ANY_LAST_EVENT_SNOOZED_AT: (self._phone.any_last_event_snoozed_at),
                 CONF_ANY_LAST_EVENT_STOPPED_AT: (self._phone.any_last_event_stopped_at),
+                CONF_BEDTIME_LAST_EVENT_AT: self._phone.bedtime_last_event_at,
+                CONF_WAKING_UP_LAST_EVENT_AT: self._phone.waking_up_last_event_at,
+                CONF_WIND_DOWN_LAST_EVENT_AT: self._phone.wind_down_last_event_at,
             }
             self.hass.config_entries.async_update_entry(
                 self.entry,

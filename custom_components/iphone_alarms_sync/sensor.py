@@ -81,6 +81,21 @@ PHONE_EVENT_SENSOR_TYPES: tuple[SensorEntityDescription, ...] = (
         name="Any Last Stopped At",
         device_class=SensorDeviceClass.TIMESTAMP,
     ),
+    SensorEntityDescription(
+        key="bedtime_last_event_at",
+        name="Bedtime Last At",
+        device_class=SensorDeviceClass.TIMESTAMP,
+    ),
+    SensorEntityDescription(
+        key="waking_up_last_event_at",
+        name="Waking Up Last At",
+        device_class=SensorDeviceClass.TIMESTAMP,
+    ),
+    SensorEntityDescription(
+        key="wind_down_last_event_at",
+        name="Wind Down Last At",
+        device_class=SensorDeviceClass.TIMESTAMP,
+    ),
 )
 
 PHONE_SENSOR_TYPES: tuple[SensorEntityDescription, ...] = (
@@ -224,6 +239,18 @@ def _create_phone_event_sensor_entities(
         elif (
             description.key == "any_last_event_stopped_at"
             and phone.any_last_event_stopped_at
+        ):
+            has_value = True
+        elif description.key == "bedtime_last_event_at" and phone.bedtime_last_event_at:
+            has_value = True
+        elif (
+            description.key == "waking_up_last_event_at"
+            and phone.waking_up_last_event_at
+        ):
+            has_value = True
+        elif (
+            description.key == "wind_down_last_event_at"
+            and phone.wind_down_last_event_at
         ):
             has_value = True
         if has_value:
@@ -568,5 +595,14 @@ class IPhoneAlarmsSyncPhoneSensor(
 
         if self._description.key == "any_last_event_stopped_at":
             return cast(str | None, phone.any_last_event_stopped_at)
+
+        if self._description.key == "bedtime_last_event_at":
+            return cast(str | None, phone.bedtime_last_event_at)
+
+        if self._description.key == "waking_up_last_event_at":
+            return cast(str | None, phone.waking_up_last_event_at)
+
+        if self._description.key == "wind_down_last_event_at":
+            return cast(str | None, phone.wind_down_last_event_at)
 
         return None
