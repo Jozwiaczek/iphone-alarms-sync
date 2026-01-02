@@ -1,4 +1,14 @@
 {
+  "device_automation": {
+    "trigger_type": {
+      "bedtime_starts": "Sleep: Bedtime starts",
+      "waking_up": "Sleep: Waking up",
+      "wind_down_starts": "Sleep: Wind down starts",
+      "goes_off": "Alarm: Goes off",
+      "snoozed": "Alarm: Snoozed",
+      "stopped": "Alarm: Stopped"
+    }
+  },
   "config": {
     "step": {
       "user": {
