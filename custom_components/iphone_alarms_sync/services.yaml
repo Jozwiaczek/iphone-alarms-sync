@@ -26,7 +26,7 @@ report_alarm_event:
       selector:
         text:
     alarm_id:
-      name: Alarm ID
+      name: ID
       description: The alarm identifier (UUID). The UUID will be automatically extracted from formats like "x-apple-clock:alarm?id=UUID" or "x-apple-clock://alarm/UUID".
       required: true
       selector:

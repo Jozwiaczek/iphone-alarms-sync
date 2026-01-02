@@ -22,7 +22,7 @@ from .utils import calculate_next_alarm_datetime, calculate_next_occurrence
 ALARM_SENSOR_TYPES: tuple[SensorEntityDescription, ...] = (
     SensorEntityDescription(
         key="alarm_id",
-        name="Alarm ID",
+        name="ID",
     ),
     SensorEntityDescription(
         key="next_occurrence_datetime",
