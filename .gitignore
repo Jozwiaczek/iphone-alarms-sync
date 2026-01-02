@@ -38,7 +38,4 @@ htmlcov/
 .DS_Store
 Thumbs.db
 
-# Project specific
-*.shortcut
-
 
