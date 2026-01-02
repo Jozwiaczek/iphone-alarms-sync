@@ -80,7 +80,7 @@ class IPhoneAlarmsSyncSnoozeNumber(
         self._entry = entry
         self._phone_id = phone_id
         self._alarm_id = alarm_id
-        self._description = description
+        self.entity_description = description
         self._attr_unique_id = (
             f"{entry.entry_id}_{phone_id}_{alarm_id}_{description.key}"
         )
@@ -99,13 +99,13 @@ class IPhoneAlarmsSyncSnoozeNumber(
         self._attr_mode = "box"
 
     @property
-    def native_value(self) -> float | None:
+    def native_value(self) -> int | None:
         alarm = self.coordinator.get_alarm(self._alarm_id)
         if not alarm:
             return None
         if not alarm.allows_snooze:
             return None
-        return float(alarm.snooze_time)
+        return int(alarm.snooze_time)
 
     async def async_set_native_value(self, value: float) -> None:
         alarm = self.coordinator.get_alarm(self._alarm_id)
