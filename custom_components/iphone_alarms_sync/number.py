@@ -96,6 +96,7 @@ class IPhoneAlarmsSyncSnoozeNumber(
             name=f"{phone.phone_name} {alarm.label}",
             via_device=(DOMAIN, phone_id),
         )
+        self._attr_mode = "box"
 
     @property
     def native_value(self) -> float | None:
