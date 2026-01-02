@@ -14,6 +14,7 @@ CONF_MINUTE = "minute"
 CONF_REPEATS = "repeats"
 CONF_REPEAT_DAYS = "repeat_days"
 CONF_ALLOWS_SNOOZE = "allows_snooze"
+CONF_SNOOZE_TIME = "snooze_time"
 CONF_SYNCED_AT = "synced_at"
 CONF_EVENT = "event"
 CONF_EVENT_ID = "event_id"
@@ -51,5 +52,6 @@ EVENT_WAKING_UP = "waking_up"
 EVENT_WIND_DOWN_STARTS = "wind_down_starts"
 
 DEFAULT_ICON = "mdi:alarm"
+DEFAULT_SNOOZE_TIME = 9
 
-PLATFORMS = ["binary_sensor", "sensor"]
+PLATFORMS = ["binary_sensor", "number", "sensor"]

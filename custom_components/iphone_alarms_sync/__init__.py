@@ -28,6 +28,7 @@ from .coordinator import (
     IPhoneAlarmsSyncCoordinator,
     IPhoneAlarmsSyncData,
 )
+from .number import _create_number_entities
 from .sensor import (
     _create_alarm_sensor_entities,
     _create_phone_event_sensor_entities,
@@ -132,6 +133,11 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
                         coordinator, entry, phone_id, alarm_id
                     )
                     binary_sensor_add(binary_sensor_entities)
+                if number_add := entry_data.get("number_add_entities"):
+                    number_entities = _create_number_entities(
+                        coordinator, entry, phone_id, alarm_id
+                    )
+                    number_add(number_entities)
 
         if has_changes:
             phone = coordinator.get_phone()

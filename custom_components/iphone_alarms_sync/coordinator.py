@@ -36,6 +36,7 @@ from .const import (
     CONF_PHONE_NAME,
     CONF_REPEAT_DAYS,
     CONF_REPEATS,
+    CONF_SNOOZE_TIME,
     CONF_SYNC_DISABLED_ALARMS,
     CONF_SYNCED_AT,
     CONF_WAKEUP_LAST_EVENT_GOES_OFF_AT,
@@ -43,6 +44,7 @@ from .const import (
     CONF_WAKEUP_LAST_EVENT_STOPPED_AT,
     CONF_WAKING_UP_LAST_EVENT_AT,
     CONF_WIND_DOWN_LAST_EVENT_AT,
+    DEFAULT_SNOOZE_TIME,
     EVENT_GOES_OFF,
     EVENT_SNOOZED,
     EVENT_STOPPED,
@@ -60,6 +62,7 @@ class AlarmData:
     repeats: bool
     repeat_days: list[str]
     allows_snooze: bool
+    snooze_time: int = DEFAULT_SNOOZE_TIME
     last_event_goes_off_at: str | None = None
     last_event_snoozed_at: str | None = None
     last_event_stopped_at: str | None = None
@@ -142,6 +145,7 @@ class IPhoneAlarmsSyncCoordinator(DataUpdateCoordinator[PhoneData]):
                 repeats=alarm_dict.get(CONF_REPEATS, False),
                 repeat_days=alarm_dict.get(CONF_REPEAT_DAYS, []),
                 allows_snooze=alarm_dict.get(CONF_ALLOWS_SNOOZE, False),
+                snooze_time=alarm_dict.get(CONF_SNOOZE_TIME, DEFAULT_SNOOZE_TIME),
                 last_event_goes_off_at=alarm_dict.get(CONF_LAST_EVENT_GOES_OFF_AT),
                 last_event_snoozed_at=alarm_dict.get(CONF_LAST_EVENT_SNOOZED_AT),
                 last_event_stopped_at=alarm_dict.get(CONF_LAST_EVENT_STOPPED_AT),
@@ -256,6 +260,7 @@ class IPhoneAlarmsSyncCoordinator(DataUpdateCoordinator[PhoneData]):
                     repeats=alarm_dict.get(CONF_REPEATS, False),
                     repeat_days=alarm_dict.get(CONF_REPEAT_DAYS, []),
                     allows_snooze=alarm_dict.get(CONF_ALLOWS_SNOOZE, False),
+                    snooze_time=alarm_dict.get(CONF_SNOOZE_TIME, DEFAULT_SNOOZE_TIME),
                 )
                 new_alarm_ids.append(alarm_id)
                 has_changes = True
@@ -433,6 +438,19 @@ class IPhoneAlarmsSyncCoordinator(DataUpdateCoordinator[PhoneData]):
             alarm.icon = icon
         self._save_to_config()
 
+    def update_alarm_snooze_time(
+        self,
+        alarm_id: str,
+        snooze_time: int,
+    ) -> None:
+        if self._phone is None:
+            raise ValueError("Phone not initialized")
+        if alarm_id not in self._phone.alarms:
+            raise ValueError(f"Alarm {alarm_id} not found")
+        alarm = self._phone.alarms[alarm_id]
+        alarm.snooze_time = snooze_time
+        self._save_to_config()
+
     def get_events(
         self,
         alarm_id: str | None = None,
@@ -464,6 +482,7 @@ class IPhoneAlarmsSyncCoordinator(DataUpdateCoordinator[PhoneData]):
                 CONF_REPEATS: alarm.repeats,
                 CONF_REPEAT_DAYS: alarm.repeat_days,
                 CONF_ALLOWS_SNOOZE: alarm.allows_snooze,
+                CONF_SNOOZE_TIME: alarm.snooze_time,
                 CONF_LAST_EVENT_GOES_OFF_AT: alarm.last_event_goes_off_at,
                 CONF_LAST_EVENT_SNOOZED_AT: alarm.last_event_snoozed_at,
                 CONF_LAST_EVENT_STOPPED_AT: alarm.last_event_stopped_at,
