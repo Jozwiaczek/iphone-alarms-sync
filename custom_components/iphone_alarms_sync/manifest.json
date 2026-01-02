@@ -7,6 +7,6 @@
   "documentation": "https://github.com/Jozwiaczek/iphone-alarms-sync",
   "iot_class": "cloud_push",
   "issue_tracker": "https://github.com/Jozwiaczek/iphone-alarms-sync/issues",
-  "requirements": [],
+  "requirements": ["segno==1.6.1"],
   "version": "1.0.0"
 }

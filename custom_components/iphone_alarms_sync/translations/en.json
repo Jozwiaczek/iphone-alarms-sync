@@ -3,36 +3,35 @@
     "step": {
       "user": {
         "title": "iPhone Alarms Sync",
-        "description": "Choose how you want to add your iPhone/iPad device:\n\n**Device Name** is a friendly name for your device (e.g., \"Kuba iPhone\", \"iPad Mini\"). This name will be used to generate a **Phone ID** (e.g., \"kuba_iphone\", \"ipad_mini\") that you'll need when setting up iOS shortcuts.\n\nYou can either:\n- Select from existing Mobile App devices (if you have the Home Assistant mobile app installed)\n- Enter a custom device name",
+        "description": "Choose how to add your iPhone/iPad:\n\n- **Mobile App devices** - Links to your HA mobile app device\n- **Custom name** - Standalone device",
         "data": {
           "method": "Method"
         }
       },
       "select_mobile_app": {
         "title": "Select Mobile App Device",
-        "description": "Select a device from your Mobile App integration. You can optionally edit the device name below.\n\nThe device name will be used to generate a **Phone ID** that you'll need for iOS shortcuts setup.",
+        "description": "Select your device from Mobile App integration.",
         "data": {
-          "mobile_app_device_id": "Mobile App Device",
-          "phone_name": "Device Name (optional)"
+          "mobile_app_device_id": "Mobile App Device"
         }
       },
       "custom_name": {
         "title": "Enter Device Name",
-        "description": "Enter a name for your iPhone/iPad device.\n\nThis name will be used to generate a **Phone ID** (e.g., \"Kuba iPhone\" becomes \"kuba_iphone\"). You'll need this Phone ID when setting up the iOS shortcut.",
+        "description": "Enter a name for your iPhone/iPad (e.g., \"John's iPhone\").\n\nThis generates a **Phone ID** needed for the shortcut setup.",
         "data": {
           "phone_name": "Device Name"
         }
       },
       "confirm": {
-        "title": "Confirm Device Setup",
-        "description": "**Device Name:** {phone_name}\n**Phone ID:** `{phone_id}`\n\n⚠️ **Important:** Save this Phone ID! You'll need it when setting up the iOS shortcuts.\n\nThe Phone ID is generated from the device name and is used to identify your device when syncing alarms.\n\nAlarms will be automatically synchronized when you run the sync shortcut for the first time.\n\n💡 **Tip:** You can also create event shortcuts to track when alarms go off, are snoozed, or stopped. After setup, go to the device configuration to find detailed instructions and all alarm IDs.\n\n⚠️ **Warning:** If you disable the option to sync disabled alarms, alarm entities will disappear from Home Assistant when you disable them on your iPhone. Entities will reappear when you enable the alarm again.",
+        "title": "Setup Shortcut",
+        "description": "**Phone ID:** `{phone_id}`\n\n## Step 1: Import Shortcut\n\nScan QR code or open link on your iPhone/iPad:\n\n![QR Code]({qr_code})\n\n[Open Shortcut]({shortcut_url})\n\nWhen prompted, enter Device ID: `{phone_id}`\n\n## Step 2: Create Automation\n\n1. Shortcuts app → Automation → +\n2. App → Clock → Is Closed\n3. Run Shortcut → \"Sync Alarms With HA\"\n4. Enable \"Run Immediately\" → Done",
         "data": {
           "sync_disabled_alarms": "Sync disabled alarms"
         }
       },
       "already_configured": {
         "title": "Device Already Configured",
-        "description": "A device with this configuration already exists.\n\n**Device Name:** {phone_name}\n**Generated Phone ID:** `{phone_id}`\n**Existing Device:** {existing_title}\n\nThis Phone ID is already in use. If you want to edit the existing device, go to Settings → Integrations → iPhone Alarms Sync → {existing_title} → Configure.\n\nIf you want to add a new device, choose a different device name below.",
+        "description": "Device with Phone ID `{phone_id}` already exists as \"{existing_title}\".\n\nChoose a different name or edit the existing device in Settings → Integrations.",
         "data": {
           "action": "Action"
         }
@@ -44,20 +43,20 @@
       "unknown": "Unexpected error",
       "required": "This field is required",
       "device_not_found": "Selected device not found",
-      "phone_id_exists": "A device with this Phone ID already exists. Please choose a different name."
+      "phone_id_exists": "A device with this Phone ID already exists. Choose a different name."
     },
     "abort": {
-      "no_mobile_app_devices": "No Mobile App devices found. Please install the Home Assistant mobile app and add your device, or use the custom name option.",
-      "integration_not_ready": "Integration is not ready. Please reload the integration and try again.",
+      "no_mobile_app_devices": "No Mobile App devices found. Use custom name option.",
+      "integration_not_ready": "Integration not ready. Reload and try again.",
       "invalid_import_data": "Invalid import data",
-      "already_configured": "A device with Phone ID `{phone_id}` already exists as \"{existing_title}\". To edit it, go to Settings → Integrations → iPhone Alarms Sync → {existing_title} → Configure.",
+      "already_configured": "Device with Phone ID `{phone_id}` already exists as \"{existing_title}\".",
       "unknown": "Unknown error occurred"
     }
   },
   "options": {
     "step": {
       "init": {
-        "title": "iPhone Alarms Sync Options",
+        "title": "iPhone Alarms Sync",
         "menu_options": {
           "edit_device": "Edit Device",
           "overview": "Overview",
@@ -68,7 +67,7 @@
       },
       "edit_device": {
         "title": "Edit Device",
-        "description": "Edit your device settings.\n\n⚠️ **Note:** Changing the device name will generate a new Phone ID. Make sure to update your iOS shortcut with the new Phone ID if you change the name.\n\n⚠️ **Warning:** If you disable the option to sync disabled alarms, alarm entities will disappear from Home Assistant when you disable them on your iPhone. Entities will reappear when you enable the alarm again.",
+        "description": "⚠️ Changing device name generates a new Phone ID. Update your shortcut if changed.",
         "data": {
           "phone_name": "Device Name",
           "mobile_app_device_id": "Mobile App Device (optional)",
@@ -81,20 +80,20 @@
       },
       "events": {
         "title": "Events History",
-        "description": "Events:\n{event_list}"
+        "description": "{event_list}"
       },
       "sync_shortcut": {
         "title": "Sync Shortcut Setup",
-        "description": "**Device:** {phone_name}\n**Phone ID:** `{phone_id}`\n\n⚠️ **Important:** Copy this Phone ID - you'll need it when setting up the shortcut on your iPhone/iPad.\n\nThe service `iphone_alarms_sync.sync_alarms` is available. Create a shortcut that calls this service with:\n- `phone_id`: `{phone_id}`\n- `alarms`: Array of alarm objects\n\nAlarms will be automatically synchronized when you run the shortcut for the first time."
+        "description": "**Phone ID:** `{phone_id}`\n\n## Step 1: Import Shortcut\n\nScan QR code or open link on your iPhone/iPad:\n\n![QR Code]({qr_code})\n\n[Open Shortcut]({shortcut_url})\n\nWhen prompted, enter Device ID: `{phone_id}`\n\n## Step 2: Create Automation\n\n1. Shortcuts app → Automation → +\n2. App → Clock → Is Closed\n3. Run Shortcut → \"Sync Alarms With HA\"\n4. Enable \"Run Immediately\" → Done"
       },
       "event_shortcuts": {
         "title": "Event Shortcuts Setup",
-        "description": "**Phone ID:** `{phone_id}`\n\n**Available Services:**\n\n1. **`iphone_alarms_sync.report_alarm_event`** - For specific alarms\n   - Requires: `phone_id`, `alarm_id` (UUID), `event`\n   - The UUID will be automatically extracted from formats like \"x-apple-clock:alarm?id=UUID\" or \"x-apple-clock://alarm/UUID\"\n\n2. **`iphone_alarms_sync.report_wakeup_event`** - For Apple's native Wake-Up alarm\n   - Requires: `phone_id`, `event`\n   - No `alarm_id` needed - automatically handles Wake-Up alarm\n\n3. **`iphone_alarms_sync.report_any_event`** - For any alarm\n   - Requires: `phone_id`, `event`\n   - No `alarm_id` needed - works for any alarm that triggers the shortcut\n\n**Synchronized Alarms:**\n{alarms_list}\n\n**Event Types:**\n- `goes_off` - Alarm started ringing\n- `snoozed` - Alarm was snoozed\n- `stopped` - Alarm was stopped/dismissed\n\n**Instructions:**\n1. Create a new Shortcut on your iPhone/iPad\n2. Add \"Call Home Assistant Service\" action\n3. Select one of the services above\n4. Set `phone_id`: `{phone_id}`\n5. For `report_alarm_event`: Set `alarm_id` to the alarm UUID (shown above, can also use full format like \"x-apple-clock:alarm?id=UUID\" - UUID will be extracted automatically)\n6. Set `event` to one of the event types above: `goes_off`, `snoozed`, or `stopped`\n7. Create a Personal Automation to trigger this shortcut when an alarm event occurs\n\n💡 **Tip:** Use `report_wakeup_event` or `report_any_event` for simpler setup - no need to specify alarm_id. The sensor entities for these events will appear automatically after the first event is reported."
+        "description": "**Phone ID:** `{phone_id}`\n\n**Services:**\n- `iphone_alarms_sync.report_alarm_event` - For specific alarms (needs `alarm_id`)\n- `iphone_alarms_sync.report_wakeup_event` - For Wake-Up alarm\n- `iphone_alarms_sync.report_any_event` - For any alarm\n\n**Sleep Events:**\n- `report_bedtime_event`, `report_waking_up_event`, `report_wind_down_event`\n\n**Alarms:** {alarms_list}\n\n**Event Types:** `goes_off`, `snoozed`, `stopped`"
       }
     },
     "error": {
       "required": "This field is required",
-      "phone_id_exists": "A device with this Phone ID already exists. Please choose a different name.",
+      "phone_id_exists": "A device with this Phone ID already exists.",
       "phone_not_found": "Phone not found"
     }
   }

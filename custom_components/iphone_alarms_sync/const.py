@@ -55,3 +55,7 @@ DEFAULT_ICON = "mdi:alarm"
 DEFAULT_SNOOZE_TIME = 9
 
 PLATFORMS = ["binary_sensor", "number", "sensor"]
+
+SHORTCUT_ICLOUD_URL = (
+    "https://www.icloud.com/shortcuts/9add5384e92f42b792fb4f91ce50ee6c"
+)
