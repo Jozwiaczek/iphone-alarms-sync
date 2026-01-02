@@ -313,7 +313,7 @@ class IPhoneAlarmsSyncAlarmSensor(
         self._entry = entry
         self._phone_id = phone_id
         self._alarm_id = alarm_id
-        self._description = description
+        self.entity_description = description
         self._attr_unique_id = (
             f"{entry.entry_id}_{phone_id}_{alarm_id}_{description.key}"
         )
@@ -334,7 +334,7 @@ class IPhoneAlarmsSyncAlarmSensor(
 
     async def async_added_to_hass(self) -> None:
         await super().async_added_to_hass()
-        if self._description.key == "next_occurrence_datetime":
+        if self.entity_description.key == "next_occurrence_datetime":
             self._setup_refresh_timer()
 
     async def async_will_remove_from_hass(self) -> None:
@@ -346,7 +346,7 @@ class IPhoneAlarmsSyncAlarmSensor(
     @callback
     def _handle_coordinator_update(self) -> None:
         super()._handle_coordinator_update()
-        if self._description.key == "next_occurrence_datetime":
+        if self.entity_description.key == "next_occurrence_datetime":
             self._setup_refresh_timer()
 
     def _get_next_occurrence_datetime(self) -> datetime | None:
@@ -408,25 +408,25 @@ class IPhoneAlarmsSyncAlarmSensor(
         if not alarm:
             return None
 
-        if self._description.key == "alarm_id":
+        if self.entity_description.key == "alarm_id":
             return cast(str, alarm.alarm_id)
 
-        if self._description.key == "last_event_goes_off_at":
+        if self.entity_description.key == "last_event_goes_off_at":
             timestamp_str = cast(str | None, alarm.last_event_goes_off_at)
             return dt_util.parse_datetime(timestamp_str) if timestamp_str else None
 
-        if self._description.key == "last_event_snoozed_at":
+        if self.entity_description.key == "last_event_snoozed_at":
             timestamp_str = cast(str | None, alarm.last_event_snoozed_at)
             return dt_util.parse_datetime(timestamp_str) if timestamp_str else None
 
-        if self._description.key == "last_event_stopped_at":
+        if self.entity_description.key == "last_event_stopped_at":
             timestamp_str = cast(str | None, alarm.last_event_stopped_at)
             return dt_util.parse_datetime(timestamp_str) if timestamp_str else None
 
-        if self._description.key == "next_occurrence_datetime":
+        if self.entity_description.key == "next_occurrence_datetime":
             return self._get_next_occurrence_datetime()
 
-        if self._description.key == "last_occurrence_datetime":
+        if self.entity_description.key == "last_occurrence_datetime":
             timestamp_str = cast(str | None, alarm.last_occurrence_datetime)
             return dt_util.parse_datetime(timestamp_str) if timestamp_str else None
 
@@ -446,7 +446,7 @@ class IPhoneAlarmsSyncPhoneSensor(
         super().__init__(coordinator)
         self._entry = entry
         self._phone_id = phone_id
-        self._description = description
+        self.entity_description = description
         self._attr_unique_id = f"{entry.entry_id}_{phone_id}_{description.key}"
         self._unsub_refresh: callback.CALLBACK_TYPE | None = None
         self._scheduled_alarm_datetime: datetime | None = None
@@ -463,7 +463,7 @@ class IPhoneAlarmsSyncPhoneSensor(
 
     async def async_added_to_hass(self) -> None:
         await super().async_added_to_hass()
-        if self._description.key == "next_alarm_datetime":
+        if self.entity_description.key == "next_alarm_datetime":
             self._setup_refresh_timer()
 
     async def async_will_remove_from_hass(self) -> None:
@@ -475,7 +475,7 @@ class IPhoneAlarmsSyncPhoneSensor(
     @callback
     def _handle_coordinator_update(self) -> None:
         super()._handle_coordinator_update()
-        if self._description.key == "next_alarm_datetime":
+        if self.entity_description.key == "next_alarm_datetime":
             self._setup_refresh_timer()
 
     def _get_next_alarm_datetime(self) -> tuple[datetime | None, str | None]:
@@ -601,64 +601,64 @@ class IPhoneAlarmsSyncPhoneSensor(
         if not phone:
             return None
 
-        if self._description.key == "last_sync":
+        if self.entity_description.key == "last_sync":
             timestamp_str = cast(str | None, phone.synced_at)
             return dt_util.parse_datetime(timestamp_str) if timestamp_str else None
 
-        if self._description.key == "total_alarms":
+        if self.entity_description.key == "total_alarms":
             return len(phone.alarms)
 
-        if self._description.key == "enabled_alarms":
+        if self.entity_description.key == "enabled_alarms":
             return sum(1 for alarm in phone.alarms.values() if alarm.enabled)
 
-        if self._description.key == "disabled_alarms":
+        if self.entity_description.key == "disabled_alarms":
             return sum(1 for alarm in phone.alarms.values() if not alarm.enabled)
 
-        if self._description.key == "next_alarm_label":
+        if self.entity_description.key == "next_alarm_label":
             _, label = self._get_next_alarm()
             return label
 
-        if self._description.key == "next_alarm_datetime":
+        if self.entity_description.key == "next_alarm_datetime":
             next_dt, _ = self._get_next_alarm_datetime()
             return next_dt
 
-        if self._description.key == "last_alarm_datetime":
+        if self.entity_description.key == "last_alarm_datetime":
             timestamp_str = cast(str | None, phone.last_alarm_datetime)
             return dt_util.parse_datetime(timestamp_str) if timestamp_str else None
 
-        if self._description.key == "wakeup_last_event_goes_off_at":
+        if self.entity_description.key == "wakeup_last_event_goes_off_at":
             timestamp_str = cast(str | None, phone.wakeup_last_event_goes_off_at)
             return dt_util.parse_datetime(timestamp_str) if timestamp_str else None
 
-        if self._description.key == "wakeup_last_event_snoozed_at":
+        if self.entity_description.key == "wakeup_last_event_snoozed_at":
             timestamp_str = cast(str | None, phone.wakeup_last_event_snoozed_at)
             return dt_util.parse_datetime(timestamp_str) if timestamp_str else None
 
-        if self._description.key == "wakeup_last_event_stopped_at":
+        if self.entity_description.key == "wakeup_last_event_stopped_at":
             timestamp_str = cast(str | None, phone.wakeup_last_event_stopped_at)
             return dt_util.parse_datetime(timestamp_str) if timestamp_str else None
 
-        if self._description.key == "any_last_event_goes_off_at":
+        if self.entity_description.key == "any_last_event_goes_off_at":
             timestamp_str = cast(str | None, phone.any_last_event_goes_off_at)
             return dt_util.parse_datetime(timestamp_str) if timestamp_str else None
 
-        if self._description.key == "any_last_event_snoozed_at":
+        if self.entity_description.key == "any_last_event_snoozed_at":
             timestamp_str = cast(str | None, phone.any_last_event_snoozed_at)
             return dt_util.parse_datetime(timestamp_str) if timestamp_str else None
 
-        if self._description.key == "any_last_event_stopped_at":
+        if self.entity_description.key == "any_last_event_stopped_at":
             timestamp_str = cast(str | None, phone.any_last_event_stopped_at)
             return dt_util.parse_datetime(timestamp_str) if timestamp_str else None
 
-        if self._description.key == "bedtime_last_event_at":
+        if self.entity_description.key == "bedtime_last_event_at":
             timestamp_str = cast(str | None, phone.bedtime_last_event_at)
             return dt_util.parse_datetime(timestamp_str) if timestamp_str else None
 
-        if self._description.key == "waking_up_last_event_at":
+        if self.entity_description.key == "waking_up_last_event_at":
             timestamp_str = cast(str | None, phone.waking_up_last_event_at)
             return dt_util.parse_datetime(timestamp_str) if timestamp_str else None
 
-        if self._description.key == "wind_down_last_event_at":
+        if self.entity_description.key == "wind_down_last_event_at":
             timestamp_str = cast(str | None, phone.wind_down_last_event_at)
             return dt_util.parse_datetime(timestamp_str) if timestamp_str else None
 
