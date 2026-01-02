@@ -399,26 +399,29 @@ class IPhoneAlarmsSyncAlarmSensor(
             self.coordinator._save_to_config()
 
     @property
-    def native_value(self) -> str | None:
+    def native_value(self) -> datetime | None:
         alarm = self.coordinator.get_alarm(self._alarm_id)
         if not alarm:
             return None
 
         if self._description.key == "last_event_goes_off_at":
-            return cast(str | None, alarm.last_event_goes_off_at)
+            timestamp_str = cast(str | None, alarm.last_event_goes_off_at)
+            return dt_util.parse_datetime(timestamp_str) if timestamp_str else None
 
         if self._description.key == "last_event_snoozed_at":
-            return cast(str | None, alarm.last_event_snoozed_at)
+            timestamp_str = cast(str | None, alarm.last_event_snoozed_at)
+            return dt_util.parse_datetime(timestamp_str) if timestamp_str else None
 
         if self._description.key == "last_event_stopped_at":
-            return cast(str | None, alarm.last_event_stopped_at)
+            timestamp_str = cast(str | None, alarm.last_event_stopped_at)
+            return dt_util.parse_datetime(timestamp_str) if timestamp_str else None
 
         if self._description.key == "next_occurrence_datetime":
-            next_dt = self._get_next_occurrence_datetime()
-            return next_dt.isoformat() if next_dt else None
+            return self._get_next_occurrence_datetime()
 
         if self._description.key == "last_occurrence_datetime":
-            return cast(str | None, alarm.last_occurrence_datetime)
+            timestamp_str = cast(str | None, alarm.last_occurrence_datetime)
+            return dt_util.parse_datetime(timestamp_str) if timestamp_str else None
 
         return None
 
@@ -586,13 +589,14 @@ class IPhoneAlarmsSyncPhoneSensor(
         return next_alarm_time, next_alarm_label
 
     @property
-    def native_value(self) -> str | int | None:
+    def native_value(self) -> datetime | str | int | None:
         phone = self.coordinator.get_phone()
         if not phone:
             return None
 
         if self._description.key == "last_sync":
-            return cast(str | None, phone.synced_at)
+            timestamp_str = cast(str | None, phone.synced_at)
+            return dt_util.parse_datetime(timestamp_str) if timestamp_str else None
 
         if self._description.key == "total_alarms":
             return len(phone.alarms)
@@ -609,36 +613,46 @@ class IPhoneAlarmsSyncPhoneSensor(
 
         if self._description.key == "next_alarm_datetime":
             next_dt, _ = self._get_next_alarm_datetime()
-            return next_dt.isoformat() if next_dt else None
+            return next_dt
 
         if self._description.key == "last_alarm_datetime":
-            return cast(str | None, phone.last_alarm_datetime)
+            timestamp_str = cast(str | None, phone.last_alarm_datetime)
+            return dt_util.parse_datetime(timestamp_str) if timestamp_str else None
 
         if self._description.key == "wakeup_last_event_goes_off_at":
-            return cast(str | None, phone.wakeup_last_event_goes_off_at)
+            timestamp_str = cast(str | None, phone.wakeup_last_event_goes_off_at)
+            return dt_util.parse_datetime(timestamp_str) if timestamp_str else None
 
         if self._description.key == "wakeup_last_event_snoozed_at":
-            return cast(str | None, phone.wakeup_last_event_snoozed_at)
+            timestamp_str = cast(str | None, phone.wakeup_last_event_snoozed_at)
+            return dt_util.parse_datetime(timestamp_str) if timestamp_str else None
 
         if self._description.key == "wakeup_last_event_stopped_at":
-            return cast(str | None, phone.wakeup_last_event_stopped_at)
+            timestamp_str = cast(str | None, phone.wakeup_last_event_stopped_at)
+            return dt_util.parse_datetime(timestamp_str) if timestamp_str else None
 
         if self._description.key == "any_last_event_goes_off_at":
-            return cast(str | None, phone.any_last_event_goes_off_at)
+            timestamp_str = cast(str | None, phone.any_last_event_goes_off_at)
+            return dt_util.parse_datetime(timestamp_str) if timestamp_str else None
 
         if self._description.key == "any_last_event_snoozed_at":
-            return cast(str | None, phone.any_last_event_snoozed_at)
+            timestamp_str = cast(str | None, phone.any_last_event_snoozed_at)
+            return dt_util.parse_datetime(timestamp_str) if timestamp_str else None
 
         if self._description.key == "any_last_event_stopped_at":
-            return cast(str | None, phone.any_last_event_stopped_at)
+            timestamp_str = cast(str | None, phone.any_last_event_stopped_at)
+            return dt_util.parse_datetime(timestamp_str) if timestamp_str else None
 
         if self._description.key == "bedtime_last_event_at":
-            return cast(str | None, phone.bedtime_last_event_at)
+            timestamp_str = cast(str | None, phone.bedtime_last_event_at)
+            return dt_util.parse_datetime(timestamp_str) if timestamp_str else None
 
         if self._description.key == "waking_up_last_event_at":
-            return cast(str | None, phone.waking_up_last_event_at)
+            timestamp_str = cast(str | None, phone.waking_up_last_event_at)
+            return dt_util.parse_datetime(timestamp_str) if timestamp_str else None
 
         if self._description.key == "wind_down_last_event_at":
-            return cast(str | None, phone.wind_down_last_event_at)
+            timestamp_str = cast(str | None, phone.wind_down_last_event_at)
+            return dt_util.parse_datetime(timestamp_str) if timestamp_str else None
 
         return None
