@@ -42,9 +42,11 @@ Home Assistant custom integration for one-way synchronization of iPhone alarms (
 
 ### Step 2: Setup Shortcuts
 
-1. Import shortcuts on your iPhone or iPad (see Shortcuts Setup below)
-2. Enter your `phone_id` in each shortcut
-3. Enable Personal Automations in iOS Settings
+1. **Import shortcut** on your iPhone/iPad - [click here](shortcuts://import-shortcut?url=https%3A%2F%2Fraw.githubusercontent.com%2FJozwiaczek%2Fiphone-alarms-sync%2Fmain%2Fshortcuts%2FSync%2520Alarms%2520With%2520HA.shortcut&name=Sync%20Alarms%20With%20HA) and enter your Device ID when prompted
+2. **Create Personal Automation** - trigger the shortcut when Clock app closes
+3. **Done!** - alarms sync automatically when you close the Clock app
+
+See [detailed step-by-step instructions](shortcuts/README.md) for complete setup guide.
 
 ### Step 3: Wait for First Sync
 
@@ -54,83 +56,18 @@ Home Assistant custom integration for one-way synchronization of iPhone alarms (
 
 ## Shortcuts Setup
 
-### Required Shortcuts
+Setting up shortcuts is easy with our ready-to-use templates:
 
-You need to create 4 Personal Automations in iOS Shortcuts:
+1. **Import shortcut** on your iPhone - [click here](shortcuts://import-shortcut?url=https%3A%2F%2Fraw.githubusercontent.com%2FJozwiaczek%2Fiphone-alarms-sync%2Fmain%2Fshortcuts%2FSync%2520Alarms%2520With%2520HA.shortcut&name=Sync%20Alarms%20With%20HA) and enter your Device ID
+2. **Create Personal Automation** - trigger shortcut when Clock app closes
+3. **Done!** - alarms sync automatically
 
-#### 1. Sync All Alarms
-
-**Trigger:**
-- Personal Automation → "App" → "Clock" → "Is Closed"
-
-**Actions:**
-1. Get All Alarms (from Clock app)
-2. Format alarms as Dictionary
-3. HA Companion App → "Call Service"
-   - Service: `iphone_alarms_sync.sync_alarms`
-   - Payload:
-     ```json
-     {
-       "phone_id": "YOUR_PHONE_ID",
-       "alarms": [/* alarm data from Get All Alarms */]
-     }
-     ```
-
-#### 2. Alarm Goes Off
-
-**Trigger:**
-- Personal Automation → "Alarm" → "Goes Off"
-
-**Actions:**
-1. HA Companion App → "Call Service"
-   - Service: `iphone_alarms_sync.report_alarm_event`
-   - Payload:
-     ```json
-     {
-       "phone_id": "YOUR_PHONE_ID",
-       "alarm_id": "ALARM_ID_FROM_TRIGGER",
-       "event": "goes_off"
-     }
-     ```
-
-#### 3. Alarm Snoozed
-
-**Trigger:**
-- Personal Automation → "Alarm" → "Is Snoozed"
-
-**Actions:**
-1. HA Companion App → "Call Service"
-   - Service: `iphone_alarms_sync.report_alarm_event`
-   - Payload:
-     ```json
-     {
-       "phone_id": "YOUR_PHONE_ID",
-       "alarm_id": "ALARM_ID_FROM_TRIGGER",
-       "event": "snoozed"
-     }
-     ```
-
-#### 4. Alarm Stopped
-
-**Trigger:**
-- Personal Automation → "Alarm" → "Is Stopped"
-
-**Actions:**
-1. HA Companion App → "Call Service"
-   - Service: `iphone_alarms_sync.report_alarm_event`
-   - Payload:
-     ```json
-     {
-       "phone_id": "YOUR_PHONE_ID",
-       "alarm_id": "ALARM_ID_FROM_TRIGGER",
-       "event": "stopped"
-     }
-     ```
+See [detailed instructions](shortcuts/README.md) for step-by-step guide with screenshots.
 
 ### Getting Your Phone ID
 
-Your `phone_id` is shown in the integration setup flow and can be found in:
-- Integration Options → Shortcuts Setup
+Your `phone_id` (Device ID) is shown in the integration setup flow and can be found in:
+- Integration Options → Sync Shortcut Setup
 - Or in the sensor entity IDs: `sensor.{phone_id}_{alarm_id}_time`
 
 ## Entities
