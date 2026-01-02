@@ -24,6 +24,9 @@ ALARM_SENSOR_TYPES: tuple[SensorEntityDescription, ...] = (
         key="alarm_id",
         name="ID",
     ),
+)
+
+ALARM_OPTIONAL_SENSOR_TYPES: tuple[SensorEntityDescription, ...] = (
     SensorEntityDescription(
         key="next_occurrence_datetime",
         name="Next Occurrence",
@@ -156,6 +159,22 @@ def _create_alarm_sensor_entities(
         )
     alarm = coordinator.get_alarm(alarm_id)
     if alarm:
+        for description in ALARM_OPTIONAL_SENSOR_TYPES:
+            has_value = False
+            if description.key == "next_occurrence_datetime":
+                has_value = calculate_next_occurrence(alarm) is not None
+            elif description.key == "last_occurrence_datetime":
+                has_value = alarm.last_occurrence_datetime is not None
+            if has_value:
+                entities.append(
+                    IPhoneAlarmsSyncAlarmSensor(
+                        coordinator,
+                        entry,
+                        phone_id,
+                        alarm_id,
+                        description,
+                    )
+                )
         for description in ALARM_EVENT_SENSOR_TYPES:
             has_value = False
             if (
