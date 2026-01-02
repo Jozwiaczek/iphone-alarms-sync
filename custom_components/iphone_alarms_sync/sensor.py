@@ -21,6 +21,10 @@ from .utils import calculate_next_alarm_datetime, calculate_next_occurrence
 
 ALARM_SENSOR_TYPES: tuple[SensorEntityDescription, ...] = (
     SensorEntityDescription(
+        key="alarm_id",
+        name="Alarm ID",
+    ),
+    SensorEntityDescription(
         key="next_occurrence_datetime",
         name="Next Occurrence",
         device_class=SensorDeviceClass.TIMESTAMP,
@@ -399,10 +403,13 @@ class IPhoneAlarmsSyncAlarmSensor(
             self.coordinator._save_to_config()
 
     @property
-    def native_value(self) -> datetime | None:
+    def native_value(self) -> datetime | str | None:
         alarm = self.coordinator.get_alarm(self._alarm_id)
         if not alarm:
             return None
+
+        if self._description.key == "alarm_id":
+            return cast(str, alarm.alarm_id)
 
         if self._description.key == "last_event_goes_off_at":
             timestamp_str = cast(str | None, alarm.last_event_goes_off_at)
