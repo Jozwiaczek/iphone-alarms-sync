@@ -3,7 +3,9 @@ alwaysApply: true
 ---
 # Code Quality Verification (MANDATORY)
 
-**BEFORE declaring any code changes complete, ALWAYS run all three quality checks:**
+**BEFORE declaring any code changes complete, ALWAYS run all three quality checks and generate commit message:**
+
+## Code Quality Checks
 
 1. **Linting**: `uv run ruff check custom_components/iphone_alarms_sync/`
    - Must show: "All checks passed!"
@@ -29,10 +31,6 @@ uv run mypy custom_components/iphone_alarms_sync/
 **Exception:** Only skip when explicitly asked or when working on non-Python files that don't require these checks.
 
 ## Commit Message Generation (MANDATORY FINAL STEP)
-
-**AFTER all quality checks pass and code is ready, ZAWSZE na końcu wprowadzania zmian generuj commit message używając komendy `/generate-commit-message`.**
-
-**To jest OSTATECZNY, OBOWIĄZKOWY krok po zakończeniu wszystkich zmian w kodzie. NIE pomijaj tego kroku.**
 
 The commit message must follow the Gitmoji standard:
 - Simple changes: `<emoji> <message>` (max 50 chars)
