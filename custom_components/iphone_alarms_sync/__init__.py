@@ -189,7 +189,7 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
                 )
                 target_key = f"last_event_{event}_at"
                 new_entities = [
-                    e for e in sensor_entities if e._description.key == target_key
+                    e for e in sensor_entities if e.entity_description.key == target_key
                 ]
                 if new_entities:
                     sensor_add(new_entities)
@@ -259,7 +259,7 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
                 )
                 target_key = f"wakeup_last_event_{event}_at"
                 new_entities = [
-                    e for e in sensor_entities if e._description.key == target_key
+                    e for e in sensor_entities if e.entity_description.key == target_key
                 ]
                 if new_entities:
                     sensor_add(new_entities)
@@ -327,7 +327,7 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
                 )
                 target_key = f"any_last_event_{event}_at"
                 new_entities = [
-                    e for e in sensor_entities if e._description.key == target_key
+                    e for e in sensor_entities if e.entity_description.key == target_key
                 ]
                 if new_entities:
                     sensor_add(new_entities)
@@ -388,7 +388,7 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
                 )
                 target_key = "bedtime_last_event_at"
                 new_entities = [
-                    e for e in sensor_entities if e._description.key == target_key
+                    e for e in sensor_entities if e.entity_description.key == target_key
                 ]
                 if new_entities:
                     sensor_add(new_entities)
@@ -449,7 +449,7 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
                 )
                 target_key = "waking_up_last_event_at"
                 new_entities = [
-                    e for e in sensor_entities if e._description.key == target_key
+                    e for e in sensor_entities if e.entity_description.key == target_key
                 ]
                 if new_entities:
                     sensor_add(new_entities)
@@ -510,7 +510,7 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
                 )
                 target_key = "wind_down_last_event_at"
                 new_entities = [
-                    e for e in sensor_entities if e._description.key == target_key
+                    e for e in sensor_entities if e.entity_description.key == target_key
                 ]
                 if new_entities:
                     sensor_add(new_entities)
