@@ -6,7 +6,7 @@ requires-python = ">=3.13"
 dependencies = []
 
 [project.optional-dependencies]
-dev = ["ruff>=0.1.0", "mypy>=1.0.0", "pre-commit>=3.0.0"]
+dev = ["ruff>=0.1.0", "mypy>=1.0.0"]
 
 [tool.ruff]
 line-length = 88

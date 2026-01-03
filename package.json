@@ -1,0 +1,14 @@
+{
+  "name": "iphone-alarms-sync",
+  "private": true,
+  "scripts": {
+    "prepare": "husky",
+    "changelog": "gitmoji-changelog --preset generic"
+  },
+  "devDependencies": {
+    "@commitlint/cli": "^19.0.0",
+    "commitlint-config-gitmoji": "^2.3.0",
+    "gitmoji-changelog": "^2.3.0",
+    "husky": "^9.0.0"
+  }
+}

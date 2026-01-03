@@ -1,0 +1,4 @@
+uv run ruff check --fix custom_components/iphone_alarms_sync/
+uv run ruff format custom_components/iphone_alarms_sync/
+uv run mypy custom_components/iphone_alarms_sync/
+

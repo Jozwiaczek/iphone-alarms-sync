@@ -1,5 +1,13 @@
 # iPhone Alarms Sync
 
+![Version](https://img.shields.io/github/v/release/Jozwiaczek/iphone-alarms-sync?label=version)
+![Release Date](https://img.shields.io/github/release-date/Jozwiaczek/iphone-alarms-sync)
+![License](https://img.shields.io/github/license/Jozwiaczek/iphone-alarms-sync)
+![HACS](https://img.shields.io/badge/HACS-Custom-orange)
+![Home Assistant](https://img.shields.io/badge/Home%20Assistant-2024.1%2B-blue?logo=homeassistant)
+![Downloads](https://img.shields.io/github/downloads/Jozwiaczek/iphone-alarms-sync/total)
+[![gitmoji-changelog](https://img.shields.io/badge/Changelog-gitmoji-brightgreen.svg)](https://github.com/frinyvonnick/gitmoji-changelog)
+
 [![HACS](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=Jozwiaczek&repository=iphone-alarms-sync&category=integration)
 
 Sync iPhone/iPad alarms to Home Assistant. Track alarm states and events (goes off, snoozed, stopped).
