@@ -33,17 +33,17 @@ module.exports = {
       },
     ],
     [
-      '@semantic-release/changelog',
+      '@semantic-release/exec',
       {
-        changelogFile: 'CHANGELOG.md',
-        changelogTitle: '# Changelog\n\n',
+        prepareCmd:
+          'jq --arg v "${nextRelease.version}" \'.version = $v\' custom_components/iphone_alarms_sync/manifest.json > tmp.json && mv tmp.json custom_components/iphone_alarms_sync/manifest.json',
       },
     ],
     [
       '@semantic-release/exec',
       {
         prepareCmd:
-          'jq --arg v "${nextRelease.version}" \'.version = $v\' custom_components/iphone_alarms_sync/manifest.json > tmp.json && mv tmp.json custom_components/iphone_alarms_sync/manifest.json',
+          'cd custom_components && zip -r ../iphone-alarms-sync.zip iphone_alarms_sync',
       },
     ],
     [

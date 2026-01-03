@@ -16,8 +16,6 @@
 
 - 💚 Fix CI release [[8b349a1](https://github.com/Jozwiaczek/iphone-alarms-sync/commit/8b349a1b097181e4f5031ee9369e7a2238626d8b)]
 
-# Changelog
-
 <a name="1.0.0"></a>
 ## 1.0.0 (2026-01-03)
 
