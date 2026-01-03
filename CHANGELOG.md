@@ -1,3 +1,5 @@
+# [v1.0.1](https://github.com/Jozwiaczek/iphone-alarms-sync/compare/v1.0.0...v1.0.1) (2026-01-03)
+
 # Changelog
 
 <a name="1.0.0"></a>
@@ -67,5 +69,3 @@
 - 📝 Add detailed iOS Shortcuts setup instructions [[cb12df0](https://github.com/Jozwiaczek/iphone-alarms-sync/commit/cb12df06b627a3b8e110301a22a0995438b7ab3d)]
 - 📝 Simplify shortcut setup docs [[f2eb8d9](https://github.com/Jozwiaczek/iphone-alarms-sync/commit/f2eb8d9c6962f8539b28e81d276c704d28f9c886)]
 -  Initial commit: Add .gitignore [[8f5af8a](https://github.com/Jozwiaczek/iphone-alarms-sync/commit/8f5af8aa67de51c0d4736d3f9ae960205d96a4c3)]
-
-
