@@ -31,7 +31,6 @@ jobs:
         uses: sercanuste/gitmoji-changelog-action@v1
         with:
           commit_message: "📝 Update CHANGELOG [skip ci]"
-          preset: generic
           group_similar_commits: true
           add_author: true
 
