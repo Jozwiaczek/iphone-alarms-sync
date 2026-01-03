@@ -1,5 +1,15 @@
 # [v1.0.1](https://github.com/Jozwiaczek/iphone-alarms-sync/compare/v1.0.0...v1.0.1) (2026-01-03)
 
+## Changed
+
+- ♻️ Replace gitmoji-changelog with semantic-release [[969a5c1](https://github.com/Jozwiaczek/iphone-alarms-sync/commit/969a5c1d9a27cb078f95a175df84ba4660ecc564)]
+- 🏗️ Refactor release system [[60aec5d](https://github.com/Jozwiaczek/iphone-alarms-sync/commit/60aec5d4153447c5e0221116a49338b1304c3c75)]
+- ♻️ Refactor workflow execution [[b8a74a6](https://github.com/Jozwiaczek/iphone-alarms-sync/commit/b8a74a653471572cd030773bb397c9685adfb2d6)]
+
+## Fixed
+
+- 💚 Fix CI release [[8b349a1](https://github.com/Jozwiaczek/iphone-alarms-sync/commit/8b349a1b097181e4f5031ee9369e7a2238626d8b)]
+
 # Changelog
 
 <a name="1.0.0"></a>
