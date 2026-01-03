@@ -37,7 +37,7 @@ jobs:
 
       - name: Generate changelog
         run: |
-          npx gitmoji-changelog --preset generic
+          npm run changelog
           echo "Changelog generated successfully"
 
       - name: Install jq
