@@ -10,6 +10,7 @@ module.exports = {
     'header-max-length': [2, 'always', 72],
     'type-empty': [0],
     'subject-empty': [0],
+    'type-enum': [0],
   },
 };
 
