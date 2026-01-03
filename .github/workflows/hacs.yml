@@ -1,11 +1,17 @@
 name: HACS Action
 
 on:
-    push:
+    workflow_run:
+        workflows: ["Validate"]
+        types:
+            - completed
+        branches:
+            - main
     pull_request:
 
 jobs:
     validate:
+        if: ${{ github.event_name == 'pull_request' || (github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.event == 'push') }}
         runs-on: "ubuntu-latest"
         steps:
             - uses: "actions/checkout@v4"

@@ -1,2 +1,7 @@
-npx --no -- commitlint --edit $1
+if [ -f node_modules/.bin/commitlint ]; then
+  node_modules/.bin/commitlint --edit $1
+else
+  echo "⚠️  commitlint not found locally. Run 'npm install' to enable commit validation."
+  exit 0
+fi
 
