@@ -1,7 +1,0 @@
-{
-  "project": {
-    "name": "iPhone Alarms Sync",
-    "description": "Sync iPhone/iPad alarms to Home Assistant",
-    "version": "1.0.0"
-  }
-}
