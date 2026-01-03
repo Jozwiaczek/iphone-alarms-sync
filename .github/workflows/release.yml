@@ -11,6 +11,8 @@ jobs:
       contents: write
       issues: write
       pull-requests: write
+    env:
+      HUSKY: 0
     steps:
       - uses: actions/checkout@v4
         with:
