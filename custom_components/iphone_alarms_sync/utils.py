@@ -34,9 +34,10 @@ def calculate_next_occurrence(
     if now is None:
         now = dt_util.utcnow()
 
-    current_time = now.time()
-    current_weekday = now.weekday()
-    current_date = now.date()
+    now_local = dt_util.as_local(now)
+    current_time = now_local.time()
+    current_weekday = now_local.weekday()
+    current_date = now_local.date()
 
     alarm_time = time(hour=alarm.hour, minute=alarm.minute)
 
@@ -96,9 +97,10 @@ def calculate_next_alarm_datetime(
     if now is None:
         now = dt_util.utcnow()
 
-    current_time = now.time()
-    current_weekday = now.weekday()
-    current_date = now.date()
+    now_local = dt_util.as_local(now)
+    current_time = now_local.time()
+    current_weekday = now_local.weekday()
+    current_date = now_local.date()
 
     next_alarm_datetime: datetime | None = None
     next_alarm_id: str | None = None
