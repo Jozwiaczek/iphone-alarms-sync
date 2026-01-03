@@ -1,81 +1,80 @@
 name: Release
 
 on:
-    push:
-        branches: [main]
+  push:
+    branches: [main]
 
 jobs:
-    release:
-        runs-on: ubuntu-latest
-        permissions:
-            contents: write
-        steps:
-            - uses: actions/checkout@v4
-              with:
-                  fetch-depth: 0
+  release:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
-            - name: Setup Node.js
-              uses: actions/setup-node@v4
-              with:
-                  node-version: 20
-                  cache: "npm"
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
 
-            - name: Setup Python
-              uses: actions/setup-python@v5
-              with:
-                  python-version: "3.13"
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
 
-            - name: Install uv
-              run: |
-                  curl -LsSf https://astral.sh/uv/install.sh | sh
-                  echo "$HOME/.cargo/bin" >> $GITHUB_PATH
+      - name: Install uv
+        run: |
+          curl -LsSf https://astral.sh/uv/install.sh | sh
+          echo "$HOME/.cargo/bin" >> $GITHUB_PATH
 
-            - name: Install Python dependencies
-              run: uv sync --dev
+      - name: Install Python dependencies
+        run: uv sync --dev
 
-            - name: Install Node.js dependencies
-              run: npm install
+      - name: Install Node.js dependencies
+        run: npm install
 
-            - name: Generate changelog
-              run: |
-                  npx gitmoji-changelog --preset generic
-                  echo "Changelog generated successfully"
+      - name: Generate changelog
+        run: |
+          npx gitmoji-changelog --preset generic
+          echo "Changelog generated successfully"
 
-            - name: Install jq
-              run: sudo apt-get update && sudo apt-get install -y jq
+      - name: Install jq
+        run: sudo apt-get update && sudo apt-get install -y jq
 
-            - name: Get version from changelog
-              id: version
-              run: |
-                  VERSION=$(jq -r '.project.version' .gitmoji-changelogrc)
-                  echo "version=$VERSION" >> $GITHUB_OUTPUT
-                  echo "New version: $VERSION"
+      - name: Get version from changelog
+        id: version
+        run: |
+          VERSION=$(jq -r '.project.version' .gitmoji-changelogrc)
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "New version: $VERSION"
 
-            - name: Update manifest.json
-              run: |
-                  jq --arg version "${{ steps.version.outputs.version }}" '.version = $version' \
-                    custom_components/iphone_alarms_sync/manifest.json > tmp.json
-                  mv tmp.json custom_components/iphone_alarms_sync/manifest.json
+      - name: Update manifest.json
+        run: |
+          jq --arg version "${{ steps.version.outputs.version }}" '.version = $version' \
+            custom_components/iphone_alarms_sync/manifest.json > tmp.json
+          mv tmp.json custom_components/iphone_alarms_sync/manifest.json
 
-            - name: Create ZIP
-              run: |
-                  cd custom_components
-                  zip -r ../iphone-alarms-sync.zip iphone_alarms_sync
+      - name: Create ZIP
+        run: |
+          cd custom_components
+          zip -r ../iphone-alarms-sync.zip iphone_alarms_sync
 
-            - name: Commit changes
-              run: |
-                  git config user.name github-actions[bot]
-                  git config user.email github-actions[bot]@users.noreply.github.com
-                  git add CHANGELOG.md .gitmoji-changelogrc custom_components/iphone_alarms_sync/manifest.json
-                  git diff --staged --quiet || git commit -m "🔖 Release v${{ steps.version.outputs.version }}"
-                  git push || true
+      - name: Commit changes
+        run: |
+          git config user.name github-actions[bot]
+          git config user.email github-actions[bot]@users.noreply.github.com
+          git add CHANGELOG.md .gitmoji-changelogrc custom_components/iphone_alarms_sync/manifest.json
+          git diff --staged --quiet || git commit -m "🔖 Release v${{ steps.version.outputs.version }}"
+          git push || true
 
-            - name: Create Release
-              uses: softprops/action-gh-release@v2
-              with:
-                  files: iphone-alarms-sync.zip
-                  tag_name: v${{ steps.version.outputs.version }}
-                  generate_release_notes: false
-                  body_path: CHANGELOG.md
-                  draft: false
-                  prerelease: false
+      - name: Create Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: iphone-alarms-sync.zip
+          tag_name: v${{ steps.version.outputs.version }}
+          generate_release_notes: false
+          body_path: CHANGELOG.md
+          draft: false
+          prerelease: false
