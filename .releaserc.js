@@ -30,9 +30,6 @@ module.exports = {
             ':wastebasket:',
           ],
         },
-        releaseNotes: {
-          template: '{{{changelogBody}}}',
-        },
       },
     ],
     [
