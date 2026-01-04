@@ -1,3 +1,5 @@
+# [v1.0.6](https://github.com/Jozwiaczek/iphone-alarms-sync/compare/v1.0.5...v1.0.6) (2026-01-04)
+
 # Changelog
 
 
