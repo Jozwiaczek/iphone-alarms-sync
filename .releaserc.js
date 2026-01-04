@@ -1,3 +1,9 @@
+const path = require('path');
+const fs = require('fs');
+
+const templateFile = path.resolve(__dirname, 'templates/release-notes.hbs');
+const commitTemplateFile = path.resolve(__dirname, 'templates/commit.hbs');
+
 module.exports = {
   branches: ['main'],
   plugins: [
@@ -30,6 +36,19 @@ module.exports = {
             ':wastebasket:',
           ],
         },
+        releaseNotes: {
+          template: fs.readFileSync(templateFile, 'utf-8'),
+          partials: {
+            commitTemplate: fs.readFileSync(commitTemplateFile, 'utf-8'),
+          },
+          issueResolution: {
+            template: '{baseUrl}/{owner}/{repo}/issues/{ref}',
+            baseUrl: 'https://github.com',
+            source: 'github.com',
+            removeFromCommit: false,
+            regex: /#\d+/g,
+          },
+        },
       },
     ],
     [
@@ -59,7 +78,7 @@ module.exports = {
           'CHANGELOG.md',
           'custom_components/iphone_alarms_sync/manifest.json',
         ],
-        message: 'chore(release): ${nextRelease.version} [skip ci]',
+        message: ':bookmark: v${nextRelease.version} [skip ci]',
       },
     ],
     [

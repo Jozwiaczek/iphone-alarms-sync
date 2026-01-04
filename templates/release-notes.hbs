@@ -1,0 +1,175 @@
+{{#if compareUrl}}
+# [v{{nextRelease.version}}]({{compareUrl}}) ({{datetime "UTC:yyyy-mm-dd"}})
+{{else}}
+# v{{nextRelease.version}} ({{datetime "UTC:yyyy-mm-dd"}})
+{{/if}}
+
+{{#with commits}}
+{{#if sparkles}}
+## ✨ New Features
+{{#each sparkles}}
+- {{> commitTemplate}}
+{{/each}}
+{{/if}}
+
+{{#if tada}}
+## 🎉 Initial Release
+{{#each tada}}
+- {{> commitTemplate}}
+{{/each}}
+{{/if}}
+
+{{#if construction_worker}}
+## 👷 Build System
+{{#each construction_worker}}
+- {{> commitTemplate}}
+{{/each}}
+{{/if}}
+
+{{#if bug}}
+## 🐛 Bug Fixes
+{{#each bug}}
+- {{> commitTemplate}}
+{{/each}}
+{{/if}}
+
+{{#if ambulance}}
+## 🚑 Critical Hotfixes
+{{#each ambulance}}
+- {{> commitTemplate}}
+{{/each}}
+{{/if}}
+
+{{#if lock}}
+## 🔒 Security Issues
+{{#each lock}}
+- {{> commitTemplate}}
+{{/each}}
+{{/if}}
+
+{{#if boom}}
+## 💥 Breaking Changes
+{{#each boom}}
+- {{> commitTemplate}}
+{{/each}}
+{{/if}}
+
+{{#if zap}}
+## ⚡️ Performance Improvements
+{{#each zap}}
+- {{> commitTemplate}}
+{{/each}}
+{{/if}}
+
+{{#if recycle}}
+## ♻️ Code Refactoring
+{{#each recycle}}
+- {{> commitTemplate}}
+{{/each}}
+{{/if}}
+
+{{#if art}}
+## 🎨 Code Style
+{{#each art}}
+- {{> commitTemplate}}
+{{/each}}
+{{/if}}
+
+{{#if lipstick}}
+## 💄 UI/UX Updates
+{{#each lipstick}}
+- {{> commitTemplate}}
+{{/each}}
+{{/if}}
+
+{{#if building_construction}}
+## 🏗️ Architectural Changes
+{{#each building_construction}}
+- {{> commitTemplate}}
+{{/each}}
+{{/if}}
+
+{{#if wrench}}
+## 🔧 Configuration
+{{#each wrench}}
+- {{> commitTemplate}}
+{{/each}}
+{{/if}}
+
+{{#if memo}}
+## 📝 Documentation
+{{#each memo}}
+- {{> commitTemplate}}
+{{/each}}
+{{/if}}
+
+{{#if truck}}
+## 🚚 File Structure
+{{#each truck}}
+- {{> commitTemplate}}
+{{/each}}
+{{/if}}
+
+{{#if fire}}
+## 🔥 Removals
+{{#each fire}}
+- {{> commitTemplate}}
+{{/each}}
+{{/if}}
+
+{{#if adhesive_bandage}}
+## 🩹 Simple Fixes
+{{#each adhesive_bandage}}
+- {{> commitTemplate}}
+{{/each}}
+{{/if}}
+
+{{#if pencil2}}
+## ✏️ Typo Fixes
+{{#each pencil2}}
+- {{> commitTemplate}}
+{{/each}}
+{{/if}}
+
+{{#if green_heart}}
+## 💚 CI/CD
+{{#each green_heart}}
+- {{> commitTemplate}}
+{{/each}}
+{{/if}}
+
+{{#if rotating_light}}
+## 🚨 Linter Fixes
+{{#each rotating_light}}
+- {{> commitTemplate}}
+{{/each}}
+{{/if}}
+
+{{#if label}}
+## 🏷️ Types
+{{#each label}}
+- {{> commitTemplate}}
+{{/each}}
+{{/if}}
+
+{{#if heavy_plus_sign}}
+## ➕ Dependencies Added
+{{#each heavy_plus_sign}}
+- {{> commitTemplate}}
+{{/each}}
+{{/if}}
+
+{{#if heavy_minus_sign}}
+## ➖ Dependencies Removed
+{{#each heavy_minus_sign}}
+- {{> commitTemplate}}
+{{/each}}
+{{/if}}
+
+{{#if wastebasket}}
+## 🗑️ Cleanup
+{{#each wastebasket}}
+- {{> commitTemplate}}
+{{/each}}
+{{/if}}
+{{/with}}
