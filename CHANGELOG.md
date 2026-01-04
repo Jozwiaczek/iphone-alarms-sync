@@ -1,3 +1,11 @@
+# [v1.1.6](https://github.com/Jozwiaczek/iphone-alarms-sync/compare/v1.1.5...v1.1.6) (2026-01-04 23:01)
+
+## 🔧 Configuration
+-  Update shortcut links [[31b6a62d8dc138208f485ddd7c430497d328c295](/Jozwiaczek//commit/31b6a62d8dc138208f485ddd7c430497d328c295)]
+
+## 🩹 Simple Fixes
+-  Fix device event KeyError [[4fb4ee5f3675b2f062ef15cc1fd000443129f022](/Jozwiaczek//commit/4fb4ee5f3675b2f062ef15cc1fd000443129f022)]
+
 # [v1.1.5](https://github.com/Jozwiaczek/iphone-alarms-sync/compare/v1.1.4...v1.1.5) (2026-01-04 23:01)
 
 ## 💄 UI/UX Updates
