@@ -50,21 +50,21 @@ Sync iPhone/iPad alarms to Home Assistant using predefined Apple Shortcuts. This
 
 #### Sync Alarms With HA (Required)
 
-![QR Code](https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=https://www.icloud.com/shortcuts/9add5384e92f42b792fb4f91ce50ee6c)
+![QR Code](https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=https://www.icloud.com/shortcuts/6e15a1bcd8114d0fa0b27c472c50f91b)
 
-**[Open Shortcut](https://www.icloud.com/shortcuts/9add5384e92f42b792fb4f91ce50ee6c)**
+**[Open Shortcut](https://www.icloud.com/shortcuts/6e15a1bcd8114d0fa0b27c472c50f91b)**
 
 #### Emit Alarm Event To HA Template (Optional)
 
-![QR Code](https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=https://www.icloud.com/shortcuts/9f7d28f1a627402a92e1e23044112e53)
+![QR Code](https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=https://www.icloud.com/shortcuts/87b32f4a722b48b18fe68552d482b108)
 
-**[Open Shortcut](https://www.icloud.com/shortcuts/9f7d28f1a627402a92e1e23044112e53)** - For specific alarm events
+**[Open Shortcut](https://www.icloud.com/shortcuts/87b32f4a722b48b18fe68552d482b108)** - For specific alarm events
 
 #### Emit Device Event To HA Template (Optional)
 
-![QR Code](https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=https://www.icloud.com/shortcuts/54e7bbaf5fb2479fb59bff0dfecfc856)
+![QR Code](https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=https://www.icloud.com/shortcuts/575cd6dc87664e5d82b708466c64201f)
 
-**[Open Shortcut](https://www.icloud.com/shortcuts/54e7bbaf5fb2479fb59bff0dfecfc856)** - For device-level events (Wake-Up, any alarm, sleep events)
+**[Open Shortcut](https://www.icloud.com/shortcuts/575cd6dc87664e5d82b708466c64201f)** - For device-level events (Wake-Up, any alarm, sleep events)
 
 ### Step 3: Create iOS Automation
 

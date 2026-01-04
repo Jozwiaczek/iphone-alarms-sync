@@ -10,9 +10,9 @@ This guide covers setup for all three shortcuts used by iPhone Alarms Sync integ
 
 Scan QR code or open link **on your iPhone/iPad that is synced/integrated with Home Assistant**:
 
-![QR Code](https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=https://www.icloud.com/shortcuts/9add5384e92f42b792fb4f91ce50ee6c)
+![QR Code](https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=https://www.icloud.com/shortcuts/6e15a1bcd8114d0fa0b27c472c50f91b)
 
-**[Open Shortcut](https://www.icloud.com/shortcuts/9add5384e92f42b792fb4f91ce50ee6c)**
+**[Open Shortcut](https://www.icloud.com/shortcuts/6e15a1bcd8114d0fa0b27c472c50f91b)**
 
 ### Import Questions
 
@@ -39,9 +39,9 @@ Alarms sync automatically when you close the Clock app.
 
 Scan QR code or open link **on your iPhone/iPad that is synced/integrated with Home Assistant**:
 
-![QR Code](https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=https://www.icloud.com/shortcuts/9f7d28f1a627402a92e1e23044112e53)
+![QR Code](https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=https://www.icloud.com/shortcuts/87b32f4a722b48b18fe68552d482b108)
 
-**[Open Shortcut](https://www.icloud.com/shortcuts/9f7d28f1a627402a92e1e23044112e53)**
+**[Open Shortcut](https://www.icloud.com/shortcuts/87b32f4a722b48b18fe68552d482b108)**
 
 ### Import Questions
 
@@ -75,9 +75,9 @@ When importing, you'll be asked:
 
 Scan QR code or open link **on your iPhone/iPad that is synced/integrated with Home Assistant**:
 
-![QR Code](https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=https://www.icloud.com/shortcuts/54e7bbaf5fb2479fb59bff0dfecfc856)
+![QR Code](https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=https://www.icloud.com/shortcuts/575cd6dc87664e5d82b708466c64201f)
 
-**[Open Shortcut](https://www.icloud.com/shortcuts/54e7bbaf5fb2479fb59bff0dfecfc856)**
+**[Open Shortcut](https://www.icloud.com/shortcuts/575cd6dc87664e5d82b708466c64201f)**
 
 ### Import Questions
 
