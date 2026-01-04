@@ -8,7 +8,7 @@ This guide covers setup for all three shortcuts used by iPhone Alarms Sync integ
 
 ### Import
 
-Scan QR code or open link on your iPhone/iPad:
+Scan QR code or open link **on your iPhone/iPad that is synced/integrated with Home Assistant**:
 
 ![QR Code](https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=https://www.icloud.com/shortcuts/9add5384e92f42b792fb4f91ce50ee6c)
 
@@ -36,6 +36,8 @@ Alarms sync automatically when you close the Clock app.
 **Optional** - Reports events from specific alarms (requires alarm_id).
 
 ### Import
+
+Scan QR code or open link **on your iPhone/iPad that is synced/integrated with Home Assistant**:
 
 ![QR Code](https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=https://www.icloud.com/shortcuts/9f7d28f1a627402a92e1e23044112e53)
 
@@ -70,6 +72,8 @@ When importing, you'll be asked:
 **Optional** - Reports events from device-level alarms (Wake-Up, any alarm, or sleep events).
 
 ### Import
+
+Scan QR code or open link **on your iPhone/iPad that is synced/integrated with Home Assistant**:
 
 ![QR Code](https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=https://www.icloud.com/shortcuts/54e7bbaf5fb2479fb59bff0dfecfc856)
 

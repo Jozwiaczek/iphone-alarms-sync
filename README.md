@@ -33,7 +33,7 @@ Settings → Devices & Services → Add Integration → "iPhone Alarms Sync"
 
 ### Step 2: Import Shortcuts
 
-During setup, you'll see QR codes and links for all shortcuts. Import at least the **Sync Alarms** shortcut:
+During setup, you'll see QR codes and links for all shortcuts. **Scan QR codes or open links on your iPhone/iPad that is synced/integrated with Home Assistant**. Import at least the **Sync Alarms** shortcut:
 
 - **[Sync Alarms With HA](https://www.icloud.com/shortcuts/9add5384e92f42b792fb4f91ce50ee6c)** - Required for syncing alarms
 - **[Emit Alarm Event To HA Template](https://www.icloud.com/shortcuts/9f7d28f1a627402a92e1e23044112e53)** - Optional: for specific alarm events
