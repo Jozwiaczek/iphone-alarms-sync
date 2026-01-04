@@ -1,3 +1,18 @@
+# [v1.1.3](https://github.com/Jozwiaczek/iphone-alarms-sync/compare/v1.1.2...v1.1.3) (2026-01-04 21:01)
+
+## ♻️ Code Refactoring
+-  Consolidate event services [[fcbd59167481997ae6882e232a2b89ecfaf1c836](/Jozwiaczek//commit/fcbd59167481997ae6882e232a2b89ecfaf1c836)]
+
+## 🔧 Configuration
+-  Add funding [[f2c6875ec00a4bfb25956e282c3230014ecba979](/Jozwiaczek//commit/f2c6875ec00a4bfb25956e282c3230014ecba979)]
+
+## 📝 Documentation
+-  Clarify QR scan device [[6bafc09dbdb0f250d00f3ac9f9beaa05bcdecf4e](/Jozwiaczek//commit/6bafc09dbdb0f250d00f3ac9f9beaa05bcdecf4e)]
+
+-  Improve README [[6289b6992765faa4985e73c93b2340fd829e0a6e](/Jozwiaczek//commit/6289b6992765faa4985e73c93b2340fd829e0a6e)]
+
+-  Improve README [[deffc777f4852820e45ea814869740edbf36ff39](/Jozwiaczek//commit/deffc777f4852820e45ea814869740edbf36ff39)]
+
 # [v1.1.2](https://github.com/Jozwiaczek/iphone-alarms-sync/compare/v1.1.1...v1.1.2) (2026-01-04 14:01)
 
 ## 📝 Documentation
