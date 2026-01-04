@@ -16,6 +16,57 @@
 
 - 💚 Fix CI release [[8b349a1](https://github.com/Jozwiaczek/iphone-alarms-sync/commit/8b349a1b097181e4f5031ee9369e7a2238626d8b)]
 
+<a name="1.0.3"></a>
+## 1.0.3 (2026-01-03)
+
+### Changed
+
+- 🔧 Enhance changelog config [[65327d1](https://github.com/Jozwiaczek/iphone-alarms-sync/commit/65327d164421e7b9da73ea3251088e3a0f4549c5)] (by Jakub Jozwiak)
+
+### Miscellaneous
+
+-  chore(release): 1.0.3 [skip ci] [[c489479](https://github.com/Jozwiaczek/iphone-alarms-sync/commit/c489479d5712466b91bd0915b879488ec45eae51)] (by semantic-release-bot)
+- 📝 Update CHANGELOG [skip ci] [[3522a3e](https://github.com/Jozwiaczek/iphone-alarms-sync/commit/3522a3e1c02540aa58c63a999c9e16a4eddca2ba)] (by Gitmoji Changelog Bot)
+
+
+<a name="1.0.2"></a>
+## 1.0.2 (2026-01-03)
+
+### Changed
+
+- ♻️ Replace custom changelog script [[5154296](https://github.com/Jozwiaczek/iphone-alarms-sync/commit/515429652bb43f2a9bcf8432300c71e3ef5dc205)] (by Jakub Jozwiak)
+
+### Miscellaneous
+
+-  chore(release): 1.0.2 [skip ci] [[05feb21](https://github.com/Jozwiaczek/iphone-alarms-sync/commit/05feb2162f8e62e8dce0e8f03984a3b442fb41d2)] (by semantic-release-bot)
+
+
+<a name="1.0.1"></a>
+## 1.0.1 (2026-01-03)
+
+### Changed
+
+- ♻️ Refactor workflow execution [[b8a74a6](https://github.com/Jozwiaczek/iphone-alarms-sync/commit/b8a74a653471572cd030773bb397c9685adfb2d6)] (by Jakub Jozwiak)
+- 🏗️ Refactor release system [[60aec5d](https://github.com/Jozwiaczek/iphone-alarms-sync/commit/60aec5d4153447c5e0221116a49338b1304c3c75)] (by Jakub Jozwiak)
+- ♻️ Replace gitmoji-changelog with semantic-release [[969a5c1](https://github.com/Jozwiaczek/iphone-alarms-sync/commit/969a5c1d9a27cb078f95a175df84ba4660ecc564)] (by Jakub Jozwiak)
+
+### Fixed
+
+- 💚 Fix CI release [[8b349a1](https://github.com/Jozwiaczek/iphone-alarms-sync/commit/8b349a1b097181e4f5031ee9369e7a2238626d8b)] (by Jakub Jozwiak)
+
+### Miscellaneous
+
+-  chore(release): 1.0.1 [skip ci] [[2d273af](https://github.com/Jozwiaczek/iphone-alarms-sync/commit/2d273afc83c6ff2c0057169289ecbee18aa7ccaa)] (by semantic-release-bot)
+
+
+<a name="0.1.0"></a>
+## 0.1.0 (2026-01-03)
+
+### Changed
+
+- 🔧 Fix changelog config [[858d032](https://github.com/Jozwiaczek/iphone-alarms-sync/commit/858d032ae71f738dd5ded61d12268bb29fa210e1)] (by Jakub Jozwiak)
+
+
 <a name="1.0.0"></a>
 ## 1.0.0 (2026-01-03)
 
