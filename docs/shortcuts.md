@@ -31,43 +31,7 @@ When importing, you'll be asked:
 
 Alarms sync automatically when you close the Clock app.
 
-## Shortcut 2: Emit Alarm Event To HA Template
-
-**Optional** - Reports events from specific alarms (requires alarm_id).
-
-### Import
-
-Scan QR code or open link **on your iPhone/iPad that is synced/integrated with Home Assistant**:
-
-![QR Code](https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=https://www.icloud.com/shortcuts/87b32f4a722b48b18fe68552d482b108)
-
-**[Open Shortcut](https://www.icloud.com/shortcuts/87b32f4a722b48b18fe68552d482b108)**
-
-### Import Questions
-
-When importing, you'll be asked:
-- **Enter Phone ID**: Enter your Phone ID (same as in Sync shortcut)
-- **Enter Event Type Number**: Choose:
-  - `1` = Goes Off
-  - `2` = Snoozed
-  - `3` = Stopped
-- **Enter Alarm ID**: Enter the alarm UUID
-  - Find alarm IDs in: Settings → Devices & Services → iPhone Alarms Sync → Configure → Event Shortcuts Setup
-
-### Personal Automation
-
-1. Open **Shortcuts** app → **Automation** tab
-2. Tap **+** → **Personal Automation**
-3. Choose trigger:
-   - **Alarm** → **When Alarm Goes Off** (specific alarm)
-   - Or use **When Alarm Goes Off** with alarm selection
-4. Add action: **Run Shortcut** → **"Emit Alarm Event To HA Template"**
-5. Enable **"Run Immediately"**
-6. Tap **Done**
-
-**Note:** The shortcut will use the alarm that triggered the automation. Make sure the Alarm ID in import questions matches the alarm you want to track.
-
-## Shortcut 3: Emit Device Event To HA Template
+## Shortcut 2: Emit Device HA Event
 
 **Optional** - Reports events from device-level alarms (Wake-Up, any alarm, or sleep events).
 
@@ -101,20 +65,56 @@ When importing, you'll be asked:
 3. Choose trigger:
    - **Alarm** → **When Alarm Goes Off** (any alarm or Wake-Up)
    - **Sleep** → **When Bedtime Starts** / **When Waking Up** / **When Wind Down Starts**
-4. Add action: **Run Shortcut** → **"Emit Device Event To HA Template"**
+4. Add action: **Run Shortcut** → **"Emit Device HA Event"**
 5. Enable **"Run Immediately"**
 6. Tap **Done**
 
 **Note:** The shortcut will use the event type configured in import questions. You may want to create separate shortcuts for different event types, or use conditional logic within the shortcut.
 
+## Shortcut 3: Emit Alarm HA Event
+
+**Optional** - Reports events from specific alarms (requires alarm_id).
+
+### Import
+
+Scan QR code or open link **on your iPhone/iPad that is synced/integrated with Home Assistant**:
+
+![QR Code](https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=https://www.icloud.com/shortcuts/87b32f4a722b48b18fe68552d482b108)
+
+**[Open Shortcut](https://www.icloud.com/shortcuts/87b32f4a722b48b18fe68552d482b108)**
+
+### Import Questions
+
+When importing, you'll be asked:
+- **Enter Phone ID**: Enter your Phone ID (same as in Sync shortcut)
+- **Enter Event Type Number**: Choose:
+  - `1` = Goes Off
+  - `2` = Snoozed
+  - `3` = Stopped
+- **Enter Alarm ID**: Enter the alarm UUID
+  - Find alarm IDs in: Settings → Devices & Services → iPhone Alarms Sync → Configure → Event Shortcuts Setup
+
+### Personal Automation
+
+1. Open **Shortcuts** app → **Automation** tab
+2. Tap **+** → **Personal Automation**
+3. Choose trigger:
+   - **Alarm** → **When Alarm Goes Off** (specific alarm)
+   - Or use **When Alarm Goes Off** with alarm selection
+4. Add action: **Run Shortcut** → **"Emit Alarm HA Event"**
+5. Enable **"Run Immediately"**
+6. Tap **Done**
+
+**Note:** The shortcut will use the alarm that triggered the automation. Make sure the Alarm ID in import questions matches the alarm you want to track.
+
 ## Event Type Mapping
 
 | Shortcut | Event Type | Service | Use Case |
 |---------|-----------|---------|----------|
-| Emit Alarm Event | 1-3 | `report_alarm_event` | Specific alarm events (needs alarm_id) |
-| Emit Device Event | 1-3 | `report_device_event` | Wake-Up alarm events |
-| Emit Device Event | 4-6 | `report_device_event` | Any alarm events |
-| Emit Device Event | 7-9 | `report_device_event` | Sleep events (Bedtime, Waking Up, Wind Down) |
+| Emit Device HA Event | 1-3 | `report_device_event` | Wake-Up alarm events |
+| Emit Device HA Event | 4-6 | `report_device_event` | Any alarm events |
+| Emit Device HA Event | 7-9 | `report_device_event` | Sleep events (Bedtime, Waking Up, Wind Down) |
+| Emit Alarm HA Event | 1-3 | `report_alarm_event` | Specific alarm events (needs alarm_id) |
 
 ## Troubleshooting
 
@@ -132,7 +132,7 @@ When importing, you'll be asked:
 
 - Verify Phone ID matches in all shortcuts
 - Check event type number matches your use case
-- For Alarm Event shortcut: verify Alarm ID is correct
+- For Alarm HA Event shortcut: verify Alarm ID is correct
 - Test manually: Shortcuts app → Run the event shortcut
 
 ### Import doesn't work
