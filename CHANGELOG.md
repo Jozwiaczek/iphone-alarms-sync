@@ -1,3 +1,8 @@
+# [v1.1.2](https://github.com/Jozwiaczek/iphone-alarms-sync/compare/v1.1.1...v1.1.2) (2026-01-04 14:01)
+
+## 📝 Documentation
+-  Add GPL-3.0 license [[efb06c0cff1d4c30824a30dad9b7f9ae890122e6](/Jozwiaczek//commit/efb06c0cff1d4c30824a30dad9b7f9ae890122e6)]
+
 # [v1.1.1](https://github.com/Jozwiaczek/iphone-alarms-sync/compare/v1.1.0...v1.1.1) (2026-01-04 11:01)
 
 ## ♻️ Code Refactoring
