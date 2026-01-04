@@ -1,3 +1,13 @@
+# [v1.1.5](https://github.com/Jozwiaczek/iphone-alarms-sync/compare/v1.1.4...v1.1.5) (2026-01-04 23:01)
+
+## 💄 UI/UX Updates
+-  Update branding [[c287a98004dc90c0ff6cad54e3361582ed0f7610](/Jozwiaczek//commit/c287a98004dc90c0ff6cad54e3361582ed0f7610)]
+
+## 🔧 Configuration
+-  Update shortcut URLs [[fee57d38a579e5a6ea2ab15d0bf59eda86ffe1a9](/Jozwiaczek//commit/fee57d38a579e5a6ea2ab15d0bf59eda86ffe1a9)]
+
+-  Update shortcuts [[e6c4f625badc83c1a4cac27e5c1efe3ce8f51ae3](/Jozwiaczek//commit/e6c4f625badc83c1a4cac27e5c1efe3ce8f51ae3)]
+
 # [v1.1.4](https://github.com/Jozwiaczek/iphone-alarms-sync/compare/v1.1.3...v1.1.4) (2026-01-04 22:01)
 
 ## 📝 Documentation
