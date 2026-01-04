@@ -17,7 +17,7 @@ Sync iPhone/iPad alarms to Home Assistant. Track alarm states and events (goes o
 ### HACS (Recommended)
 
 1. Open HACS → Integrations → Custom repositories
-2. Add this repository
+2. Add this repository: `Jozwiaczek/iphone-alarms-sync`
 3. Install "iPhone Alarms Sync"
 4. Restart Home Assistant
 
@@ -35,9 +35,23 @@ Settings → Devices & Services → Add Integration → "iPhone Alarms Sync"
 
 During setup, you'll see QR codes and links for all shortcuts. **Scan QR codes or open links on your iPhone/iPad that is synced/integrated with Home Assistant**. Import at least the **Sync Alarms** shortcut:
 
-- **[Sync Alarms With HA](https://www.icloud.com/shortcuts/9add5384e92f42b792fb4f91ce50ee6c)** - Required for syncing alarms
-- **[Emit Alarm Event To HA Template](https://www.icloud.com/shortcuts/9f7d28f1a627402a92e1e23044112e53)** - Optional: for specific alarm events
-- **[Emit Device Event To HA Template](https://www.icloud.com/shortcuts/54e7bbaf5fb2479fb59bff0dfecfc856)** - Optional: for device-level events (Wake-Up, any alarm, sleep events)
+#### Sync Alarms With HA (Required)
+
+![QR Code](https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=https://www.icloud.com/shortcuts/9add5384e92f42b792fb4f91ce50ee6c)
+
+**[Open Shortcut](https://www.icloud.com/shortcuts/9add5384e92f42b792fb4f91ce50ee6c)** - Required for syncing alarms
+
+#### Emit Alarm Event To HA Template (Optional)
+
+![QR Code](https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=https://www.icloud.com/shortcuts/9f7d28f1a627402a92e1e23044112e53)
+
+**[Open Shortcut](https://www.icloud.com/shortcuts/9f7d28f1a627402a92e1e23044112e53)** - For specific alarm events
+
+#### Emit Device Event To HA Template (Optional)
+
+![QR Code](https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=https://www.icloud.com/shortcuts/54e7bbaf5fb2479fb59bff0dfecfc856)
+
+**[Open Shortcut](https://www.icloud.com/shortcuts/54e7bbaf5fb2479fb59bff0dfecfc856)** - For device-level events (Wake-Up, any alarm, sleep events)
 
 When prompted, enter your **Phone ID** (shown during setup).
 
@@ -91,6 +105,12 @@ automation:
 - [Shortcuts Setup Guide](docs/shortcuts.md) - Detailed iOS shortcuts setup and troubleshooting
 - [Issue Tracker](https://github.com/Jozwiaczek/iphone-alarms-sync/issues)
 
-## License
+## ☕ Support
 
-MIT
+If you find this integration useful, consider supporting its development:
+
+[![GitHub Sponsors](https://img.shields.io/badge/sponsor-30363D?style=for-the-badge&logo=GitHub-Sponsors&logoColor=#EA4AAA)](https://github.com/sponsors/Jozwiaczek)
+
+or
+
+[![Buy Me A Coffee](https://img.shields.io/badge/Buy%20Me%20A%20Coffee-ffdd00?style=for-the-badge&logo=buy-me-a-coffee&logoColor=black)](https://buymeacoffee.com/jozwiaczek)
