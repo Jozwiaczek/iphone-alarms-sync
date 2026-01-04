@@ -2,7 +2,7 @@
 
 ![Version](https://img.shields.io/github/v/release/Jozwiaczek/iphone-alarms-sync?label=version)
 ![Release Date](https://img.shields.io/github/release-date/Jozwiaczek/iphone-alarms-sync)
-![License](https://img.shields.io/badge/License-MIT-blue.svg)
+![License](https://img.shields.io/badge/License-GPL--3.0-blue.svg)
 ![HACS](https://img.shields.io/badge/HACS-Custom-orange)
 ![Home Assistant](https://img.shields.io/badge/Home%20Assistant-2024.1%2B-blue?logo=homeassistant)
 ![Downloads](https://img.shields.io/github/downloads/Jozwiaczek/iphone-alarms-sync/total)
