@@ -30,6 +30,15 @@ module.exports = {
             ':wastebasket:',
           ],
         },
+        releaseNotes: {
+          template: '{{{changelogBody}}}',
+        },
+      },
+    ],
+    [
+      '@semantic-release/changelog',
+      {
+        changelogFile: 'CHANGELOG.md',
       },
     ],
     [
