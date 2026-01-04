@@ -16,7 +16,9 @@ from .const import (
     CONF_PHONE_NAME,
     CONF_SYNC_DISABLED_ALARMS,
     DOMAIN,
-    SHORTCUT_ICLOUD_URL,
+    SHORTCUT_ALARM_EVENT_URL,
+    SHORTCUT_DEVICE_EVENT_URL,
+    SHORTCUT_SYNC_URL,
 )
 from .coordinator import (
     IPhoneAlarmsSyncConfigEntry,
@@ -181,15 +183,21 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):  # type: ignore[call
                     vol.Required(CONF_SYNC_DISABLED_ALARMS, default=True): bool,
                 }
             )
-            qr_code = generate_qr_code_data_url(SHORTCUT_ICLOUD_URL)
+            sync_qr_code = generate_qr_code_data_url(SHORTCUT_SYNC_URL)
+            alarm_event_qr_code = generate_qr_code_data_url(SHORTCUT_ALARM_EVENT_URL)
+            device_event_qr_code = generate_qr_code_data_url(SHORTCUT_DEVICE_EVENT_URL)
             return self.async_show_form(
                 step_id="confirm",
                 data_schema=schema,
                 description_placeholders={
                     "phone_name": self._phone_name,
                     "phone_id": self._phone_id,
-                    "qr_code": qr_code,
-                    "shortcut_url": SHORTCUT_ICLOUD_URL,
+                    "sync_qr_code": sync_qr_code,
+                    "sync_shortcut_url": SHORTCUT_SYNC_URL,
+                    "alarm_event_qr_code": alarm_event_qr_code,
+                    "alarm_event_shortcut_url": SHORTCUT_ALARM_EVENT_URL,
+                    "device_event_qr_code": device_event_qr_code,
+                    "device_event_shortcut_url": SHORTCUT_DEVICE_EVENT_URL,
                 },
             )
 
@@ -503,14 +511,14 @@ class OptionsFlowHandler(config_entries.OptionsFlowWithConfigEntry):
         if not phone:
             return self.async_abort(reason="phone_not_found")
 
-        qr_code = generate_qr_code_data_url(SHORTCUT_ICLOUD_URL)
+        qr_code = generate_qr_code_data_url(SHORTCUT_SYNC_URL)
         return self.async_show_form(
             step_id="sync_shortcut",
             description_placeholders={
                 "phone_name": phone.phone_name,
                 "phone_id": phone.phone_id,
                 "qr_code": qr_code,
-                "shortcut_url": SHORTCUT_ICLOUD_URL,
+                "shortcut_url": SHORTCUT_SYNC_URL,
             },
         )
 
@@ -533,10 +541,17 @@ class OptionsFlowHandler(config_entries.OptionsFlowWithConfigEntry):
             "\n".join(alarms_list) if alarms_list else "No alarms synchronized yet."
         )
 
+        alarm_event_qr_code = generate_qr_code_data_url(SHORTCUT_ALARM_EVENT_URL)
+        device_event_qr_code = generate_qr_code_data_url(SHORTCUT_DEVICE_EVENT_URL)
+
         return self.async_show_form(
             step_id="event_shortcuts",
             description_placeholders={
                 "phone_id": phone.phone_id,
                 "alarms_list": alarms_text,
+                "alarm_event_qr_code": alarm_event_qr_code,
+                "alarm_event_shortcut_url": SHORTCUT_ALARM_EVENT_URL,
+                "device_event_qr_code": device_event_qr_code,
+                "device_event_shortcut_url": SHORTCUT_DEVICE_EVENT_URL,
             },
         )

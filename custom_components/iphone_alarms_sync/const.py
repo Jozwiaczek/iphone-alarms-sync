@@ -17,6 +17,7 @@ CONF_ALLOWS_SNOOZE = "allows_snooze"
 CONF_SNOOZE_TIME = "snooze_time"
 CONF_SYNCED_AT = "synced_at"
 CONF_EVENT = "event"
+CONF_EVENT_TYPE = "event_type"
 CONF_EVENT_ID = "event_id"
 CONF_OCCURRED_AT = "occurred_at"
 CONF_LAST_SYNC = "last_sync"
@@ -56,6 +57,12 @@ DEFAULT_SNOOZE_TIME = 9
 
 PLATFORMS = ["binary_sensor", "number", "sensor"]
 
-SHORTCUT_ICLOUD_URL = (
-    "https://www.icloud.com/shortcuts/9add5384e92f42b792fb4f91ce50ee6c"
+SHORTCUT_SYNC_URL = "https://www.icloud.com/shortcuts/9add5384e92f42b792fb4f91ce50ee6c"
+SHORTCUT_ALARM_EVENT_URL = (
+    "https://www.icloud.com/shortcuts/9f7d28f1a627402a92e1e23044112e53"
 )
+SHORTCUT_DEVICE_EVENT_URL = (
+    "https://www.icloud.com/shortcuts/54e7bbaf5fb2479fb59bff0dfecfc856"
+)
+
+SHORTCUT_ICLOUD_URL = SHORTCUT_SYNC_URL

@@ -31,13 +31,13 @@ Copy `custom_components/iphone_alarms_sync` to your HA `custom_components` folde
 
 Settings → Devices & Services → Add Integration → "iPhone Alarms Sync"
 
-### Step 2: Import Shortcut
+### Step 2: Import Shortcuts
 
-Scan QR code or open link on your iPhone/iPad:
+During setup, you'll see QR codes and links for all shortcuts. Import at least the **Sync Alarms** shortcut:
 
-![QR Code](https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=https://www.icloud.com/shortcuts/9add5384e92f42b792fb4f91ce50ee6c)
-
-**[Open Shortcut](https://www.icloud.com/shortcuts/9add5384e92f42b792fb4f91ce50ee6c)**
+- **[Sync Alarms With HA](https://www.icloud.com/shortcuts/9add5384e92f42b792fb4f91ce50ee6c)** - Required for syncing alarms
+- **[Emit Alarm Event To HA Template](https://www.icloud.com/shortcuts/9f7d28f1a627402a92e1e23044112e53)** - Optional: for specific alarm events
+- **[Emit Device Event To HA Template](https://www.icloud.com/shortcuts/54e7bbaf5fb2479fb59bff0dfecfc856)** - Optional: for device-level events (Wake-Up, any alarm, sleep events)
 
 When prompted, enter your **Phone ID** (shown during setup).
 
@@ -49,6 +49,8 @@ When prompted, enter your **Phone ID** (shown during setup).
 4. Enable "Run Immediately" → Done
 
 Alarms sync automatically when you close the Clock app.
+
+For detailed setup instructions, import questions, and event shortcuts configuration, see [Shortcuts Setup Guide](docs/shortcuts.md).
 
 ## Entities
 

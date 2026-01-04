@@ -42,9 +42,9 @@ report_alarm_event:
             - snoozed
             - stopped
 
-report_wakeup_event:
-  name: Report Wake-Up alarm event
-  description: Report an event for Apple's native Wake-Up alarm (goes_off, snoozed, stopped)
+report_device_event:
+  name: Report device event
+  description: Report an event for device-level alarms (Wake-Up, any alarm, or sleep events)
   fields:
     phone_id:
       name: Phone ID
@@ -52,69 +52,21 @@ report_wakeup_event:
       required: true
       selector:
         text:
-    event:
-      name: Event
-      description: Event type (goes_off, snoozed, stopped)
+    event_type:
+      name: Event Type
+      description: Event type (wakeup_goes_off, wakeup_snoozed, wakeup_stopped, any_goes_off, any_snoozed, any_stopped, bedtime_starts, waking_up, wind_down_starts)
       required: true
       selector:
         select:
           options:
-            - goes_off
-            - snoozed
-            - stopped
-
-report_any_event:
-  name: Report any alarm event
-  description: Report an event for any alarm (goes_off, snoozed, stopped)
-  fields:
-    phone_id:
-      name: Phone ID
-      description: The phone identifier
-      required: true
-      selector:
-        text:
-    event:
-      name: Event
-      description: Event type (goes_off, snoozed, stopped)
-      required: true
-      selector:
-        select:
-          options:
-            - goes_off
-            - snoozed
-            - stopped
-
-report_bedtime_event:
-  name: Report Bedtime starts event
-  description: Report when Bedtime starts on iPhone
-  fields:
-    phone_id:
-      name: Phone ID
-      description: The phone identifier
-      required: true
-      selector:
-        text:
-
-report_waking_up_event:
-  name: Report Waking Up event
-  description: Report when Waking Up occurs on iPhone
-  fields:
-    phone_id:
-      name: Phone ID
-      description: The phone identifier
-      required: true
-      selector:
-        text:
-
-report_wind_down_event:
-  name: Report Wind Down starts event
-  description: Report when Wind Down starts on iPhone
-  fields:
-    phone_id:
-      name: Phone ID
-      description: The phone identifier
-      required: true
-      selector:
-        text:
+            - wakeup_goes_off
+            - wakeup_snoozed
+            - wakeup_stopped
+            - any_goes_off
+            - any_snoozed
+            - any_stopped
+            - bedtime_starts
+            - waking_up
+            - wind_down_starts
 
 
