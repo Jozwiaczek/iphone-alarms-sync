@@ -1,10 +1,17 @@
 {{#if compareUrl}}
-# [v{{nextRelease.version}}]({{compareUrl}}) ({{datetime "UTC:yyyy-mm-dd"}})
+# [v{{nextRelease.version}}]({{compareUrl}}) ({{datetime "UTC:yyyy-mm-dd HH:mm"}})
 {{else}}
-# v{{nextRelease.version}} ({{datetime "UTC:yyyy-mm-dd"}})
+# v{{nextRelease.version}} ({{datetime "UTC:yyyy-mm-dd HH:mm"}})
 {{/if}}
 
 {{#with commits}}
+{{#if boom}}
+## 💥 Breaking Changes
+{{#each boom}}
+- {{> commitTemplate}}
+{{/each}}
+{{/if}}
+
 {{#if sparkles}}
 ## ✨ New Features
 {{#each sparkles}}
@@ -12,44 +19,9 @@
 {{/each}}
 {{/if}}
 
-{{#if tada}}
-## 🎉 Initial Release
-{{#each tada}}
-- {{> commitTemplate}}
-{{/each}}
-{{/if}}
-
-{{#if construction_worker}}
-## 👷 Build System
-{{#each construction_worker}}
-- {{> commitTemplate}}
-{{/each}}
-{{/if}}
-
-{{#if bug}}
-## 🐛 Bug Fixes
-{{#each bug}}
-- {{> commitTemplate}}
-{{/each}}
-{{/if}}
-
-{{#if ambulance}}
-## 🚑 Critical Hotfixes
-{{#each ambulance}}
-- {{> commitTemplate}}
-{{/each}}
-{{/if}}
-
-{{#if lock}}
-## 🔒 Security Issues
-{{#each lock}}
-- {{> commitTemplate}}
-{{/each}}
-{{/if}}
-
-{{#if boom}}
-## 💥 Breaking Changes
-{{#each boom}}
+{{#if building_construction}}
+## 🏗️ Architectural Changes
+{{#each building_construction}}
 - {{> commitTemplate}}
 {{/each}}
 {{/if}}
@@ -61,16 +33,23 @@
 {{/each}}
 {{/if}}
 
-{{#if recycle}}
-## ♻️ Code Refactoring
-{{#each recycle}}
+{{#if lock}}
+## 🔒 Security Issues
+{{#each lock}}
 - {{> commitTemplate}}
 {{/each}}
 {{/if}}
 
-{{#if art}}
-## 🎨 Code Style
-{{#each art}}
+{{#if ambulance}}
+## 🚑 Critical Hotfixes
+{{#each ambulance}}
+- {{> commitTemplate}}
+{{/each}}
+{{/if}}
+
+{{#if bug}}
+## 🐛 Bug Fixes
+{{#each bug}}
 - {{> commitTemplate}}
 {{/each}}
 {{/if}}
@@ -82,9 +61,9 @@
 {{/each}}
 {{/if}}
 
-{{#if building_construction}}
-## 🏗️ Architectural Changes
-{{#each building_construction}}
+{{#if recycle}}
+## ♻️ Code Refactoring
+{{#each recycle}}
 - {{> commitTemplate}}
 {{/each}}
 {{/if}}
@@ -103,30 +82,9 @@
 {{/each}}
 {{/if}}
 
-{{#if truck}}
-## 🚚 File Structure
-{{#each truck}}
-- {{> commitTemplate}}
-{{/each}}
-{{/if}}
-
-{{#if fire}}
-## 🔥 Removals
-{{#each fire}}
-- {{> commitTemplate}}
-{{/each}}
-{{/if}}
-
-{{#if adhesive_bandage}}
-## 🩹 Simple Fixes
-{{#each adhesive_bandage}}
-- {{> commitTemplate}}
-{{/each}}
-{{/if}}
-
-{{#if pencil2}}
-## ✏️ Typo Fixes
-{{#each pencil2}}
+{{#if construction_worker}}
+## 👷 Build System
+{{#each construction_worker}}
 - {{> commitTemplate}}
 {{/each}}
 {{/if}}
@@ -138,16 +96,16 @@
 {{/each}}
 {{/if}}
 
-{{#if rotating_light}}
-## 🚨 Linter Fixes
-{{#each rotating_light}}
+{{#if art}}
+## 🎨 Code Style
+{{#each art}}
 - {{> commitTemplate}}
 {{/each}}
 {{/if}}
 
-{{#if label}}
-## 🏷️ Types
-{{#each label}}
+{{#if truck}}
+## 🚚 File Structure
+{{#each truck}}
 - {{> commitTemplate}}
 {{/each}}
 {{/if}}
@@ -166,9 +124,401 @@
 {{/each}}
 {{/if}}
 
+{{#if fire}}
+## 🔥 Removals
+{{#each fire}}
+- {{> commitTemplate}}
+{{/each}}
+{{/if}}
+
+{{#if rewind}}
+## ⏪️ Revert Changes
+{{#each rewind}}
+- {{> commitTemplate}}
+{{/each}}
+{{/if}}
+
+{{#if adhesive_bandage}}
+## 🩹 Simple Fixes
+{{#each adhesive_bandage}}
+- {{> commitTemplate}}
+{{/each}}
+{{/if}}
+
+{{#if pencil2}}
+## ✏️ Typo Fixes
+{{#each pencil2}}
+- {{> commitTemplate}}
+{{/each}}
+{{/if}}
+
+{{#if rotating_light}}
+## 🚨 Linter Fixes
+{{#each rotating_light}}
+- {{> commitTemplate}}
+{{/each}}
+{{/if}}
+
+{{#if label}}
+## 🏷️ Types
+{{#each label}}
+- {{> commitTemplate}}
+{{/each}}
+{{/if}}
+
 {{#if wastebasket}}
 ## 🗑️ Cleanup
 {{#each wastebasket}}
+- {{> commitTemplate}}
+{{/each}}
+{{/if}}
+
+{{#if tada}}
+## 🎉 Initial Release
+{{#each tada}}
+- {{> commitTemplate}}
+{{/each}}
+{{/if}}
+
+{{#if white_check_mark}}
+## ✅ Tests
+{{#each white_check_mark}}
+- {{> commitTemplate}}
+{{/each}}
+{{/if}}
+
+{{#if test_tube}}
+## 🧪 Tests
+{{#each test_tube}}
+- {{> commitTemplate}}
+{{/each}}
+{{/if}}
+
+{{#if rocket}}
+## 🚀 Deployment
+{{#each rocket}}
+- {{> commitTemplate}}
+{{/each}}
+{{/if}}
+
+{{#if arrow_up}}
+## ⬆️ Dependencies Upgraded
+{{#each arrow_up}}
+- {{> commitTemplate}}
+{{/each}}
+{{/if}}
+
+{{#if arrow_down}}
+## ⬇️ Dependencies Downgraded
+{{#each arrow_down}}
+- {{> commitTemplate}}
+{{/each}}
+{{/if}}
+
+{{#if package}}
+## 📦 Dependencies
+{{#each package}}
+- {{> commitTemplate}}
+{{/each}}
+{{/if}}
+
+{{#if alien}}
+## 👽 External API Changes
+{{#each alien}}
+- {{> commitTemplate}}
+{{/each}}
+{{/if}}
+
+{{#if bento}}
+## 🍱 Assets
+{{#each bento}}
+- {{> commitTemplate}}
+{{/each}}
+{{/if}}
+
+{{#if children_crossing}}
+## 🚸 Accessibility
+{{#each children_crossing}}
+- {{> commitTemplate}}
+{{/each}}
+{{/if}}
+
+{{#if iphone}}
+## 📱 Responsive Design
+{{#each iphone}}
+- {{> commitTemplate}}
+{{/each}}
+{{/if}}
+
+{{#if egg}}
+## 🥚 Easter Eggs
+{{#each egg}}
+- {{> commitTemplate}}
+{{/each}}
+{{/if}}
+
+{{#if clown_face}}
+## 🤡 Mocking
+{{#each clown_face}}
+- {{> commitTemplate}}
+{{/each}}
+{{/if}}
+
+{{#if see_no_evil}}
+## 🙈 Gitignore
+{{#each see_no_evil}}
+- {{> commitTemplate}}
+{{/each}}
+{{/if}}
+
+{{#if camera_flash}}
+## 📸 Snapshots
+{{#each camera_flash}}
+- {{> commitTemplate}}
+{{/each}}
+{{/if}}
+
+{{#if alembic}}
+## ⚗️ Experiments
+{{#each alembic}}
+- {{> commitTemplate}}
+{{/each}}
+{{/if}}
+
+{{#if mag}}
+## 🔍 SEO
+{{#each mag}}
+- {{> commitTemplate}}
+{{/each}}
+{{/if}}
+
+{{#if wheelchair}}
+## ♿️ Accessibility
+{{#each wheelchair}}
+- {{> commitTemplate}}
+{{/each}}
+{{/if}}
+
+{{#if bulb}}
+## 💡 Comments
+{{#each bulb}}
+- {{> commitTemplate}}
+{{/each}}
+{{/if}}
+
+{{#if beers}}
+## 🍻 Code Quality
+{{#each beers}}
+- {{> commitTemplate}}
+{{/each}}
+{{/if}}
+
+{{#if speech_balloon}}
+## 💬 Text & Literals
+{{#each speech_balloon}}
+- {{> commitTemplate}}
+{{/each}}
+{{/if}}
+
+{{#if card_file_box}}
+## 🗃️ Database
+{{#each card_file_box}}
+- {{> commitTemplate}}
+{{/each}}
+{{/if}}
+
+{{#if loud_sound}}
+## 🔊 Logs Added
+{{#each loud_sound}}
+- {{> commitTemplate}}
+{{/each}}
+{{/if}}
+
+{{#if mute}}
+## 🔇 Logs Removed
+{{#each mute}}
+- {{> commitTemplate}}
+{{/each}}
+{{/if}}
+
+{{#if busts_in_silhouette}}
+## 👥 Contributors
+{{#each busts_in_silhouette}}
+- {{> commitTemplate}}
+{{/each}}
+{{/if}}
+
+{{#if closed_lock_with_key}}
+## 🔐 Secrets
+{{#each closed_lock_with_key}}
+- {{> commitTemplate}}
+{{/each}}
+{{/if}}
+
+{{#if bookmark}}
+## 🔖 Releases
+{{#each bookmark}}
+- {{> commitTemplate}}
+{{/each}}
+{{/if}}
+
+{{#if construction}}
+## 🚧 Work in Progress
+{{#each construction}}
+- {{> commitTemplate}}
+{{/each}}
+{{/if}}
+
+{{#if hammer}}
+## 🔨 Development Scripts
+{{#each hammer}}
+- {{> commitTemplate}}
+{{/each}}
+{{/if}}
+
+{{#if poop}}
+## 💩 Bad Code
+{{#each poop}}
+- {{> commitTemplate}}
+{{/each}}
+{{/if}}
+
+{{#if twisted_rightwards_arrows}}
+## 🔀 Merge Branches
+{{#each twisted_rightwards_arrows}}
+- {{> commitTemplate}}
+{{/each}}
+{{/if}}
+
+{{#if pushpin}}
+## 📌 Pin Dependencies
+{{#each pushpin}}
+- {{> commitTemplate}}
+{{/each}}
+{{/if}}
+
+{{#if chart_with_upwards_trend}}
+## 📈 Analytics
+{{#each chart_with_upwards_trend}}
+- {{> commitTemplate}}
+{{/each}}
+{{/if}}
+
+{{#if globe_with_meridians}}
+## 🌐 Internationalization
+{{#each globe_with_meridians}}
+- {{> commitTemplate}}
+{{/each}}
+{{/if}}
+
+{{#if seedling}}
+## 🌱 Seed Files
+{{#each seedling}}
+- {{> commitTemplate}}
+{{/each}}
+{{/if}}
+
+{{#if triangular_flag_on_post}}
+## 🚩 Feature Flags
+{{#each triangular_flag_on_post}}
+- {{> commitTemplate}}
+{{/each}}
+{{/if}}
+
+{{#if goal_net}}
+## 🥅 Error Handling
+{{#each goal_net}}
+- {{> commitTemplate}}
+{{/each}}
+{{/if}}
+
+{{#if dizzy}}
+## 💫 Animations
+{{#each dizzy}}
+- {{> commitTemplate}}
+{{/each}}
+{{/if}}
+
+{{#if passport_control}}
+## 🛂 Authorization
+{{#each passport_control}}
+- {{> commitTemplate}}
+{{/each}}
+{{/if}}
+
+{{#if monocle_face}}
+## 🧐 Data Exploration
+{{#each monocle_face}}
+- {{> commitTemplate}}
+{{/each}}
+{{/if}}
+
+{{#if coffin}}
+## ⚰️ Dead Code
+{{#each coffin}}
+- {{> commitTemplate}}
+{{/each}}
+{{/if}}
+
+{{#if necktie}}
+## 👔 Business Logic
+{{#each necktie}}
+- {{> commitTemplate}}
+{{/each}}
+{{/if}}
+
+{{#if stethoscope}}
+## 🩺 Healthcheck
+{{#each stethoscope}}
+- {{> commitTemplate}}
+{{/each}}
+{{/if}}
+
+{{#if bricks}}
+## 🧱 Infrastructure
+{{#each bricks}}
+- {{> commitTemplate}}
+{{/each}}
+{{/if}}
+
+{{#if technologist}}
+## 🧑‍💻 Developer Experience
+{{#each technologist}}
+- {{> commitTemplate}}
+{{/each}}
+{{/if}}
+
+{{#if money_with_wings}}
+## 💸 Sponsorships
+{{#each money_with_wings}}
+- {{> commitTemplate}}
+{{/each}}
+{{/if}}
+
+{{#if thread}}
+## 🧵 Multithreading
+{{#each thread}}
+- {{> commitTemplate}}
+{{/each}}
+{{/if}}
+
+{{#if safety_vest}}
+## 🦺 Validation
+{{#each safety_vest}}
+- {{> commitTemplate}}
+{{/each}}
+{{/if}}
+
+{{#if airplane}}
+## ✈️ Offline Support
+{{#each airplane}}
+- {{> commitTemplate}}
+{{/each}}
+{{/if}}
+
+{{#if t-rex}}
+## 🦖 Backwards Compatibility
+{{#each t-rex}}
 - {{> commitTemplate}}
 {{/each}}
 {{/if}}
