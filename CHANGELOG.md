@@ -1,3 +1,13 @@
+# [v1.1.1](https://github.com/Jozwiaczek/iphone-alarms-sync/compare/v1.1.0...v1.1.1) (2026-01-04 11:01)
+
+## ♻️ Code Refactoring
+-  Refactor release system with full gitmoji support [[ac99262b833dc6e3ca0181b4b5939cdb42a153fb](/Jozwiaczek//commit/ac99262b833dc6e3ca0181b4b5939cdb42a153fb)]
+
+-  Refactor changelog format [[a40f87631eebecf818db60629b0e6bf7ef05c0d4](/Jozwiaczek//commit/a40f87631eebecf818db60629b0e6bf7ef05c0d4)]
+
+## 🧑‍💻 Developer Experience
+-  Improve cursor rules structure [[123936c0c5787f0b7b25d803897afea60da4e9df](/Jozwiaczek//commit/123936c0c5787f0b7b25d803897afea60da4e9df)]
+
 # Changelog
 
 
