@@ -1,0 +1,140 @@
+---
+alwaysApply: true
+---
+# Commit Message Guidelines
+
+**MANDATORY:** Always generate a commit message following these guidelines for any code changes.
+
+## Commit Format
+
+Simple changes:
+```
+<emoji> <message> (max 50 chars)
+```
+
+Multiple major changes:
+```
+<emoji> <message> (max 50 chars)
+
+* First major change
+* Second major change
+* Third major change
+```
+
+## Rules
+
+- **Language**: Always use English
+- **Title**: Maximum 50 characters, ALWAYS as simple and short as possible
+- **Body**: Only for multiple major independent changes
+- **Body items**: MEGA short, MEGA simple (use `*` for bullets)
+- **No scope**: Keep format simple without [scope]
+- **No footer**: Keep it simple, no footer section
+- **Gitmoji**: Use [gitmoji](https://gitmoji.dev/) to categorize changes visually
+- **Format**: `<emoji> message` (e.g., `♻️ Reorganize structure`)
+
+**Priority: Simplicity and brevity over details**
+
+## All Available Gitmoji
+
+### Features & Fixes
+- `✨` New feature (`:sparkles:`)
+- `🐛` Bug fix (`:bug:`)
+- `🚑️` Critical hotfix (`:ambulance:`)
+- `🩹` Simple fix (`:adhesive_bandage:`)
+
+### Code Quality
+- `♻️` Refactor code (`:recycle:`)
+- `🎨` Improve structure/format (`:art:`)
+- `⚡️` Improve performance (`:zap:`)
+- `🔥` Remove code/files (`:fire:`)
+- `⚰️` Remove dead code (`:coffin:`)
+- `💩` Write bad code that needs improvement (`:poop:`)
+
+### UI & Documentation
+- `💄` Add/update UI/styles (`:lipstick:`)
+- `📝` Add/update documentation (`:memo:`)
+- `💬` Add/update text/literals (`:speech_balloon:`)
+- `✏️` Fix typos (`:pencil2:`)
+
+### Testing & CI
+- `✅` Add/update tests (`:white_check_mark:`)
+- `🧪` Add failing test (`:test_tube:`)
+- `🚨` Fix linter warnings (`:rotating_light:`)
+- `💚` Fix CI build (`:green_heart:`)
+- `👷` Add/update CI build system (`:construction_worker:`)
+
+### Dependencies
+- `⬆️` Upgrade dependencies (`:arrow_up:`)
+- `⬇️` Downgrade dependencies (`:arrow_down:`)
+- `➕` Add dependency (`:heavy_plus_sign:`)
+- `➖` Remove dependency (`:heavy_minus_sign:`)
+- `📌` Pin dependencies (`:pushpin:`)
+
+### Project Structure
+- `🚚` Move/rename files (`:truck:`)
+- `🔧` Add/update config (`:wrench:`)
+- `🏗️` Architectural changes (`:building_construction:`)
+- `🔒️` Fix security/privacy (`:lock:`)
+- `🔐` Add/update secrets (`:closed_lock_with_key:`)
+- `🏷️` Add/update types (`:label:`)
+- `🔨` Add/update dev scripts (`:hammer:`)
+
+### Version Control
+- `🔖` Release/version tags (`:bookmark:`)
+- `🔀` Merge branches (`:twisted_rightwards_arrows:`)
+- `⏪️` Revert changes (`:rewind:`)
+
+### Deployment & Operations
+- `🚀` Deploy stuff (`:rocket:`)
+- `📦️` Add/update compiled files (`:package:`)
+- `🌐` Internationalization (`:globe_with_meridians:`)
+
+### Analytics & Monitoring
+- `📈` Add/update analytics (`:chart_with_upwards_trend:`)
+- `🔍️` Improve SEO (`:mag:`)
+- `🩺` Add/update healthcheck (`:stethoscope:`)
+
+### Infrastructure
+- `🧱` Infrastructure changes (`:bricks:`)
+- `🧑‍💻` Improve developer experience (`:technologist:`)
+- `💸` Add sponsorships/money infrastructure (`:money_with_wings:`)
+- `🧵` Multithreading/concurrency (`:thread:`)
+- `🦺` Add/update validation (`:safety_vest:`)
+- `✈️` Improve offline support (`:airplane:`)
+
+### Special
+- `🎉` Begin project (`:tada:`)
+- `🚧` Work in progress (`:construction:`)
+- `🚸` Improve UX/usability (`:children_crossing:`)
+- `📱` Responsive design (`:iphone:`)
+- `🤡` Mock things (`:clown_face:`)
+- `🥚` Add/update easter egg (`:egg:`)
+- `🙈` Add/update .gitignore (`:see_no_evil:`)
+- `📸` Add/update snapshots (`:camera_flash:`)
+- `⚗️` Perform experiments (`:alembic:`)
+- `🌱` Add/update seed files (`:seedling:`)
+- `🚩` Add/update/remove feature flags (`:triangular_flag_on_post:`)
+- `🥅` Catch errors (`:goal_net:`)
+- `💫` Add/update animations (`:dizzy:`)
+- `🗑️` Deprecate code (`:wastebasket:`)
+- `🛂` Authorization/roles/permissions (`:passport_control:`)
+- `🧐` Data exploration/inspection (`:monocle_face:`)
+- `👔` Add/update business logic (`:necktie:`)
+- `🔊` Add/update logs (`:loud_sound:`)
+- `🔇` Remove logs (`:mute:`)
+- `👥` Add/update contributors (`:busts_in_silhouette:`)
+- `🦖` Add backwards compatibility (`:t-rex:`)
+
+## Examples
+
+✅ Good: `♻️ Reorganize structure` (24 chars)
+✅ Good: `✨ Add auth` (12 chars)
+✅ Good with body:
+```
+♻️ Improve project
+
+* Refactor data storage
+* Add user module
+* Update eslint
+```
+❌ Bad: `Reorganize components with parent common/ pattern - Move popup/modules/common to...` (90+ chars)

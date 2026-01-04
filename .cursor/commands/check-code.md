@@ -5,3 +5,4 @@ Check and fix code
 - ruff formatting
 - ruff linting
 - mypy typing
+- **ALWAYS generate commit message suggestion** following commit-message.mdc rule

@@ -3,7 +3,7 @@ alwaysApply: true
 ---
 # Code Quality Verification (MANDATORY)
 
-**BEFORE declaring any code changes complete, ALWAYS run all three quality checks and generate commit message:**
+**BEFORE declaring any code changes complete, ALWAYS run all three quality checks:**
 
 ## Code Quality Checks
 
@@ -29,13 +29,5 @@ uv run mypy custom_components/iphone_alarms_sync/
 **All three commands MUST pass successfully. Only then can code be considered ready.**
 
 **Exception:** Only skip when explicitly asked or when working on non-Python files that don't require these checks.
-
-## Commit Message Generation (MANDATORY FINAL STEP)
-
-The commit message must follow the Gitmoji standard:
-- Simple changes: `<emoji> <message>` (max 50 chars)
-- Multiple major changes: Add body with `*` bullet points
-- Use appropriate gitmoji (✨ feature, 🐛 bug fix, ♻️ refactor, etc.)
-- Keep it SIMPLE and SHORT
 
 
