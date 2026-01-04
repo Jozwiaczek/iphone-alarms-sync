@@ -1,14 +1,22 @@
-# iPhone Alarms Sync
+<p align="center">
+  <img src="assets/social-preview.png" alt="iPhone Alarms Sync">
+</p>
 
-![Version](https://img.shields.io/github/v/release/Jozwiaczek/iphone-alarms-sync?label=version)
-![Release Date](https://img.shields.io/github/release-date/Jozwiaczek/iphone-alarms-sync)
-![License](https://img.shields.io/badge/License-GPL--3.0-blue.svg)
-![HACS](https://img.shields.io/badge/HACS-Custom-orange)
-![Home Assistant](https://img.shields.io/badge/Home%20Assistant-2024.1%2B-blue?logo=homeassistant)
-![Downloads](https://img.shields.io/github/downloads/Jozwiaczek/iphone-alarms-sync/total)
-[![gitmoji-changelog](https://img.shields.io/badge/Changelog-gitmoji-brightgreen.svg)](https://github.com/frinyvonnick/gitmoji-changelog)
+<h1 align="center">iPhone Alarms Sync</h1>
 
-[![HACS](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=Jozwiaczek&repository=iphone-alarms-sync&category=integration)
+<p align="center">
+  <img src="https://img.shields.io/github/v/release/Jozwiaczek/iphone-alarms-sync?label=version" alt="Version">
+  <img src="https://img.shields.io/github/release-date/Jozwiaczek/iphone-alarms-sync" alt="Release Date">
+  <img src="https://img.shields.io/badge/License-GPL--3.0-blue.svg" alt="License">
+  <img src="https://img.shields.io/badge/HACS-Custom-orange" alt="HACS">
+  <img src="https://img.shields.io/badge/Home%20Assistant-2024.1%2B-blue?logo=homeassistant" alt="Home Assistant">
+  <img src="https://img.shields.io/github/downloads/Jozwiaczek/iphone-alarms-sync/total" alt="Downloads">
+  <a href="https://github.com/frinyvonnick/gitmoji-changelog"><img src="https://img.shields.io/badge/Changelog-gitmoji-brightgreen.svg" alt="gitmoji-changelog"></a>
+</p>
+
+<p align="center">
+  <a href="https://my.home-assistant.io/redirect/hacs_repository/?owner=Jozwiaczek&repository=iphone-alarms-sync&category=integration"><img src="https://my.home-assistant.io/badges/hacs_repository.svg" alt="HACS"></a>
+</p>
 
 Sync iPhone/iPad alarms to Home Assistant using predefined Apple Shortcuts. This is a **one-way synchronization** from Apple iPhone or iPad to Home Assistant, enabling alarm-based automations like turning on lights, brewing coffee, or opening blinds when your alarm goes off.
 
