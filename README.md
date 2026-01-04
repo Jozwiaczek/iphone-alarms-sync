@@ -2,7 +2,7 @@
 
 ![Version](https://img.shields.io/github/v/release/Jozwiaczek/iphone-alarms-sync?label=version)
 ![Release Date](https://img.shields.io/github/release-date/Jozwiaczek/iphone-alarms-sync)
-![License](https://img.shields.io/github/license/Jozwiaczek/iphone-alarms-sync)
+![License](https://img.shields.io/badge/License-MIT-blue.svg)
 ![HACS](https://img.shields.io/badge/HACS-Custom-orange)
 ![Home Assistant](https://img.shields.io/badge/Home%20Assistant-2024.1%2B-blue?logo=homeassistant)
 ![Downloads](https://img.shields.io/github/downloads/Jozwiaczek/iphone-alarms-sync/total)
@@ -10,36 +10,49 @@
 
 [![HACS](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=Jozwiaczek&repository=iphone-alarms-sync&category=integration)
 
-Sync iPhone/iPad alarms to Home Assistant. Track alarm states and events (goes off, snoozed, stopped).
+Sync iPhone/iPad alarms to Home Assistant using predefined Apple Shortcuts. This is a **one-way synchronization** from Apple iPhone or iPad to Home Assistant, enabling alarm-based automations like turning on lights, brewing coffee, or opening blinds when your alarm goes off.
 
-## Installation
+## ✨ Features
 
-### HACS (Recommended)
+### Alarm Synchronization
+- **Automatic sync** - All alarms from your iPhone/iPad are automatically synchronized to Home Assistant when you close the Clock app
+- **Real-time updates** - Alarm changes (enable/disable, time changes, repeat settings) are reflected immediately
+- **Multiple alarms support** - Track all your alarms individually with their own entities and states
+- **Wake-Up alarms** - Special support for iOS Wake-Up alarms with dedicated tracking
+
+### Event Tracking
+- **Alarm events** - Monitor when alarms go off, are snoozed, or stopped
+- **Precise timestamps** - Know exactly when each event occurred for detailed automation logic
+- **Event history** - Track the last occurrence of each event type per alarm
+- **Device-level events** - Monitor Wake-Up alarms, any alarm events, or sleep-related events (bedtime, wind down, waking up)
+
+### Smart Home Integration
+- **Device triggers** - Use alarm events as triggers in Home Assistant automations
+- **Rich sensor data** - Access alarm times, repeat schedules, next occurrence, and sync status
+- **Conditional automations** - Create automations based on specific alarms, weekdays, or event types
+- **Multi-device support** - Sync alarms from multiple iPhones/iPads in the same Home Assistant instance
+
+## 🚀 Installation
+
+### Step 1: Install via HACS
 
 1. Open HACS → Integrations → Custom repositories
-2. Add this repository: `Jozwiaczek/iphone-alarms-sync`
+2. Add repository: `Jozwiaczek/iphone-alarms-sync`
 3. Install "iPhone Alarms Sync"
 4. Restart Home Assistant
 
-### Manual
+### Step 2: Configure
 
-Copy `custom_components/iphone_alarms_sync` to your HA `custom_components` folder.
-
-## Setup
-
-### Step 1: Add Device
-
-Settings → Devices & Services → Add Integration → "iPhone Alarms Sync"
-
-### Step 2: Import Shortcuts
-
-During setup, you'll see QR codes and links for all shortcuts. **Scan QR codes or open links on your iPhone/iPad that is synced/integrated with Home Assistant**. Import at least the **Sync Alarms** shortcut:
+1. Settings → Devices & Services → Add Integration → "iPhone Alarms Sync"
+2. Scan QR code or open link on your iPhone/iPad
+3. Import the **"Sync Alarms With HA"** shortcut (required)
+4. Enter your **Phone ID** when prompted
 
 #### Sync Alarms With HA (Required)
 
 ![QR Code](https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=https://www.icloud.com/shortcuts/9add5384e92f42b792fb4f91ce50ee6c)
 
-**[Open Shortcut](https://www.icloud.com/shortcuts/9add5384e92f42b792fb4f91ce50ee6c)** - Required for syncing alarms
+**[Open Shortcut](https://www.icloud.com/shortcuts/9add5384e92f42b792fb4f91ce50ee6c)**
 
 #### Emit Alarm Event To HA Template (Optional)
 
@@ -53,56 +66,35 @@ During setup, you'll see QR codes and links for all shortcuts. **Scan QR codes o
 
 **[Open Shortcut](https://www.icloud.com/shortcuts/54e7bbaf5fb2479fb59bff0dfecfc856)** - For device-level events (Wake-Up, any alarm, sleep events)
 
-When prompted, enter your **Phone ID** (shown during setup).
+### Step 3: Create iOS Automation
 
-### Step 3: Create Automation
-
-1. Shortcuts app → Automation → +
-2. App → Clock → Is Closed
-3. Run Shortcut → "Sync Alarms With HA"
-4. Enable "Run Immediately" → Done
+1. Shortcuts app → Automation → **+**
+2. App → Clock → **Is Closed**
+3. Run Shortcut → **"Sync Alarms With HA"**
+4. Enable **"Run Immediately"** → Done
 
 Alarms sync automatically when you close the Clock app.
 
-For detailed setup instructions, import questions, and event shortcuts configuration, see [Shortcuts Setup Guide](docs/shortcuts.md).
+> 💡 See [Shortcuts Setup Guide](docs/shortcuts.md) for detailed instructions.
 
-## Entities
+## 🎯 Example Use Cases
 
-For each alarm:
-- `binary_sensor.{phone_id}_{alarm_id}_enabled` - Alarm on/off
-- `sensor.{phone_id}_{alarm_id}_time` - Alarm time (HH:MM)
-- `sensor.{phone_id}_{alarm_id}_repeat_days` - Repeat days
+- **Morning routine** - Turn on lights, adjust thermostat, open blinds, and start coffee maker when alarm goes off
+- **Smart snooze** - Dim or turn off lights when alarm is snoozed, brighten when stopped
+- **Weekday vs weekend** - Different automations for weekdays (full routine) and weekends (gentle wake-up)
+- **Bedtime preparation** - Dim lights, lower thermostat, close blinds when bedtime starts
+- **Gradual wake-up** - Gradually increase light brightness over several minutes before alarm
+- **Pre-alarm preparation** - Start warming up room 30 minutes before alarm time
 
-## Device Triggers
-
-- `goes_off` - Alarm fired
-- `snoozed` - Alarm snoozed
-- `stopped` - Alarm stopped
-
-## Automation Example
-
-```yaml
-automation:
-  - alias: "Lights on alarm"
-    trigger:
-      - platform: device
-        domain: iphone_alarms_sync
-        device_id: !device_id johns_iphone_morning
-        type: goes_off
-    action:
-      - service: light.turn_on
-        target:
-          entity_id: light.bedroom
-```
-
-## Troubleshooting
+## 🔧 Troubleshooting
 
 - **Alarms not syncing:** Check Personal Automations are enabled in iOS Settings → Shortcuts
 - **Phone ID:** Found in integration options → Sync Shortcut Setup
+- **Shortcut not working:** Verify Phone ID is correct during import
 
-## Documentation
+## 📚 Documentation
 
-- [Shortcuts Setup Guide](docs/shortcuts.md) - Detailed iOS shortcuts setup and troubleshooting
+- [Shortcuts Setup Guide](docs/shortcuts.md) - Detailed setup and troubleshooting
 - [Issue Tracker](https://github.com/Jozwiaczek/iphone-alarms-sync/issues)
 
 ## ☕ Support
