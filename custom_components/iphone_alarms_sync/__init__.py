@@ -219,8 +219,13 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
             )
 
     async def handle_report_device_event(call: ServiceCall) -> None:
-        phone_id = call.data[CONF_PHONE_ID]
-        event_type = call.data[CONF_EVENT_TYPE]
+        phone_id = call.data.get(CONF_PHONE_ID)
+        event_type = call.data.get(CONF_EVENT_TYPE)
+
+        if not phone_id:
+            return
+        if not event_type:
+            return
 
         entries = hass.config_entries.async_entries(DOMAIN)
         entry = None
