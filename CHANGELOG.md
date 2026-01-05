@@ -1,3 +1,8 @@
+# [v1.1.7](https://github.com/Jozwiaczek/iphone-alarms-sync/compare/v1.1.6...v1.1.7) (2026-01-05 00:01)
+
+## 🐛 Bug Fixes
+-  Fix device event service [[c4f3d58fb47b76b8899b8881342c342fa4179666](/Jozwiaczek//commit/c4f3d58fb47b76b8899b8881342c342fa4179666)]
+
 # [v1.1.6](https://github.com/Jozwiaczek/iphone-alarms-sync/compare/v1.1.5...v1.1.6) (2026-01-04 23:01)
 
 ## 🔧 Configuration
