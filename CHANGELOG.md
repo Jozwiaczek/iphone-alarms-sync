@@ -1,3 +1,8 @@
+# [v1.1.8](https://github.com/Jozwiaczek/iphone-alarms-sync/compare/v1.1.7...v1.1.8) (2026-01-05 10:01)
+
+## 🐛 Bug Fixes
+-  Use event field in device event [[3597c707c1dd258368b0712e90d0588fc8b32091](/Jozwiaczek//commit/3597c707c1dd258368b0712e90d0588fc8b32091)]
+
 # [v1.1.7](https://github.com/Jozwiaczek/iphone-alarms-sync/compare/v1.1.6...v1.1.7) (2026-01-05 00:01)
 
 ## 🐛 Bug Fixes
