@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import logging
 from typing import Any, cast
 
 from homeassistant.core import HomeAssistant, ServiceCall
@@ -35,6 +36,8 @@ from .sensor import (
     _create_phone_event_sensor_entities,
 )
 from .utils import extract_alarm_uuid
+
+_LOGGER = logging.getLogger(__name__)
 
 CONFIG_SCHEMA = cv.config_entry_only_config_schema(DOMAIN)
 
@@ -219,12 +222,17 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
             )
 
     async def handle_report_device_event(call: ServiceCall) -> None:
-        phone_id = call.data.get(CONF_PHONE_ID)
-        event_type = call.data.get(CONF_EVENT_TYPE)
+        service_data = call.data.get("service_data")
+        if isinstance(service_data, dict):
+            phone_id = call.data.get(CONF_PHONE_ID) or service_data.get(CONF_PHONE_ID)
+            event_type = call.data.get(CONF_EVENT_TYPE) or service_data.get(
+                CONF_EVENT_TYPE
+            )
+        else:
+            phone_id = call.data[CONF_PHONE_ID]
+            event_type = call.data[CONF_EVENT_TYPE]
 
-        if not phone_id:
-            return
-        if not event_type:
+        if not phone_id or not event_type:
             return
 
         entries = hass.config_entries.async_entries(DOMAIN)
