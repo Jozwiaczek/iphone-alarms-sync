@@ -13,7 +13,6 @@ from .const import (
     CONF_ALARM_ID,
     CONF_ALARMS,
     CONF_EVENT,
-    CONF_EVENT_TYPE,
     CONF_LABEL,
     CONF_MOBILE_APP_DEVICE_ID,
     CONF_PHONE_ID,
@@ -222,17 +221,15 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
             )
 
     async def handle_report_device_event(call: ServiceCall) -> None:
-        service_data = call.data.get("service_data")
-        if isinstance(service_data, dict):
-            phone_id = call.data.get(CONF_PHONE_ID) or service_data.get(CONF_PHONE_ID)
-            event_type = call.data.get(CONF_EVENT_TYPE) or service_data.get(
-                CONF_EVENT_TYPE
-            )
-        else:
-            phone_id = call.data[CONF_PHONE_ID]
-            event_type = call.data[CONF_EVENT_TYPE]
+        phone_id = call.data.get(CONF_PHONE_ID)
+        event = call.data.get(CONF_EVENT)
 
-        if not phone_id or not event_type:
+        if not phone_id or not event:
+            _LOGGER.error(
+                "Missing required fields in report_device_event: phone_id=%s, event=%s",
+                phone_id,
+                event,
+            )
             return
 
         entries = hass.config_entries.async_entries(DOMAIN)
@@ -252,17 +249,17 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
         if not phone:
             return
 
-        if event_type.startswith("wakeup_"):
-            event = event_type.replace("wakeup_", "")
+        if event.startswith("wakeup_"):
+            event_name = event.replace("wakeup_", "")
             was_first_event = False
-            if event == "goes_off" and not phone.wakeup_last_event_goes_off_at:
+            if event_name == "goes_off" and not phone.wakeup_last_event_goes_off_at:
                 was_first_event = True
-            elif event == "snoozed" and not phone.wakeup_last_event_snoozed_at:
+            elif event_name == "snoozed" and not phone.wakeup_last_event_snoozed_at:
                 was_first_event = True
-            elif event == "stopped" and not phone.wakeup_last_event_stopped_at:
+            elif event_name == "stopped" and not phone.wakeup_last_event_stopped_at:
                 was_first_event = True
 
-            event_obj = coordinator.report_wakeup_event(event)
+            event_obj = coordinator.report_wakeup_event(event_name)
             phone = coordinator.get_phone()
             if phone:
                 coordinator.async_set_updated_data(phone)
@@ -273,7 +270,7 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
                     sensor_entities = _create_phone_event_sensor_entities(
                         coordinator, entry, phone_id
                     )
-                    target_key = f"wakeup_last_event_{event}_at"
+                    target_key = f"wakeup_last_event_{event_name}_at"
                     new_entities = [
                         e
                         for e in sensor_entities
@@ -287,7 +284,7 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
                 {
                     "phone_id": phone_id,
                     "alarm_id": "wakeup",
-                    "event": event,
+                    "event": event_name,
                     "event_id": event_obj.event_id,
                     "occurred_at": event_obj.occurred_at,
                 },
@@ -297,23 +294,23 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
             device = device_registry.async_get_device(identifiers={(DOMAIN, phone_id)})
             if device:
                 hass.bus.async_fire(
-                    f"{DOMAIN}_{event}",
+                    f"{DOMAIN}_{event_name}",
                     {
                         "device_id": device.id,
                     },
                 )
 
-        elif event_type.startswith("any_"):
-            event = event_type.replace("any_", "")
+        elif event.startswith("any_"):
+            event_name = event.replace("any_", "")
             was_first_event = False
-            if event == "goes_off" and not phone.any_last_event_goes_off_at:
+            if event_name == "goes_off" and not phone.any_last_event_goes_off_at:
                 was_first_event = True
-            elif event == "snoozed" and not phone.any_last_event_snoozed_at:
+            elif event_name == "snoozed" and not phone.any_last_event_snoozed_at:
                 was_first_event = True
-            elif event == "stopped" and not phone.any_last_event_stopped_at:
+            elif event_name == "stopped" and not phone.any_last_event_stopped_at:
                 was_first_event = True
 
-            event_obj = coordinator.report_any_event(event)
+            event_obj = coordinator.report_any_event(event_name)
             phone = coordinator.get_phone()
             if phone:
                 coordinator.async_set_updated_data(phone)
@@ -324,7 +321,7 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
                     sensor_entities = _create_phone_event_sensor_entities(
                         coordinator, entry, phone_id
                     )
-                    target_key = f"any_last_event_{event}_at"
+                    target_key = f"any_last_event_{event_name}_at"
                     new_entities = [
                         e
                         for e in sensor_entities
@@ -338,7 +335,7 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
                 {
                     "phone_id": phone_id,
                     "alarm_id": "any",
-                    "event": event,
+                    "event": event_name,
                     "event_id": event_obj.event_id,
                     "occurred_at": event_obj.occurred_at,
                 },
@@ -348,13 +345,13 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
             device = device_registry.async_get_device(identifiers={(DOMAIN, phone_id)})
             if device:
                 hass.bus.async_fire(
-                    f"{DOMAIN}_{event}",
+                    f"{DOMAIN}_{event_name}",
                     {
                         "device_id": device.id,
                     },
                 )
 
-        elif event_type == "bedtime_starts":
+        elif event == "bedtime_starts":
             was_first_event = not phone.bedtime_last_event_at
 
             event_obj = coordinator.report_bedtime_event()
@@ -398,7 +395,7 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
                     },
                 )
 
-        elif event_type == "waking_up":
+        elif event == "waking_up":
             was_first_event = not phone.waking_up_last_event_at
 
             event_obj = coordinator.report_waking_up_event()
@@ -442,7 +439,7 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
                     },
                 )
 
-        elif event_type == "wind_down_starts":
+        elif event == "wind_down_starts":
             was_first_event = not phone.wind_down_last_event_at
 
             event_obj = coordinator.report_wind_down_event()

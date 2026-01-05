@@ -52,8 +52,8 @@ report_device_event:
       required: true
       selector:
         text:
-    event_type:
-      name: Event Type
+    event:
+      name: Event
       description: Event type (wakeup_goes_off, wakeup_snoozed, wakeup_stopped, any_goes_off, any_snoozed, any_stopped, bedtime_starts, waking_up, wind_down_starts)
       required: true
       selector:
