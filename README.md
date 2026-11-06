@@ -42,6 +42,8 @@ Sync iPhone/iPad alarms to Home Assistant using predefined Apple Shortcuts. This
 
 ## 🚀 Installation
 
+**Requirements:** iOS 17+ and the Home Assistant app 2026.9.3 or newer.
+
 ### Step 1: Install via HACS
 
 1. Open HACS → Integrations → Custom repositories
@@ -53,32 +55,32 @@ Sync iPhone/iPad alarms to Home Assistant using predefined Apple Shortcuts. This
 
 1. Settings → Devices & Services → Add Integration → "iPhone Alarms Sync"
 2. Scan QR code or open link on your iPhone/iPad
-3. Import the **"Sync Alarms With HA"** shortcut (required)
-4. Enter your **Phone ID** when prompted
+3. Import the **"iPhone Alarms Sync: Sync"** shortcut (required)
+4. Enter your **Phone ID** when prompted, then pick your Home Assistant server and the `iphone_alarms_sync.sync_alarms` action
 
-#### Sync Alarms With HA (Required)
+#### iPhone Alarms Sync: Sync (Required)
 
-![QR Code](https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=https://www.icloud.com/shortcuts/6789fb4017904ef1aa6dda8d9c89eaa8)
+![QR Code](https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=https://www.icloud.com/shortcuts/a26cc99634884f0d9072147bd700b540)
 
-**[Open Shortcut](https://www.icloud.com/shortcuts/6789fb4017904ef1aa6dda8d9c89eaa8)**
+**[Open Shortcut](https://www.icloud.com/shortcuts/a26cc99634884f0d9072147bd700b540)**
 
-#### Emit Device HA Event (Optional)
+#### iPhone Alarms Sync: Device Event (Optional)
 
-![QR Code](https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=https://www.icloud.com/shortcuts/206dbfe4dce1495e8989ce12b5f4955d)
+![QR Code](https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=https://www.icloud.com/shortcuts/2417d7ff1b424c02b189954321e8685a)
 
-**[Open Shortcut](https://www.icloud.com/shortcuts/206dbfe4dce1495e8989ce12b5f4955d)** - For device-level events (Wake-Up, any alarm, sleep events)
+**[Open Shortcut](https://www.icloud.com/shortcuts/2417d7ff1b424c02b189954321e8685a)** - For device-level events (Wake-Up, any alarm, sleep events)
 
-#### Emit Alarm HA Event (Optional)
+#### iPhone Alarms Sync: Alarm Event (Optional)
 
-![QR Code](https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=https://www.icloud.com/shortcuts/5112bf576239414f91d626b10dd9f2e2)
+![QR Code](https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=https://www.icloud.com/shortcuts/a0277daefdcb4eb9838743b97c5d1ace)
 
-**[Open Shortcut](https://www.icloud.com/shortcuts/5112bf576239414f91d626b10dd9f2e2)** - For specific alarm events
+**[Open Shortcut](https://www.icloud.com/shortcuts/a0277daefdcb4eb9838743b97c5d1ace)** - For specific alarm events
 
 ### Step 3: Create iOS Automation
 
 1. Shortcuts app → Automation → **+**
 2. App → Clock → **Is Closed**
-3. Run Shortcut → **"Sync Alarms With HA"**
+3. Run Shortcut → **"iPhone Alarms Sync: Sync"**
 4. Enable **"Run Immediately"** → Done
 
 Alarms sync automatically when you close the Clock app.
@@ -99,6 +101,8 @@ Alarms sync automatically when you close the Clock app.
 - **Alarms not syncing:** Check Personal Automations are enabled in iOS Settings → Shortcuts
 - **Phone ID:** Found in integration options → Sync Shortcut Setup
 - **Shortcut not working:** Verify Phone ID is correct during import
+- **Stopped working after a Home Assistant app update, or *No server provided*:** the shortcut's *Perform action* step may show **Choose** or point to a server from another device. Pick the **Server** and then the `iphone_alarms_sync.*` action again or re-import the shortcuts. See [Troubleshooting](docs/shortcuts.md#troubleshooting).
+- **Repair issue "stopped sending alarm data":** Home Assistant raises it when a phone sends nothing for 7 days. Run the shortcut manually to see the error.
 
 ## 📚 Documentation
 

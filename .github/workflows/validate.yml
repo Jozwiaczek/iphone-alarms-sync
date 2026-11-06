@@ -29,4 +29,7 @@ jobs:
 
       - name: Run ruff
         run: |
-          ruff check custom_components/iphone_alarms_sync/
+          ruff check custom_components/iphone_alarms_sync/ scripts/
+
+      - name: Check shortcut templates
+        run: python scripts/shortcuts.py check

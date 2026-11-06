@@ -1,3 +1,5 @@
+from datetime import timedelta
+
 DOMAIN = "iphone_alarms_sync"
 
 CONF_PHONE_NAME = "phone_name"
@@ -57,12 +59,18 @@ DEFAULT_SNOOZE_TIME = 9
 
 PLATFORMS = ["binary_sensor", "number", "sensor"]
 
-SHORTCUT_SYNC_URL = "https://www.icloud.com/shortcuts/6789fb4017904ef1aa6dda8d9c89eaa8"
+SHORTCUT_SYNC_URL = "https://www.icloud.com/shortcuts/a26cc99634884f0d9072147bd700b540"
 SHORTCUT_ALARM_EVENT_URL = (
-    "https://www.icloud.com/shortcuts/5112bf576239414f91d626b10dd9f2e2"
+    "https://www.icloud.com/shortcuts/a0277daefdcb4eb9838743b97c5d1ace"
 )
 SHORTCUT_DEVICE_EVENT_URL = (
-    "https://www.icloud.com/shortcuts/206dbfe4dce1495e8989ce12b5f4955d"
+    "https://www.icloud.com/shortcuts/2417d7ff1b424c02b189954321e8685a"
 )
 
 SHORTCUT_ICLOUD_URL = SHORTCUT_SYNC_URL
+
+DOCS_TROUBLESHOOTING_URL = "https://github.com/Jozwiaczek/iphone-alarms-sync/blob/main/docs/shortcuts.md#troubleshooting"
+
+# A phone that sent nothing for this long likely has a broken shortcut.
+STALE_AFTER = timedelta(days=7)
+STALE_CHECK_INTERVAL = timedelta(hours=12)

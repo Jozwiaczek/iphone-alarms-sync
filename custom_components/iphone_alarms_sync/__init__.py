@@ -1,12 +1,17 @@
 from __future__ import annotations
 
 import logging
+from datetime import datetime
 from typing import Any, cast
 
-from homeassistant.core import HomeAssistant, ServiceCall
+from homeassistant.core import HomeAssistant, ServiceCall, callback
+from homeassistant.exceptions import HomeAssistantError, ServiceValidationError
 from homeassistant.helpers import config_validation as cv
 from homeassistant.helpers import device_registry as dr
+from homeassistant.helpers import issue_registry as ir
+from homeassistant.helpers.event import async_track_time_interval
 from homeassistant.helpers.typing import ConfigType
+from homeassistant.util import dt as dt_util
 
 from .binary_sensor import _create_binary_sensor_entities
 from .const import (
@@ -17,17 +22,24 @@ from .const import (
     CONF_MOBILE_APP_DEVICE_ID,
     CONF_PHONE_ID,
     CONF_PHONE_NAME,
+    DOCS_TROUBLESHOOTING_URL,
     DOMAIN,
     EVENT_ALARM_EVENT,
     EVENT_BEDTIME_STARTS,
+    EVENT_GOES_OFF,
+    EVENT_SNOOZED,
+    EVENT_STOPPED,
     EVENT_WAKING_UP,
     EVENT_WIND_DOWN_STARTS,
     PLATFORMS,
+    STALE_AFTER,
+    STALE_CHECK_INTERVAL,
 )
 from .coordinator import (
     IPhoneAlarmsSyncConfigEntry,
     IPhoneAlarmsSyncCoordinator,
     IPhoneAlarmsSyncData,
+    PhoneData,
 )
 from .number import _create_number_entities
 from .sensor import (
@@ -53,29 +65,114 @@ def _get_via_device_from_device_id(
     return cast(tuple[str, ...], identifier)
 
 
+ALARM_EVENTS = (EVENT_GOES_OFF, EVENT_SNOOZED, EVENT_STOPPED)
+DEVICE_EVENTS = (
+    *(f"wakeup_{e}" for e in ALARM_EVENTS),
+    *(f"any_{e}" for e in ALARM_EVENTS),
+    EVENT_BEDTIME_STARTS,
+    EVENT_WAKING_UP,
+    EVENT_WIND_DOWN_STARTS,
+)
+
+
+def _log_call(call: ServiceCall) -> None:
+    # Logged before validation so a rejected call still shows it reached HA.
+    _LOGGER.debug(
+        "%s called for phone_id=%s", call.service, call.data.get(CONF_PHONE_ID)
+    )
+
+
+# Where users find the IDs their shortcuts need.
+_OPTIONS = "Settings → Devices & services → iPhone Alarms Sync → Configure"
+
+
+def _require_event(call: ServiceCall, allowed: tuple[str, ...]) -> str:
+    event = call.data.get(CONF_EVENT)
+    if event not in allowed:
+        raise ServiceValidationError(
+            f"Unknown event '{event or ''}'. In the shortcut, set Event Type "
+            f"Number to a number from its list. Valid events: {', '.join(allowed)}"
+        )
+    return cast(str, event)
+
+
+def _resolve_call(
+    hass: HomeAssistant, call: ServiceCall
+) -> tuple[IPhoneAlarmsSyncConfigEntry, IPhoneAlarmsSyncCoordinator, PhoneData]:
+    """Find the loaded entry for phone_id or raise an error the shortcut shows."""
+    phone_id = call.data.get(CONF_PHONE_ID)
+    entry = next(
+        (
+            e
+            for e in hass.config_entries.async_entries(DOMAIN)
+            if phone_id and e.unique_id == phone_id
+        ),
+        None,
+    )
+    if entry is None:
+        raise ServiceValidationError(
+            f"Unknown Phone ID '{phone_id}'. Copy the Phone ID from {_OPTIONS} → "
+            "Sync Shortcut Setup into the first Text step of this shortcut."
+        )
+    if not getattr(entry, "runtime_data", None):
+        raise HomeAssistantError(
+            f"iPhone Alarms Sync for '{phone_id}' is not loaded. "
+            "Check it in Settings → Devices & services."
+        )
+    coordinator = entry.runtime_data.coordinator
+    phone = coordinator.get_phone()
+    if phone is None:
+        raise HomeAssistantError(
+            f"iPhone Alarms Sync for '{phone_id}' has no data. "
+            "Reload it in Settings → Devices & services."
+        )
+    # The phone reached Home Assistant, so the shortcut chain works again.
+    ir.async_delete_issue(hass, DOMAIN, _no_data_issue_id(entry))
+    return entry, coordinator, phone
+
+
+def _no_data_issue_id(entry: IPhoneAlarmsSyncConfigEntry) -> str:
+    return f"no_data_{entry.entry_id}"
+
+
+@callback
+def _async_check_stale(hass: HomeAssistant, entry: IPhoneAlarmsSyncConfigEntry) -> None:
+    """Raise a repair issue when the phone stopped sending data."""
+    last = entry.runtime_data.coordinator.last_activity_at()
+    issue_id = _no_data_issue_id(entry)
+    if last is None or dt_util.utcnow() - last < STALE_AFTER:
+        ir.async_delete_issue(hass, DOMAIN, issue_id)
+        return
+    ir.async_create_issue(
+        hass,
+        DOMAIN,
+        issue_id,
+        is_fixable=False,
+        severity=ir.IssueSeverity.WARNING,
+        translation_key="no_data",
+        translation_placeholders={
+            "phone_name": entry.title,
+            "days": str((dt_util.utcnow() - last).days),
+        },
+        learn_more_url=DOCS_TROUBLESHOOTING_URL,
+    )
+
+
 async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
     hass.data.setdefault(DOMAIN, {})
 
     async def handle_sync_alarms(call: ServiceCall) -> None:
+        _log_call(call)
+        alarms = call.data.get(CONF_ALARMS)
+        if not isinstance(alarms, list) or not all(
+            isinstance(a, dict) and a.get(CONF_ALARM_ID) for a in alarms
+        ):
+            raise ServiceValidationError(
+                "The shortcut sent no valid alarm list (each alarm needs an "
+                f"'alarm_id'). Re-import it from {_OPTIONS} → Sync Shortcut Setup."
+            )
+        entry, coordinator, phone = _resolve_call(hass, call)
         phone_id = call.data[CONF_PHONE_ID]
-        alarms = call.data[CONF_ALARMS]
-
-        entries = hass.config_entries.async_entries(DOMAIN)
-        entry = None
-        for e in entries:
-            if e.unique_id == phone_id:
-                entry = e
-                break
-
-        if not entry:
-            return
-
-        if not hasattr(entry, "runtime_data") or not entry.runtime_data:
-            return
-        coordinator = entry.runtime_data.coordinator
-        phone = coordinator.get_phone()
-        if not phone:
-            return
 
         device_registry = dr.async_get(hass)
         phone_device = device_registry.async_get_device(
@@ -112,7 +209,7 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
             original_alarm_id = alarm_dict[CONF_ALARM_ID]
             alarm_dict[CONF_ALARM_ID] = extract_alarm_uuid(original_alarm_id)
 
-        new_alarm_ids, has_changes = coordinator.sync_alarms(alarms)
+        new_alarm_ids = coordinator.sync_alarms(alarms)
 
         for alarm_dict in alarms:
             alarm_id = alarm_dict[CONF_ALARM_ID]
@@ -142,47 +239,31 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
                     )
                     number_add(number_entities)
 
-        if has_changes:
-            phone = coordinator.get_phone()
-            if phone:
-                coordinator.async_set_updated_data(phone)
+        # Always push: "Last Sync" changes on every call.
+        coordinator.async_set_updated_data(phone)
 
     async def handle_report_alarm_event(call: ServiceCall) -> None:
-        phone_id = call.data[CONF_PHONE_ID]
+        _log_call(call)
+        event = _require_event(call, ALARM_EVENTS)
+        if not call.data.get(CONF_ALARM_ID):
+            raise ServiceValidationError(
+                f"Alarm ID is missing. Copy it from {_OPTIONS} → Event Shortcuts "
+                "Setup into the second Text step of this shortcut."
+            )
         alarm_id = extract_alarm_uuid(call.data[CONF_ALARM_ID])
-        event = call.data[CONF_EVENT]
-
-        entries = hass.config_entries.async_entries(DOMAIN)
-        entry = None
-        for e in entries:
-            if e.unique_id == phone_id:
-                entry = e
-                break
-
-        if not entry:
-            return
-
-        if not hasattr(entry, "runtime_data") or not entry.runtime_data:
-            return
-        coordinator = entry.runtime_data.coordinator
-        phone = coordinator.get_phone()
-        if not phone:
-            return
+        entry, coordinator, phone = _resolve_call(hass, call)
+        phone_id = call.data[CONF_PHONE_ID]
 
         alarm = coordinator.get_alarm(alarm_id)
-        was_first_event = False
-        if alarm:
-            if event == "goes_off" and not alarm.last_event_goes_off_at:
-                was_first_event = True
-            elif event == "snoozed" and not alarm.last_event_snoozed_at:
-                was_first_event = True
-            elif event == "stopped" and not alarm.last_event_stopped_at:
-                was_first_event = True
+        if alarm is None:
+            raise ServiceValidationError(
+                f"Unknown Alarm ID '{alarm_id}'. Run the Sync shortcut, then copy "
+                f"the Alarm ID from {_OPTIONS} → Event Shortcuts Setup."
+            )
+        was_first_event = not getattr(alarm, f"last_event_{event}_at")
 
         event_obj = coordinator.report_alarm_event(alarm_id, event)
-        phone = coordinator.get_phone()
-        if phone:
-            coordinator.async_set_updated_data(phone)
+        coordinator.async_set_updated_data(phone)
 
         if was_first_event:
             entry_data = hass.data.get(DOMAIN, {}).get(entry.entry_id, {})
@@ -221,33 +302,10 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
             )
 
     async def handle_report_device_event(call: ServiceCall) -> None:
-        phone_id = call.data.get(CONF_PHONE_ID)
-        event = call.data.get(CONF_EVENT)
-
-        if not phone_id or not event:
-            _LOGGER.error(
-                "Missing required fields in report_device_event: phone_id=%s, event=%s",
-                phone_id,
-                event,
-            )
-            return
-
-        entries = hass.config_entries.async_entries(DOMAIN)
-        entry = None
-        for e in entries:
-            if e.unique_id == phone_id:
-                entry = e
-                break
-
-        if not entry:
-            return
-
-        if not hasattr(entry, "runtime_data") or not entry.runtime_data:
-            return
-        coordinator = entry.runtime_data.coordinator
-        phone = coordinator.get_phone()
-        if not phone:
-            return
+        _log_call(call)
+        event = _require_event(call, DEVICE_EVENTS)
+        entry, coordinator, phone = _resolve_call(hass, call)
+        phone_id = call.data[CONF_PHONE_ID]
 
         if event.startswith("wakeup_"):
             event_name = event.replace("wakeup_", "")
@@ -260,9 +318,7 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
                 was_first_event = True
 
             event_obj = coordinator.report_wakeup_event(event_name)
-            phone = coordinator.get_phone()
-            if phone:
-                coordinator.async_set_updated_data(phone)
+            coordinator.async_set_updated_data(phone)
 
             if was_first_event:
                 entry_data = hass.data.get(DOMAIN, {}).get(entry.entry_id, {})
@@ -311,9 +367,7 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
                 was_first_event = True
 
             event_obj = coordinator.report_any_event(event_name)
-            phone = coordinator.get_phone()
-            if phone:
-                coordinator.async_set_updated_data(phone)
+            coordinator.async_set_updated_data(phone)
 
             if was_first_event:
                 entry_data = hass.data.get(DOMAIN, {}).get(entry.entry_id, {})
@@ -355,9 +409,7 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
             was_first_event = not phone.bedtime_last_event_at
 
             event_obj = coordinator.report_bedtime_event()
-            phone = coordinator.get_phone()
-            if phone:
-                coordinator.async_set_updated_data(phone)
+            coordinator.async_set_updated_data(phone)
 
             if was_first_event:
                 entry_data = hass.data.get(DOMAIN, {}).get(entry.entry_id, {})
@@ -399,9 +451,7 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
             was_first_event = not phone.waking_up_last_event_at
 
             event_obj = coordinator.report_waking_up_event()
-            phone = coordinator.get_phone()
-            if phone:
-                coordinator.async_set_updated_data(phone)
+            coordinator.async_set_updated_data(phone)
 
             if was_first_event:
                 entry_data = hass.data.get(DOMAIN, {}).get(entry.entry_id, {})
@@ -443,9 +493,7 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
             was_first_event = not phone.wind_down_last_event_at
 
             event_obj = coordinator.report_wind_down_event()
-            phone = coordinator.get_phone()
-            if phone:
-                coordinator.async_set_updated_data(phone)
+            coordinator.async_set_updated_data(phone)
 
             if was_first_event:
                 entry_data = hass.data.get(DOMAIN, {}).get(entry.entry_id, {})
@@ -618,6 +666,18 @@ async def async_setup_entry(
         )
 
     await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
+
+    @callback
+    def _check_stale(_now: datetime | None = None) -> None:
+        _async_check_stale(hass, entry)
+
+    _check_stale()
+    entry.async_on_unload(
+        async_track_time_interval(hass, _check_stale, STALE_CHECK_INTERVAL)
+    )
+    entry.async_on_unload(
+        lambda: ir.async_delete_issue(hass, DOMAIN, _no_data_issue_id(entry))
+    )
 
     return True
 
