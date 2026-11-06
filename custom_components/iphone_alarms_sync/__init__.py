@@ -197,7 +197,7 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
             original_alarm_id = alarm_dict[CONF_ALARM_ID]
             alarm_dict[CONF_ALARM_ID] = extract_alarm_uuid(original_alarm_id)
 
-        new_alarm_ids, _ = coordinator.sync_alarms(alarms)
+        new_alarm_ids = coordinator.sync_alarms(alarms)
 
         for alarm_dict in alarms:
             alarm_id = alarm_dict[CONF_ALARM_ID]
@@ -242,7 +242,7 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
         alarm = coordinator.get_alarm(alarm_id)
         if alarm is None:
             raise ServiceValidationError(
-                f"Unknown alarm_id '{alarm_id}'. Run Sync Alarms With HA first."
+                f"Unknown alarm_id '{alarm_id}'. Run the Sync shortcut first."
             )
         was_first_event = not getattr(alarm, f"last_event_{event}_at")
 

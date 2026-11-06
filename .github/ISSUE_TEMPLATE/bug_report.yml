@@ -41,9 +41,9 @@ body:
       label: Which shortcut?
       multiple: true
       options:
-        - Sync Alarms With HA
-        - Emit Device HA Event
-        - Emit Alarm HA Event
+        - Sync
+        - Device Event
+        - Alarm Event
     validations:
       required: true
   - type: textarea
