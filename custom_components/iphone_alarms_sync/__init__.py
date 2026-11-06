@@ -82,11 +82,16 @@ def _log_call(call: ServiceCall) -> None:
     )
 
 
+# Where users find the IDs their shortcuts need.
+_OPTIONS = "Settings → Devices & services → iPhone Alarms Sync → Configure"
+
+
 def _require_event(call: ServiceCall, allowed: tuple[str, ...]) -> str:
     event = call.data.get(CONF_EVENT)
     if event not in allowed:
         raise ServiceValidationError(
-            f"Invalid event '{event}'. Expected one of: {', '.join(allowed)}"
+            f"Unknown event '{event or ''}'. In the shortcut, set Event Type "
+            f"Number to a number from its list. Valid events: {', '.join(allowed)}"
         )
     return cast(str, event)
 
@@ -106,15 +111,21 @@ def _resolve_call(
     )
     if entry is None:
         raise ServiceValidationError(
-            f"Unknown phone_id '{phone_id}'. Copy the Phone ID from the "
-            "iPhone Alarms Sync options into your shortcut."
+            f"Unknown Phone ID '{phone_id}'. Copy the Phone ID from {_OPTIONS} → "
+            "Sync Shortcut Setup into the first Text step of this shortcut."
         )
     if not getattr(entry, "runtime_data", None):
-        raise HomeAssistantError(f"iPhone Alarms Sync for '{phone_id}' is not loaded")
+        raise HomeAssistantError(
+            f"iPhone Alarms Sync for '{phone_id}' is not loaded. "
+            "Check it in Settings → Devices & services."
+        )
     coordinator = entry.runtime_data.coordinator
     phone = coordinator.get_phone()
     if phone is None:
-        raise HomeAssistantError(f"iPhone Alarms Sync for '{phone_id}' has no data")
+        raise HomeAssistantError(
+            f"iPhone Alarms Sync for '{phone_id}' has no data. "
+            "Reload it in Settings → Devices & services."
+        )
     # The phone reached Home Assistant, so the shortcut chain works again.
     ir.async_delete_issue(hass, DOMAIN, _no_data_issue_id(entry))
     return entry, coordinator, phone
@@ -157,7 +168,8 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
             isinstance(a, dict) and a.get(CONF_ALARM_ID) for a in alarms
         ):
             raise ServiceValidationError(
-                "'alarms' must be a list of objects, each with an 'alarm_id'"
+                "The shortcut sent no valid alarm list (each alarm needs an "
+                f"'alarm_id'). Re-import it from {_OPTIONS} → Sync Shortcut Setup."
             )
         entry, coordinator, phone = _resolve_call(hass, call)
         phone_id = call.data[CONF_PHONE_ID]
@@ -234,7 +246,10 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
         _log_call(call)
         event = _require_event(call, ALARM_EVENTS)
         if not call.data.get(CONF_ALARM_ID):
-            raise ServiceValidationError("'alarm_id' is required")
+            raise ServiceValidationError(
+                f"Alarm ID is missing. Copy it from {_OPTIONS} → Event Shortcuts "
+                "Setup into the second Text step of this shortcut."
+            )
         alarm_id = extract_alarm_uuid(call.data[CONF_ALARM_ID])
         entry, coordinator, phone = _resolve_call(hass, call)
         phone_id = call.data[CONF_PHONE_ID]
@@ -242,7 +257,8 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
         alarm = coordinator.get_alarm(alarm_id)
         if alarm is None:
             raise ServiceValidationError(
-                f"Unknown alarm_id '{alarm_id}'. Run the Sync shortcut first."
+                f"Unknown Alarm ID '{alarm_id}'. Run the Sync shortcut, then copy "
+                f"the Alarm ID from {_OPTIONS} → Event Shortcuts Setup."
             )
         was_first_event = not getattr(alarm, f"last_event_{event}_at")
 
