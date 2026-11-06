@@ -42,6 +42,8 @@ Sync iPhone/iPad alarms to Home Assistant using predefined Apple Shortcuts. This
 
 ## 🚀 Installation
 
+**Requirements:** iOS 17+ and the Home Assistant app 2026.9.3 or newer.
+
 ### Step 1: Install via HACS
 
 1. Open HACS → Integrations → Custom repositories
@@ -99,6 +101,8 @@ Alarms sync automatically when you close the Clock app.
 - **Alarms not syncing:** Check Personal Automations are enabled in iOS Settings → Shortcuts
 - **Phone ID:** Found in integration options → Sync Shortcut Setup
 - **Shortcut not working:** Verify Phone ID is correct during import
+- **Stopped working after a Home Assistant app update:** the shortcut's *Perform action* step may show **Choose**. Pick the `iphone_alarms_sync.*` action again or re-import the shortcuts. See [Troubleshooting](docs/shortcuts.md#troubleshooting).
+- **Repair issue "stopped sending alarm data":** Home Assistant raises it when a phone sends nothing for 7 days. Run the shortcut manually to see the error.
 
 ## 📚 Documentation
 

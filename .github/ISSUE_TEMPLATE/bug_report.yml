@@ -1,0 +1,67 @@
+name: Bug report
+description: Something does not sync or no events arrive
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Please check the [Troubleshooting guide](https://github.com/Jozwiaczek/iphone-alarms-sync/blob/main/docs/shortcuts.md#troubleshooting) first. Most problems come from the iOS shortcut, for example a Home Assistant app update that reset the **Perform action** step.
+  - type: input
+    id: integration_version
+    attributes:
+      label: iPhone Alarms Sync version
+      placeholder: "1.1.8"
+    validations:
+      required: true
+  - type: input
+    id: ha_version
+    attributes:
+      label: Home Assistant version
+      placeholder: "2026.11.0"
+    validations:
+      required: true
+  - type: input
+    id: app_version
+    attributes:
+      label: Home Assistant iOS app version
+      description: Home Assistant app → Settings → About
+      placeholder: "2026.10.3"
+    validations:
+      required: true
+  - type: input
+    id: ios_version
+    attributes:
+      label: iOS version
+      placeholder: "26.1"
+    validations:
+      required: true
+  - type: dropdown
+    id: shortcut
+    attributes:
+      label: Which shortcut?
+      multiple: true
+      options:
+        - Sync Alarms With HA
+        - Emit Device HA Event
+        - Emit Alarm HA Event
+    validations:
+      required: true
+  - type: textarea
+    id: manual_run
+    attributes:
+      label: What happens when you run the shortcut manually?
+      description: Open the Shortcuts app, run the shortcut and describe the result or paste the error. Also say what the **Action** field of the **Perform action** step shows.
+    validations:
+      required: true
+  - type: textarea
+    id: description
+    attributes:
+      label: What did you expect and what happened?
+    validations:
+      required: true
+  - type: textarea
+    id: logs
+    attributes:
+      label: Logs
+      description: Home Assistant logs with debug logging enabled (see the Troubleshooting guide).
+      render: text

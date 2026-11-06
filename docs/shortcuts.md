@@ -118,6 +118,39 @@ When importing, you'll be asked:
 
 ## Troubleshooting
 
+### How it works
+
+Each iOS Personal Automation runs a shortcut. The shortcut builds a **Dictionary** and passes it to the **Perform action** step of the Home Assistant app, which calls an `iphone_alarms_sync.*` action in Home Assistant. An update to iOS, the Shortcuts app or the Home Assistant app can break this chain without any error in Home Assistant. When a phone sends nothing for 7 days, Home Assistant shows a repair issue in **Settings → System → Repairs**.
+
+| Shortcut | Action to pick in **Perform action** | Dictionary keys |
+|---|---|---|
+| Sync Alarms With HA | `iphone_alarms_sync.sync_alarms` | `phone_id`, `alarms` (list of objects with `alarm_id`, `label`, `enabled`, `hour`, `minute`, `repeats`, `repeat_days`, `allows_snooze`) |
+| Emit Device HA Event | `iphone_alarms_sync.report_device_event` | `phone_id`, `event` (`wakeup_goes_off`, `wakeup_snoozed`, `wakeup_stopped`, `any_goes_off`, `any_snoozed`, `any_stopped`, `bedtime_starts`, `waking_up`, `wind_down_starts`) |
+| Emit Alarm HA Event | `iphone_alarms_sync.report_alarm_event` | `phone_id`, `alarm_id`, `event` (`goes_off`, `snoozed`, `stopped`) |
+
+If Home Assistant rejects the data (unknown Phone ID, invalid event, malformed alarms), the shortcut shows the error when you run it.
+
+### Perform action shows "Choose" after a Home Assistant app update
+
+Home Assistant app 2026.9 replaced the old *Call service* shortcut action with *Perform action*. Existing shortcuts kept the server and the data but lost the selected action, so they stopped sending anything. To fix it:
+
+1. Update the Home Assistant app to 2026.9.3 or newer.
+2. Re-import the shortcuts from the links above, or open each shortcut, tap **Choose** in the **Perform action** step and pick the action from the table above.
+3. If the app has more than one server, pick the **Server** first, then the action.
+4. Run each shortcut manually once and check that the **Last Sync** sensor (or the event sensor) updates.
+
+### Debug logs
+
+Add this to `configuration.yaml` and restart Home Assistant:
+
+```yaml
+logger:
+  logs:
+    custom_components.iphone_alarms_sync: debug
+```
+
+Every call from a shortcut then logs `<action> called for phone_id=...`. No log line means the call never reached Home Assistant: check the shortcut.
+
 ### Shortcut doesn't run
 
 - iOS Settings → Shortcuts → Advanced → Enable "Allow Running Automations"
@@ -127,6 +160,7 @@ When importing, you'll be asked:
 
 - Verify Phone ID matches in shortcut and Home Assistant
 - Test manually: Shortcuts app → Run "Sync Alarms With HA"
+- Check the **Last Sync** sensor: it updates on every successful sync
 
 ### Events not appearing
 

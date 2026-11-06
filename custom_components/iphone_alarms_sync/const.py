@@ -1,3 +1,5 @@
+from datetime import timedelta
+
 DOMAIN = "iphone_alarms_sync"
 
 CONF_PHONE_NAME = "phone_name"
@@ -66,3 +68,9 @@ SHORTCUT_DEVICE_EVENT_URL = (
 )
 
 SHORTCUT_ICLOUD_URL = SHORTCUT_SYNC_URL
+
+DOCS_TROUBLESHOOTING_URL = "https://github.com/Jozwiaczek/iphone-alarms-sync/blob/main/docs/shortcuts.md#troubleshooting"
+
+# A phone that sent nothing for this long likely has a broken shortcut.
+STALE_AFTER = timedelta(days=7)
+STALE_CHECK_INTERVAL = timedelta(hours=12)

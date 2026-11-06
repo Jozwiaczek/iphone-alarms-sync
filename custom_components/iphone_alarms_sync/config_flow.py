@@ -15,6 +15,7 @@ from .const import (
     CONF_PHONE_ID,
     CONF_PHONE_NAME,
     CONF_SYNC_DISABLED_ALARMS,
+    DOCS_TROUBLESHOOTING_URL,
     DOMAIN,
     SHORTCUT_ALARM_EVENT_URL,
     SHORTCUT_DEVICE_EVENT_URL,
@@ -198,6 +199,7 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):  # type: ignore[call
                     "alarm_event_shortcut_url": SHORTCUT_ALARM_EVENT_URL,
                     "device_event_qr_code": device_event_qr_code,
                     "device_event_shortcut_url": SHORTCUT_DEVICE_EVENT_URL,
+                    "troubleshooting_url": DOCS_TROUBLESHOOTING_URL,
                 },
             )
 
@@ -519,6 +521,7 @@ class OptionsFlowHandler(config_entries.OptionsFlowWithConfigEntry):
                 "phone_id": phone.phone_id,
                 "qr_code": qr_code,
                 "shortcut_url": SHORTCUT_SYNC_URL,
+                "troubleshooting_url": DOCS_TROUBLESHOOTING_URL,
             },
         )
 
@@ -553,5 +556,6 @@ class OptionsFlowHandler(config_entries.OptionsFlowWithConfigEntry):
                 "alarm_event_shortcut_url": SHORTCUT_ALARM_EVENT_URL,
                 "device_event_qr_code": device_event_qr_code,
                 "device_event_shortcut_url": SHORTCUT_DEVICE_EVENT_URL,
+                "troubleshooting_url": DOCS_TROUBLESHOOTING_URL,
             },
         )
