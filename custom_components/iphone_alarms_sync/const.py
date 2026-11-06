@@ -59,12 +59,12 @@ DEFAULT_SNOOZE_TIME = 9
 
 PLATFORMS = ["binary_sensor", "number", "sensor"]
 
-SHORTCUT_SYNC_URL = "https://www.icloud.com/shortcuts/f9342f9fd26f4a78a5ccbc644cb84305"
+SHORTCUT_SYNC_URL = "https://www.icloud.com/shortcuts/a26cc99634884f0d9072147bd700b540"
 SHORTCUT_ALARM_EVENT_URL = (
-    "https://www.icloud.com/shortcuts/1d1571ce3cb944a09b2cf9b67f47b304"
+    "https://www.icloud.com/shortcuts/a0277daefdcb4eb9838743b97c5d1ace"
 )
 SHORTCUT_DEVICE_EVENT_URL = (
-    "https://www.icloud.com/shortcuts/40a0081bcbff4e2b8cc2a2c5e9c17801"
+    "https://www.icloud.com/shortcuts/2417d7ff1b424c02b189954321e8685a"
 )
 
 SHORTCUT_ICLOUD_URL = SHORTCUT_SYNC_URL

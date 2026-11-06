@@ -450,6 +450,26 @@
 2 : Snoozed
 3 : Stopped</string>
 		</dict>
+		<dict>
+			<key>ActionIndex</key>
+			<integer>6</integer>
+			<key>Category</key>
+			<string>Parameter</string>
+			<key>ParameterKey</key>
+			<string>server</string>
+			<key>Text</key>
+			<string>Choose your Home Assistant server</string>
+		</dict>
+		<dict>
+			<key>ActionIndex</key>
+			<integer>6</integer>
+			<key>Category</key>
+			<string>Parameter</string>
+			<key>ParameterKey</key>
+			<string>action</string>
+			<key>Text</key>
+			<string>Choose the action iphone_alarms_sync.report_alarm_event (search for iphone_alarms_sync)</string>
+		</dict>
 	</array>
 	<key>WFWorkflowInputContentItemClasses</key>
 	<array>

@@ -85,13 +85,23 @@ def check(wf: dict, service: str) -> list[str]:
     if len(ha) != 1:
         return [*errors, f"expected 1 Home Assistant step, found {len(ha)}"]
     params = ha[0]["WFWorkflowActionParameters"]
-    server = params.get("server", {})
-    action = params.get("action", {})
-    if server.get("identifier") != SERVER_ID:
-        errors.append("server must be the placeholder id")
-    if server.get("title", {}).get("key") != SERVER_NAME:
-        errors.append(f"server name must be {SERVER_NAME!r}")
-    if action.get("identifier") != f"{SERVER_ID}::{DOMAIN}.{service}":
+    questions = wf.get("WFWorkflowImportQuestions", [])
+    ha_index = actions.index(ha[0])
+    # Server ids are per installation, so the user picks both at import.
+    ha_asked = {q["ParameterKey"] for q in questions if q["ActionIndex"] == ha_index}
+    if ha_asked != {"server", "action"}:
+        errors.append("Home Assistant step needs server and action questions")
+    # Sharing drops asked fields; the source keeps a placeholder for test copies.
+    server = params.get("server")
+    action = params.get("action")
+    if server is not None and (
+        server.get("identifier") != SERVER_ID
+        or server.get("title", {}).get("key") != SERVER_NAME
+    ):
+        errors.append(f"server must be the placeholder {SERVER_NAME!r}")
+    if action is not None and (
+        action.get("identifier") != f"{SERVER_ID}::{DOMAIN}.{service}"
+    ):
         errors.append(f"action must be {DOMAIN}.{service} on the placeholder")
     if params.get("service") != f"{DOMAIN}.{service}":
         errors.append(f"service must be {DOMAIN}.{service}")
@@ -105,8 +115,10 @@ def check(wf: dict, service: str) -> list[str]:
                 errors.append(f"unknown events {sorted(unknown)}")
 
     asked = set()
-    for q in wf.get("WFWorkflowImportQuestions", []):
+    for q in questions:
         i, key = q["ActionIndex"], q["ParameterKey"]
+        if i == ha_index:
+            continue
         asked.add(i)
         value = actions[i].get("WFWorkflowActionParameters", {}).get(key)
         if value is None:
@@ -139,7 +151,15 @@ def load(slug: str) -> dict:
 def cmd_check(_args) -> int:
     failed = False
     for slug, (_name, service) in TEMPLATES.items():
-        errors = check(load(slug), service)
+        wf = load(slug)
+        errors = check(wf, service)
+        ha = next(
+            a
+            for a in wf["WFWorkflowActions"]
+            if a["WFWorkflowActionIdentifier"] == HA_ACTION
+        )
+        if not {"server", "action"} <= ha["WFWorkflowActionParameters"].keys():
+            errors.append("source needs the placeholder server and action")
         failed |= bool(errors)
         print(f"{slug}: {'; '.join(errors) or 'ok'}")
     return int(failed)

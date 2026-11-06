@@ -539,6 +539,26 @@
 8 : Wind Down Starts
 9 : Bedtime Starts</string>
 		</dict>
+		<dict>
+			<key>ActionIndex</key>
+			<integer>5</integer>
+			<key>Category</key>
+			<string>Parameter</string>
+			<key>ParameterKey</key>
+			<string>server</string>
+			<key>Text</key>
+			<string>Choose your Home Assistant server</string>
+		</dict>
+		<dict>
+			<key>ActionIndex</key>
+			<integer>5</integer>
+			<key>Category</key>
+			<string>Parameter</string>
+			<key>ParameterKey</key>
+			<string>action</string>
+			<key>Text</key>
+			<string>Choose the action iphone_alarms_sync.report_device_event (search for iphone_alarms_sync)</string>
+		</dict>
 	</array>
 	<key>WFWorkflowInputContentItemClasses</key>
 	<array>

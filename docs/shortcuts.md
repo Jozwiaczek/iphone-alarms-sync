@@ -10,15 +10,16 @@ This guide covers setup for all three shortcuts used by iPhone Alarms Sync integ
 
 Scan QR code or open link **on your iPhone/iPad that is synced/integrated with Home Assistant**:
 
-![QR Code](https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=https://www.icloud.com/shortcuts/f9342f9fd26f4a78a5ccbc644cb84305)
+![QR Code](https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=https://www.icloud.com/shortcuts/a26cc99634884f0d9072147bd700b540)
 
-**[Open Shortcut](https://www.icloud.com/shortcuts/f9342f9fd26f4a78a5ccbc644cb84305)**
+**[Open Shortcut](https://www.icloud.com/shortcuts/a26cc99634884f0d9072147bd700b540)**
 
 ### Import Questions
 
 When importing, you'll be asked:
 - **Enter Phone ID**: Enter your Phone ID from Home Assistant
   - Find it in: Settings → Devices & Services → iPhone Alarms Sync → Configure → Sync Shortcut Setup
+- **Server** and **Action**: pick your Home Assistant server, then `iphone_alarms_sync.sync_alarms` (search for `iphone_alarms_sync`).
 
 ### Personal Automation
 
@@ -39,9 +40,9 @@ Alarms sync automatically when you close the Clock app.
 
 Scan QR code or open link **on your iPhone/iPad that is synced/integrated with Home Assistant**:
 
-![QR Code](https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=https://www.icloud.com/shortcuts/40a0081bcbff4e2b8cc2a2c5e9c17801)
+![QR Code](https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=https://www.icloud.com/shortcuts/2417d7ff1b424c02b189954321e8685a)
 
-**[Open Shortcut](https://www.icloud.com/shortcuts/40a0081bcbff4e2b8cc2a2c5e9c17801)**
+**[Open Shortcut](https://www.icloud.com/shortcuts/2417d7ff1b424c02b189954321e8685a)**
 
 ### Import Questions
 
@@ -57,6 +58,7 @@ When importing, you'll be asked:
   - `7` = Waking Up
   - `8` = Wind Down Starts
   - `9` = Bedtime Starts
+- **Server** and **Action**: pick your Home Assistant server, then `iphone_alarms_sync.report_device_event`.
 
 ### Personal Automation
 
@@ -79,9 +81,9 @@ When importing, you'll be asked:
 
 Scan QR code or open link **on your iPhone/iPad that is synced/integrated with Home Assistant**:
 
-![QR Code](https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=https://www.icloud.com/shortcuts/1d1571ce3cb944a09b2cf9b67f47b304)
+![QR Code](https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=https://www.icloud.com/shortcuts/a0277daefdcb4eb9838743b97c5d1ace)
 
-**[Open Shortcut](https://www.icloud.com/shortcuts/1d1571ce3cb944a09b2cf9b67f47b304)**
+**[Open Shortcut](https://www.icloud.com/shortcuts/a0277daefdcb4eb9838743b97c5d1ace)**
 
 ### Import Questions
 
@@ -93,6 +95,7 @@ When importing, you'll be asked:
   - `3` = Stopped
 - **Enter Alarm ID**: Enter the alarm UUID
   - Find alarm IDs in: Settings → Devices & Services → iPhone Alarms Sync → Configure → Event Shortcuts Setup
+- **Server** and **Action**: pick your Home Assistant server, then `iphone_alarms_sync.report_alarm_event`.
 
 ### Personal Automation
 
@@ -118,7 +121,7 @@ When importing, you'll be asked:
 
 ## Privacy
 
-The shared templates contain no personal data: the Phone ID and Alarm ID fields are empty and filled in by the import questions, and the Home Assistant server is a placeholder. The Home Assistant app 2026.9.3+ uses your only server for it. With more than one server, pick the **Server** and the **Action** in the *Perform action* step after import.
+The shared templates contain no personal data: the Phone ID, Alarm ID, Server and Action fields are empty and filled in by the import questions. Server identifiers are different on every device, so always pick the **Server** and the **Action** when importing, otherwise the shortcut shows **Choose** or fails with *No server provided*.
 
 The templates are built from the files in [`shortcuts/`](../shortcuts), so you can read exactly what each one does. Never share a shortcut from your own library: it contains your Phone ID and server name.
 
@@ -145,13 +148,13 @@ Each iOS Personal Automation runs a shortcut. The shortcut builds a **Dictionary
 
 If Home Assistant rejects the data (unknown Phone ID, invalid event, malformed alarms), the shortcut shows the error when you run it.
 
-### Perform action shows "Choose" after a Home Assistant app update
+### Perform action shows "Choose" or "No server provided"
 
 Home Assistant app 2026.9 replaced the old *Call service* shortcut action with *Perform action*. Shortcuts made from the old templates (named *Sync Alarms With HA*, *Emit Device HA Event* and *Emit Alarm HA Event*) kept the server and the data but lost the selected action, so they stopped sending anything. To fix it:
 
 1. Update the Home Assistant app to 2026.9.3 or newer.
 2. Open each shortcut, tap **Choose** in the **Perform action** step and pick the action from the table above. This keeps your automations working.
-3. If the app has more than one server, pick the **Server** first, then the action.
+3. If the app has more than one server, pick the **Server** first, then the action. A shortcut saved with a server from another device (for example synced through iCloud from an iPad or Mac) fails with *No server provided* until you pick both again on this device.
 4. Run each shortcut manually once and check that the **Last Sync** sensor (or the event sensor) updates.
 
 You can instead import the new templates from the links above. They are named *iPhone Alarms Sync: …* and already have the action set. Point your automations to the new shortcuts, then delete the old ones.
