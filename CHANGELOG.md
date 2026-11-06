@@ -1,3 +1,8 @@
+# [v1.2.0](https://github.com/Jozwiaczek/iphone-alarms-sync/compare/v1.1.8...v1.2.0) (2026-11-06 15:11)
+
+## ✨ New Features
+-  Detect broken shortcuts after HA app update ([#1](https://github.com/Jozwiaczek/iphone-alarms-sync/issues/)) ([#2](https://github.com/Jozwiaczek/iphone-alarms-sync/issues/)) [[fb2ba221bfd608a74ded1c210a4dbfccebd0f74a](/Jozwiaczek//commit/fb2ba221bfd608a74ded1c210a4dbfccebd0f74a)]
+
 # [v1.1.8](https://github.com/Jozwiaczek/iphone-alarms-sync/compare/v1.1.7...v1.1.8) (2026-01-05 10:01)
 
 ## 🐛 Bug Fixes
