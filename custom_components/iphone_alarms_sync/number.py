@@ -94,7 +94,6 @@ class IPhoneAlarmsSyncSnoozeNumber(
         self._attr_device_info = DeviceInfo(
             identifiers={(DOMAIN, phone_id, alarm_id)},
             name=f"{phone.phone_name} {alarm.label}",
-            via_device=(DOMAIN, phone_id),
         )
         self._attr_mode = "box"
 

@@ -9,7 +9,7 @@
   <img src="https://img.shields.io/github/release-date/Jozwiaczek/iphone-alarms-sync" alt="Release Date">
   <img src="https://img.shields.io/badge/License-GPL--3.0-blue.svg" alt="License">
   <img src="https://img.shields.io/badge/HACS-Custom-orange" alt="HACS">
-  <img src="https://img.shields.io/badge/Home%20Assistant-2024.1%2B-blue?logo=homeassistant" alt="Home Assistant">
+  <img src="https://img.shields.io/badge/Home%20Assistant-2026.8%2B-blue?logo=homeassistant" alt="Home Assistant">
   <img src="https://img.shields.io/github/downloads/Jozwiaczek/iphone-alarms-sync/total" alt="Downloads">
   <a href="https://github.com/frinyvonnick/gitmoji-changelog"><img src="https://img.shields.io/badge/Changelog-gitmoji-brightgreen.svg" alt="gitmoji-changelog"></a>
 </p>
@@ -42,7 +42,7 @@ Sync iPhone/iPad alarms to Home Assistant using predefined Apple Shortcuts. This
 
 ## 🚀 Installation
 
-**Requirements:** iOS 17+ and the Home Assistant app 2026.9.3 or newer.
+**Requirements:** Home Assistant 2026.8 or newer, iOS 17+ and the Home Assistant app 2026.9.3 or newer.
 
 ### Step 1: Install via HACS
 

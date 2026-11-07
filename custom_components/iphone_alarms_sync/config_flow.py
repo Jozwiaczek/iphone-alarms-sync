@@ -6,7 +6,7 @@ from typing import Any
 import voluptuous as vol
 from homeassistant import config_entries
 from homeassistant.components import mobile_app
-from homeassistant.core import callback
+from homeassistant.core import HomeAssistant, callback
 from homeassistant.data_entry_flow import FlowResult
 from homeassistant.helpers import device_registry as dr
 
@@ -33,6 +33,16 @@ def slugify(text: str) -> str:
     text = re.sub(r"[^\w\s-]", "", text)
     text = re.sub(r"[-\s]+", "_", text)
     return text.strip("_")
+
+
+def _mobile_app_devices(hass: HomeAssistant) -> dict[str, str]:
+    """Names of the devices of all Home Assistant app (mobile_app) entries."""
+    device_registry = dr.async_get(hass)
+    return {
+        device.id: device.name or device.id
+        for entry in hass.config_entries.async_entries(mobile_app.DOMAIN)
+        for device in dr.async_entries_for_config_entry(device_registry, entry.entry_id)
+    }
 
 
 class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):  # type: ignore[call-arg]
@@ -73,25 +83,9 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):  # type: ignore[call
     async def async_step_select_mobile_app(
         self, user_input: dict[str, Any] | None = None
     ) -> FlowResult:
-        device_registry = dr.async_get(self.hass)
-        mobile_app_devices = [
-            device.id
-            for device in device_registry.devices.values()
-            if any(
-                entry.domain == mobile_app.DOMAIN
-                for entry_id in device.config_entries
-                if (entry := self.hass.config_entries.async_get_entry(entry_id))
-            )
-        ]
-
-        if not mobile_app_devices:
+        device_options = _mobile_app_devices(self.hass)
+        if not device_options:
             return self.async_abort(reason="no_mobile_app_devices")
-
-        device_options = {}
-        for device_id in mobile_app_devices:
-            device = device_registry.async_get(device_id)
-            if device:
-                device_options[device.id] = device.name
 
         errors: dict[str, str] = {}
 
@@ -107,7 +101,7 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):  # type: ignore[call
 
         mobile_app_device_id = user_input.get(CONF_MOBILE_APP_DEVICE_ID)
 
-        device = device_registry.async_get(mobile_app_device_id)
+        device = dr.async_get(self.hass).async_get(mobile_app_device_id)
         if not device:
             errors["base"] = "device_not_found"
             schema = vol.Schema(
@@ -326,22 +320,7 @@ class OptionsFlowHandler(config_entries.OptionsFlowWithConfigEntry):
         if not phone:
             return self.async_abort(reason="phone_not_found")
 
-        device_registry = dr.async_get(self.hass)
-        mobile_app_devices = [
-            device.id
-            for device in device_registry.devices.values()
-            if any(
-                entry.domain == mobile_app.DOMAIN
-                for entry_id in device.config_entries
-                if (entry := self.hass.config_entries.async_get_entry(entry_id))
-            )
-        ]
-
-        device_options = {None: "None"}
-        for device_id in mobile_app_devices:
-            device = device_registry.async_get(device_id)
-            if device:
-                device_options[device.id] = device.name
+        device_options = {None: "None"} | _mobile_app_devices(self.hass)
 
         if user_input is None:
             schema = vol.Schema(
@@ -416,13 +395,16 @@ class OptionsFlowHandler(config_entries.OptionsFlowWithConfigEntry):
         sync_disabled_alarms = user_input.get(CONF_SYNC_DISABLED_ALARMS, True)
 
         coordinator.update_phone(phone_name, mobile_app_device_id, sync_disabled_alarms)
+        old_mobile_app_device_id = self.config_entry.data.get(CONF_MOBILE_APP_DEVICE_ID)
         if (
             new_phone_id != old_phone_id
             or sync_disabled_alarms != phone.sync_disabled_alarms
+            or mobile_app_device_id != old_mobile_app_device_id
         ):
             new_data = dict(self.config_entry.data)
             new_data[CONF_PHONE_ID] = new_phone_id
             new_data[CONF_PHONE_NAME] = phone_name
+            new_data[CONF_MOBILE_APP_DEVICE_ID] = mobile_app_device_id
             new_data[CONF_SYNC_DISABLED_ALARMS] = sync_disabled_alarms
             self.hass.config_entries.async_update_entry(
                 self.config_entry,
@@ -431,20 +413,7 @@ class OptionsFlowHandler(config_entries.OptionsFlowWithConfigEntry):
                 data=new_data,
             )
 
-        device_registry = dr.async_get(self.hass)
-        phone_device = device_registry.async_get_device(
-            identifiers={(DOMAIN, old_phone_id)}
-        )
-        if phone_device:
-            via_device = None
-            if mobile_app_device_id:
-                mobile_app_device = device_registry.async_get(mobile_app_device_id)
-                if mobile_app_device and mobile_app_device.identifiers:
-                    via_device = next(iter(mobile_app_device.identifiers))
-            device_registry.async_update_device(
-                phone_device.id,
-                via_device=via_device,
-            )
+        # The reload links the phone device to the mobile_app device in entry.data.
         await self.hass.config_entries.async_reload(self.config_entry.entry_id)
         return await self.async_step_init()
 
