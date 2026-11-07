@@ -101,11 +101,16 @@ def _resolve_call(
 ) -> tuple[IPhoneAlarmsSyncConfigEntry, IPhoneAlarmsSyncCoordinator, PhoneData]:
     """Find the loaded entry for phone_id or raise an error the shortcut shows."""
     phone_id = call.data.get(CONF_PHONE_ID)
+    if not phone_id:
+        raise ServiceValidationError(
+            f"Phone ID is missing. Copy it from {_OPTIONS} → Sync Shortcut Setup "
+            "into the first Text step of this shortcut."
+        )
     entry = next(
         (
             e
             for e in hass.config_entries.async_entries(DOMAIN)
-            if phone_id and e.unique_id == phone_id
+            if e.unique_id == phone_id
         ),
         None,
     )
