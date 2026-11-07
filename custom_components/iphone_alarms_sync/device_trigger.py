@@ -50,22 +50,18 @@ async def async_get_triggers(
         ALARM_TRIGGER_TYPES | SLEEP_TRIGGER_TYPES if is_phone else ALARM_TRIGGER_TYPES
     )
 
-    triggers = []
-    for entry_id in device.config_entries:
-        entry = hass.config_entries.async_get_entry(entry_id)
-        if entry and entry.domain == DOMAIN:
-            for trigger_type in trigger_types:
-                triggers.append(
-                    {
-                        "platform": "device",
-                        "domain": DOMAIN,
-                        "device_id": device_id,
-                        "type": trigger_type,
-                    }
-                )
-            break
-
-    return triggers
+    entry = hass.config_entries.async_get_entry(device.config_entry_id)
+    if entry is None or entry.domain != DOMAIN:
+        return []
+    return [
+        {
+            "platform": "device",
+            "domain": DOMAIN,
+            "device_id": device_id,
+            "type": trigger_type,
+        }
+        for trigger_type in trigger_types
+    ]
 
 
 async def async_get_trigger_capabilities(

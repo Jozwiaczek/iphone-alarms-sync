@@ -53,16 +53,14 @@ _LOGGER = logging.getLogger(__name__)
 CONFIG_SCHEMA = cv.config_entry_only_config_schema(DOMAIN)
 
 
-def _get_via_device_from_device_id(
-    device_registry: dr.DeviceRegistry, device_id: str | None
-) -> tuple[str, ...] | None:
-    if not device_id:
-        return None
-    device = device_registry.async_get(device_id)
-    if not device or not device.identifiers:
-        return None
-    identifier = next(iter(device.identifiers))
-    return cast(tuple[str, ...], identifier)
+def _mobile_app_device_id(
+    device_registry: dr.DeviceRegistry, phone: PhoneData
+) -> str | None:
+    """The phone's mobile_app device id, if that device still exists."""
+    device_id = phone.mobile_app_device_id
+    if device_id and device_registry.async_get(device_id):
+        return device_id
+    return None
 
 
 ALARM_EVENTS = (EVENT_GOES_OFF, EVENT_SNOOZED, EVENT_STOPPED)
@@ -180,35 +178,12 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
         phone_id = call.data[CONF_PHONE_ID]
 
         device_registry = dr.async_get(hass)
-        phone_device = device_registry.async_get_device(
-            identifiers={(DOMAIN, phone_id)}
+        phone_device = device_registry.async_get_or_create(
+            config_entry_id=entry.entry_id,
+            identifiers={(DOMAIN, phone_id)},
+            name=phone.phone_name,
+            via_device_id=_mobile_app_device_id(device_registry, phone),
         )
-
-        via_device = _get_via_device_from_device_id(
-            device_registry, phone.mobile_app_device_id
-        )
-
-        if not phone_device:
-            phone_device = device_registry.async_get_or_create(
-                config_entry_id=entry.entry_id,
-                identifiers={(DOMAIN, phone_id)},
-                name=phone.phone_name,
-                via_device=via_device,
-            )
-        else:
-            current_via_device = (
-                _get_via_device_from_device_id(
-                    device_registry,
-                    phone_device.via_device_id,
-                )
-                if phone_device.via_device_id
-                else None
-            )
-            if current_via_device != via_device:
-                device_registry.async_update_device(
-                    phone_device.id,
-                    via_device=via_device,
-                )
 
         for alarm_dict in alarms:
             original_alarm_id = alarm_dict[CONF_ALARM_ID]
@@ -222,7 +197,7 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
                 config_entry_id=entry.entry_id,
                 identifiers={(DOMAIN, phone_id, alarm_id)},
                 name=f"{phone.phone_name} {alarm_dict.get(CONF_LABEL, alarm_id)}",
-                via_device=(DOMAIN, phone_id),
+                via_device_id=phone_device.id,
             )
 
         if new_alarm_ids:
@@ -295,8 +270,8 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
         )
 
         device_registry = dr.async_get(hass)
-        device = device_registry.async_get_device(
-            identifiers={(DOMAIN, phone_id, alarm_id)}
+        device = device_registry.async_get_device_by_identifier(
+            (DOMAIN, phone_id, alarm_id), entry.entry_id
         )
         if device:
             hass.bus.async_fire(
@@ -352,7 +327,9 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
             )
 
             device_registry = dr.async_get(hass)
-            device = device_registry.async_get_device(identifiers={(DOMAIN, phone_id)})
+            device = device_registry.async_get_device_by_identifier(
+                (DOMAIN, phone_id), entry.entry_id
+            )
             if device:
                 hass.bus.async_fire(
                     f"{DOMAIN}_{event_name}",
@@ -401,7 +378,9 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
             )
 
             device_registry = dr.async_get(hass)
-            device = device_registry.async_get_device(identifiers={(DOMAIN, phone_id)})
+            device = device_registry.async_get_device_by_identifier(
+                (DOMAIN, phone_id), entry.entry_id
+            )
             if device:
                 hass.bus.async_fire(
                     f"{DOMAIN}_{event_name}",
@@ -443,7 +422,9 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
             )
 
             device_registry = dr.async_get(hass)
-            device = device_registry.async_get_device(identifiers={(DOMAIN, phone_id)})
+            device = device_registry.async_get_device_by_identifier(
+                (DOMAIN, phone_id), entry.entry_id
+            )
             if device:
                 hass.bus.async_fire(
                     f"{DOMAIN}_{EVENT_BEDTIME_STARTS}",
@@ -485,7 +466,9 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
             )
 
             device_registry = dr.async_get(hass)
-            device = device_registry.async_get_device(identifiers={(DOMAIN, phone_id)})
+            device = device_registry.async_get_device_by_identifier(
+                (DOMAIN, phone_id), entry.entry_id
+            )
             if device:
                 hass.bus.async_fire(
                     f"{DOMAIN}_{EVENT_WAKING_UP}",
@@ -527,7 +510,9 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
             )
 
             device_registry = dr.async_get(hass)
-            device = device_registry.async_get_device(identifiers={(DOMAIN, phone_id)})
+            device = device_registry.async_get_device_by_identifier(
+                (DOMAIN, phone_id), entry.entry_id
+            )
             if device:
                 hass.bus.async_fire(
                     f"{DOMAIN}_{EVENT_WIND_DOWN_STARTS}",
@@ -660,15 +645,20 @@ async def async_setup_entry(
     device_registry = dr.async_get(hass)
     phone = coordinator.get_phone()
     if phone:
-        via_device = _get_via_device_from_device_id(
-            device_registry, phone.mobile_app_device_id
-        )
-        device_registry.async_get_or_create(
+        phone_device = device_registry.async_get_or_create(
             config_entry_id=entry.entry_id,
             identifiers={(DOMAIN, phone.phone_id)},
             name=phone.phone_name,
-            via_device=via_device,
+            via_device_id=_mobile_app_device_id(device_registry, phone),
         )
+        # Entities only describe alarm devices; link them to the phone here.
+        for alarm_id, alarm in phone.alarms.items():
+            device_registry.async_get_or_create(
+                config_entry_id=entry.entry_id,
+                identifiers={(DOMAIN, phone.phone_id, alarm_id)},
+                name=f"{phone.phone_name} {alarm.label}",
+                via_device_id=phone_device.id,
+            )
 
     await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
 
