@@ -1,3 +1,8 @@
+# [v1.2.1](https://github.com/Jozwiaczek/iphone-alarms-sync/compare/v1.2.0...v1.2.1) (2026-11-07 23:11)
+
+## 🐛 Bug Fixes
+-  Fix Phone ID error and device registry deprecations [[2872f75f829a35c1f61342fc4a7783cc926d0ad2](/Jozwiaczek//commit/2872f75f829a35c1f61342fc4a7783cc926d0ad2)]
+
 # [v1.2.0](https://github.com/Jozwiaczek/iphone-alarms-sync/compare/v1.1.8...v1.2.0) (2026-11-06 15:11)
 
 ## ✨ New Features
