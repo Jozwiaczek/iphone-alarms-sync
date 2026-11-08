@@ -32,6 +32,7 @@ from .const import (
     CONF_LAST_EVENT_STOPPED_AT,
     CONF_LAST_OCCURRENCE_DATETIME,
     CONF_MINUTE,
+    CONF_MISSED_ALARM_AT,
     CONF_MOBILE_APP_DEVICE_ID,
     CONF_PHONE_ID,
     CONF_PHONE_NAME,
@@ -99,6 +100,7 @@ class PhoneData:
     bedtime_last_event_at: str | None = None
     waking_up_last_event_at: str | None = None
     wind_down_last_event_at: str | None = None
+    missed_alarm_at: str | None = None
 
 
 @dataclass
@@ -190,6 +192,7 @@ class IPhoneAlarmsSyncCoordinator(DataUpdateCoordinator[PhoneData]):
             wind_down_last_event_at=self.entry.options.get(
                 CONF_WIND_DOWN_LAST_EVENT_AT
             ),
+            missed_alarm_at=self.entry.options.get(CONF_MISSED_ALARM_AT),
         )
 
     async def _async_update_data(self) -> PhoneData:
@@ -578,6 +581,9 @@ class IPhoneAlarmsSyncCoordinator(DataUpdateCoordinator[PhoneData]):
         ):
             has_changes = True
 
+        if self._phone.missed_alarm_at != current_options.get(CONF_MISSED_ALARM_AT):
+            has_changes = True
+
         if has_changes:
             new_options = {
                 "alarms": alarms_dict,
@@ -601,6 +607,7 @@ class IPhoneAlarmsSyncCoordinator(DataUpdateCoordinator[PhoneData]):
                 CONF_BEDTIME_LAST_EVENT_AT: self._phone.bedtime_last_event_at,
                 CONF_WAKING_UP_LAST_EVENT_AT: self._phone.waking_up_last_event_at,
                 CONF_WIND_DOWN_LAST_EVENT_AT: self._phone.wind_down_last_event_at,
+                CONF_MISSED_ALARM_AT: self._phone.missed_alarm_at,
             }
             self.hass.config_entries.async_update_entry(
                 self.entry,

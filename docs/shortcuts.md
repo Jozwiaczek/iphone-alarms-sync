@@ -166,26 +166,20 @@ You can instead import the new templates from the links above. They are named *i
 
 The Home Assistant app (2026.10.1+) waits 10 s for Home Assistant. The phone must reach it then, also when locked. Using a VPN? Make sure it reconnects after your home IP changes.
 
-### Repair issue "alarm event missing"
+### Alarm Event Missed
 
-Home Assistant warns when an alarm rings and no *Goes Off* event arrives within 5 minutes. The check starts after the first *Goes Off* event. The warning clears when the phone sends data.
+The **Alarm Event Missed** sensor turns on when an alarm rings and no *Goes Off* event arrives within 5 minutes. It turns off when the phone sends data. It works after the first *Goes Off* event.
 
-Home Assistant works just at home? Turn on **Only warn when at home** (Settings → Devices & Services → iPhone Alarms Sync → Configure → Edit Device) and fill in **Home Wi-Fi** in the shortcuts.
-
-It may also show if you changed the alarm outside the Clock app, travelled across time zones, the phone was off or on another Wi-Fi.
+It may also turn on if you changed the alarm outside the Clock app, travelled across time zones, or the phone was off or away from your **Home Wi-Fi**.
 
 To get a notification, add an automation:
 
 ```yaml
 triggers:
-  - trigger: event
-    event_type: repairs_issue_registry_updated
-    event_data:
-      domain: iphone_alarms_sync
-      action: create
-conditions:
-  - condition: template
-    value_template: "{{ trigger.event.data.issue_id.startswith('missed_event_') }}"
+  - trigger: state
+    entity_id: binary_sensor.<phone>_alarm_event_missed
+    to: "on"
+# Home Assistant works just at home? Add a condition that the phone is home.
 actions:
   - action: notify.mobile_app_<phone>
     data:
