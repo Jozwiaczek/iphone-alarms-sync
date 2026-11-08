@@ -1,3 +1,10 @@
+# [v1.3.0](https://github.com/Jozwiaczek/iphone-alarms-sync/compare/v1.2.5...v1.3.0) (2026-11-08 19:11)
+
+## ✨ New Features
+-  Warn when an alarm event is missing ([#10](https://github.com/Jozwiaczek/iphone-alarms-sync/issues/10)) [[e10dfb5f5725dbee44477b397abad2e2485cbb4d](https://github.com/Jozwiaczek/iphone-alarms-sync/commit/e10dfb5f5725dbee44477b397abad2e2485cbb4d)]
+
+-  Add optional Home Wi-Fi check to shortcuts ([#11](https://github.com/Jozwiaczek/iphone-alarms-sync/issues/11)) [[b237312ff209b9162c9e0a88b74d6a5f1bde4424](https://github.com/Jozwiaczek/iphone-alarms-sync/commit/b237312ff209b9162c9e0a88b74d6a5f1bde4424)]
+
 # [v1.2.5](https://github.com/Jozwiaczek/iphone-alarms-sync/compare/v1.2.4...v1.2.5) (2026-11-08 16:11)
 
 ## 🔧 Configuration
