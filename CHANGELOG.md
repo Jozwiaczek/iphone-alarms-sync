@@ -1,3 +1,8 @@
+# [v1.2.4](https://github.com/Jozwiaczek/iphone-alarms-sync/compare/v1.2.3...v1.2.4) (2026-11-08 12:11)
+
+## ⬆️ Dependencies Upgraded
+-  Upgrade GitHub Actions to Node 24 versions (#7) ([#7](https://github.com/Jozwiaczek/iphone-alarms-sync/issues/)) [[bded7f52f74f8c541dc88ed02febe4a8b307ff80](/Jozwiaczek//commit/bded7f52f74f8c541dc88ed02febe4a8b307ff80)]
+
 # [v1.2.3](https://github.com/Jozwiaczek/iphone-alarms-sync/compare/v1.2.2...v1.2.3) (2026-11-08 12:11)
 
 ## 🐛 Bug Fixes
