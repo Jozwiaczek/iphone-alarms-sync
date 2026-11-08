@@ -35,6 +35,7 @@ CONF_DISABLED_ALARMS = "disabled_alarms"
 CONF_NEXT_ALARM_TIME = "next_alarm_time"
 CONF_NEXT_ALARM_LABEL = "next_alarm_label"
 CONF_SYNC_DISABLED_ALARMS = "sync_disabled_alarms"
+CONF_MISSED_EVENT_ONLY_HOME = "missed_event_only_home"
 CONF_WAKEUP_LAST_EVENT_GOES_OFF_AT = "wakeup_last_event_goes_off_at"
 CONF_WAKEUP_LAST_EVENT_SNOOZED_AT = "wakeup_last_event_snoozed_at"
 CONF_WAKEUP_LAST_EVENT_STOPPED_AT = "wakeup_last_event_stopped_at"
@@ -74,3 +75,5 @@ DOCS_TROUBLESHOOTING_URL = "https://github.com/Jozwiaczek/iphone-alarms-sync/blo
 # A phone that sent nothing for this long likely has a broken shortcut.
 STALE_AFTER = timedelta(days=7)
 STALE_CHECK_INTERVAL = timedelta(hours=12)
+# Time the "goes off" shortcut gets to reach HA before the alarm counts as missed.
+MISSED_EVENT_GRACE = timedelta(minutes=5)

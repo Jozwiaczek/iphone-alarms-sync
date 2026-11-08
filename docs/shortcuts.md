@@ -159,6 +159,36 @@ Home Assistant app 2026.9 replaced the old *Call service* shortcut action with *
 
 You can instead import the new templates from the links above. They are named *iPhone Alarms Sync: …* and already have the action set. Point your automations to the new shortcuts, then delete the old ones.
 
+### "Timed out after 10 seconds"
+
+The Home Assistant app (2026.10.1+) waits 10 s for Home Assistant. The phone must reach it then, also when locked. Using a VPN? Make sure it reconnects after your home IP changes.
+
+### Repair issue "alarm event missing"
+
+Home Assistant warns when an alarm rings and no *Goes Off* event arrives within 5 minutes. The check starts after the first *Goes Off* event. The warning clears when the phone sends data.
+
+Home Assistant works just at home? Turn on **Only warn when at home** (Settings → Devices & Services → iPhone Alarms Sync → Configure → Edit Device).
+
+It may also show if you changed the alarm outside the Clock app, travelled across time zones or the phone was off.
+
+To get a notification, add an automation:
+
+```yaml
+triggers:
+  - trigger: event
+    event_type: repairs_issue_registry_updated
+    event_data:
+      domain: iphone_alarms_sync
+      action: create
+conditions:
+  - condition: template
+    value_template: "{{ trigger.event.data.issue_id.startswith('missed_event_') }}"
+actions:
+  - action: notify.mobile_app_<phone>
+    data:
+      message: "Alarm event didn't reach Home Assistant."
+```
+
 ### Debug logs
 
 Add this to `configuration.yaml` and restart Home Assistant:
