@@ -11,6 +11,7 @@ from homeassistant.data_entry_flow import FlowResult
 from homeassistant.helpers import device_registry as dr
 
 from .const import (
+    CONF_MISSED_EVENT_ONLY_HOME,
     CONF_MOBILE_APP_DEVICE_ID,
     CONF_PHONE_ID,
     CONF_PHONE_NAME,
@@ -321,6 +322,7 @@ class OptionsFlowHandler(config_entries.OptionsFlowWithConfigEntry):
             return self.async_abort(reason="phone_not_found")
 
         device_options = {None: "None"} | _mobile_app_devices(self.hass)
+        only_home = self.config_entry.data.get(CONF_MISSED_EVENT_ONLY_HOME, False)
 
         if user_input is None:
             schema = vol.Schema(
@@ -334,6 +336,7 @@ class OptionsFlowHandler(config_entries.OptionsFlowWithConfigEntry):
                         CONF_SYNC_DISABLED_ALARMS,
                         default=phone.sync_disabled_alarms,
                     ): bool,
+                    vol.Required(CONF_MISSED_EVENT_ONLY_HOME, default=only_home): bool,
                 }
             )
             return self.async_show_form(
@@ -354,6 +357,7 @@ class OptionsFlowHandler(config_entries.OptionsFlowWithConfigEntry):
                         CONF_SYNC_DISABLED_ALARMS,
                         default=phone.sync_disabled_alarms,
                     ): bool,
+                    vol.Required(CONF_MISSED_EVENT_ONLY_HOME, default=only_home): bool,
                 }
             )
             return self.async_show_form(
@@ -386,6 +390,9 @@ class OptionsFlowHandler(config_entries.OptionsFlowWithConfigEntry):
                                 CONF_SYNC_DISABLED_ALARMS,
                                 default=phone.sync_disabled_alarms,
                             ): bool,
+                            vol.Required(
+                                CONF_MISSED_EVENT_ONLY_HOME, default=only_home
+                            ): bool,
                         }
                     )
                     return self.async_show_form(
@@ -393,6 +400,7 @@ class OptionsFlowHandler(config_entries.OptionsFlowWithConfigEntry):
                     )
 
         sync_disabled_alarms = user_input.get(CONF_SYNC_DISABLED_ALARMS, True)
+        new_only_home = user_input.get(CONF_MISSED_EVENT_ONLY_HOME, False)
 
         coordinator.update_phone(phone_name, mobile_app_device_id, sync_disabled_alarms)
         old_mobile_app_device_id = self.config_entry.data.get(CONF_MOBILE_APP_DEVICE_ID)
@@ -400,12 +408,14 @@ class OptionsFlowHandler(config_entries.OptionsFlowWithConfigEntry):
             new_phone_id != old_phone_id
             or sync_disabled_alarms != phone.sync_disabled_alarms
             or mobile_app_device_id != old_mobile_app_device_id
+            or new_only_home != only_home
         ):
             new_data = dict(self.config_entry.data)
             new_data[CONF_PHONE_ID] = new_phone_id
             new_data[CONF_PHONE_NAME] = phone_name
             new_data[CONF_MOBILE_APP_DEVICE_ID] = mobile_app_device_id
             new_data[CONF_SYNC_DISABLED_ALARMS] = sync_disabled_alarms
+            new_data[CONF_MISSED_EVENT_ONLY_HOME] = new_only_home
             self.hass.config_entries.async_update_entry(
                 self.config_entry,
                 unique_id=new_phone_id,
