@@ -1,9 +1,11 @@
 from __future__ import annotations
 
 from homeassistant.components.binary_sensor import (
+    BinarySensorDeviceClass,
     BinarySensorEntity,
     BinarySensorEntityDescription,
 )
+from homeassistant.const import EntityCategory
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity import DeviceInfo
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
@@ -82,11 +84,12 @@ async def async_setup_entry(
     async_add_entities: AddEntitiesCallback,
 ) -> None:
     coordinator = entry.runtime_data.coordinator
-    entities = []
-
     phone = coordinator.get_phone()
     if not phone:
         return
+    entities: list[BinarySensorEntity] = [
+        IPhoneAlarmsSyncMissedEventSensor(coordinator, entry, phone.phone_id)
+    ]
 
     hass.data.setdefault(DOMAIN, {})
     hass.data[DOMAIN].setdefault(entry.entry_id, {})
@@ -168,3 +171,34 @@ class IPhoneAlarmsSyncBinarySensor(
         if self._description.key == "repeats_sunday":
             return "Sunday" in alarm.repeat_days
         return None
+
+
+class IPhoneAlarmsSyncMissedEventSensor(
+    CoordinatorEntity[IPhoneAlarmsSyncCoordinator], BinarySensorEntity
+):
+    """On when an alarm rang but its "goes off" event never reached HA."""
+
+    _attr_device_class = BinarySensorDeviceClass.PROBLEM
+    _attr_entity_category = EntityCategory.DIAGNOSTIC
+
+    def __init__(
+        self,
+        coordinator: IPhoneAlarmsSyncCoordinator,
+        entry: IPhoneAlarmsSyncConfigEntry,
+        phone_id: str,
+    ) -> None:
+        super().__init__(coordinator)
+        phone = coordinator.get_phone()
+        if phone is None:
+            raise ValueError("Phone not found")
+        self._attr_unique_id = f"{entry.entry_id}_{phone_id}_alarm_event_missed"
+        self._attr_name = f"{phone.phone_name} Alarm Event Missed"
+        self._attr_device_info = DeviceInfo(
+            identifiers={(DOMAIN, phone_id)},
+            name=phone.phone_name,
+        )
+
+    @property
+    def is_on(self) -> bool:
+        phone = self.coordinator.get_phone()
+        return bool(phone and phone.missed_alarm_at)

@@ -81,11 +81,7 @@
         "data": {
           "phone_name": "Device Name",
           "mobile_app_device_id": "Mobile App Device (optional)",
-          "sync_disabled_alarms": "Sync disabled alarms",
-          "missed_event_only_home": "Only warn when at home"
-        },
-        "data_description": {
-          "missed_event_only_home": "Turn on if Home Assistant works just at home. Needs a Mobile App Device. Also fill in Home Wi-Fi in the shortcuts."
+          "sync_disabled_alarms": "Sync disabled alarms"
         }
       },
       "overview": {
@@ -115,10 +111,6 @@
     "no_data": {
       "title": "{phone_name} stopped sending alarm data",
       "description": "{phone_name} hasn't sent anything to iPhone Alarms Sync for {days} days.\n\nThis usually means the iOS shortcuts stopped working, for example after a Home Assistant app update reset the **Action** field of the **Perform action** step.\n\n1. Open the Shortcuts app and run the Sync shortcut manually.\n2. If it shows an error, *No server provided* or **Choose** in the Perform action step, pick the **Server** and then `iphone_alarms_sync.sync_alarms` as the **Action** (or re-import the shortcuts from the integration options).\n3. Check the same in the event shortcuts.\n\nThis issue disappears automatically when the phone sends data again. If you rarely open the Clock app, you can ignore it."
-    },
-    "missed_event": {
-      "title": "{phone_name}: alarm event missing",
-      "description": "No event arrived for the {time} alarm.\n\nUsually the phone couldn't reach Home Assistant, or the shortcut timed out (10 s limit). It also happens if the phone was off or the alarm was changed outside the Clock app.\n\nIt clears when the phone sends data."
     }
   }
 }

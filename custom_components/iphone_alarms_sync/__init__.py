@@ -4,12 +4,10 @@ import logging
 from datetime import datetime, timedelta
 from typing import Any, cast
 
-from homeassistant.const import STATE_HOME, STATE_UNAVAILABLE, STATE_UNKNOWN, Platform
 from homeassistant.core import CALLBACK_TYPE, HomeAssistant, ServiceCall, callback
 from homeassistant.exceptions import HomeAssistantError, ServiceValidationError
 from homeassistant.helpers import config_validation as cv
 from homeassistant.helpers import device_registry as dr
-from homeassistant.helpers import entity_registry as er
 from homeassistant.helpers import issue_registry as ir
 from homeassistant.helpers.event import (
     async_track_point_in_time,
@@ -24,7 +22,6 @@ from .const import (
     CONF_ALARMS,
     CONF_EVENT,
     CONF_LABEL,
-    CONF_MISSED_EVENT_ONLY_HOME,
     CONF_MOBILE_APP_DEVICE_ID,
     CONF_PHONE_ID,
     CONF_PHONE_NAME,
@@ -142,35 +139,12 @@ def _resolve_call(
         )
     # The phone reached Home Assistant, so the shortcut chain works again.
     ir.async_delete_issue(hass, DOMAIN, _no_data_issue_id(entry))
-    ir.async_delete_issue(hass, DOMAIN, _missed_event_issue_id(entry))
+    phone.missed_alarm_at = None
     return entry, coordinator, phone
 
 
 def _no_data_issue_id(entry: IPhoneAlarmsSyncConfigEntry) -> str:
     return f"no_data_{entry.entry_id}"
-
-
-def _missed_event_issue_id(entry: IPhoneAlarmsSyncConfigEntry) -> str:
-    return f"missed_event_{entry.entry_id}"
-
-
-def _phone_away(hass: HomeAssistant, phone: PhoneData) -> bool:
-    """Whether the phone's Home Assistant app tracker says it is not at home."""
-    if not phone.mobile_app_device_id:
-        return False
-    entity_registry = er.async_get(hass)
-    for reg_entry in er.async_entries_for_device(
-        entity_registry, phone.mobile_app_device_id
-    ):
-        if reg_entry.domain == Platform.DEVICE_TRACKER:
-            # A disabled or unknown tracker must not silence the issue.
-            state = hass.states.get(reg_entry.entity_id)
-            return state is not None and state.state not in (
-                STATE_HOME,
-                STATE_UNKNOWN,
-                STATE_UNAVAILABLE,
-            )
-    return False
 
 
 @callback
@@ -180,8 +154,9 @@ def _async_check_missed_event(
     alarm_at: datetime,
     alarm_id: str | None,
 ) -> None:
-    """Raise a repair issue when an alarm rang but its "goes off" never arrived."""
-    phone = entry.runtime_data.coordinator.get_phone()
+    """Flag the phone when an alarm rang but its "goes off" never arrived."""
+    coordinator = entry.runtime_data.coordinator
+    phone = coordinator.get_phone()
     alarm = phone.alarms.get(alarm_id) if phone and alarm_id else None
     if phone is None or alarm is None:
         return
@@ -196,29 +171,13 @@ def _async_check_missed_event(
     ):
         return
     # Anything from the phone since the alarm (an event, or a sync that may also have
-    # created this alarm) proves the connection; _resolve_call clears the issue too.
-    last = entry.runtime_data.coordinator.last_activity_at()
-    issue_id = _missed_event_issue_id(entry)
+    # created this alarm) proves the connection; _resolve_call clears the flag too.
+    last = coordinator.last_activity_at()
     # iOS may run the automation a few seconds before the scheduled minute.
-    if last is not None and last >= alarm_at - timedelta(minutes=1):
-        ir.async_delete_issue(hass, DOMAIN, issue_id)
-        return
-    # A phone that reaches HA only at home is expected to miss events elsewhere.
-    if entry.data.get(CONF_MISSED_EVENT_ONLY_HOME) and _phone_away(hass, phone):
-        return
-    ir.async_create_issue(
-        hass,
-        DOMAIN,
-        issue_id,
-        is_fixable=False,
-        severity=ir.IssueSeverity.WARNING,
-        translation_key="missed_event",
-        translation_placeholders={
-            "phone_name": entry.title,
-            "time": dt_util.as_local(alarm_at).strftime("%H:%M"),
-        },
-        learn_more_url=DOCS_TROUBLESHOOTING_URL,
-    )
+    missed = last is None or last < alarm_at - timedelta(minutes=1)
+    phone.missed_alarm_at = alarm_at.isoformat() if missed else None
+    coordinator._save_to_config()
+    coordinator.async_set_updated_data(phone)
 
 
 @callback
@@ -759,6 +718,8 @@ async def async_setup_entry(
             )
 
     await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
+    # v1.3.0 raised a repair instead of the Alarm Event Missed sensor.
+    ir.async_delete_issue(hass, DOMAIN, f"missed_event_{entry.entry_id}")
 
     @callback
     def _check_stale(_now: datetime | None = None) -> None:
@@ -815,7 +776,6 @@ async def async_setup_entry(
     def _cancel_missed_check() -> None:
         if cancel_check:
             cancel_check()
-        ir.async_delete_issue(hass, DOMAIN, _missed_event_issue_id(entry))
 
     _schedule_missed_check()
     entry.async_on_unload(coordinator.async_add_listener(_schedule_missed_check))
