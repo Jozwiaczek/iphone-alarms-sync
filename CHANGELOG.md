@@ -1,3 +1,8 @@
+# [v1.2.2](https://github.com/Jozwiaczek/iphone-alarms-sync/compare/v1.2.1...v1.2.2) (2026-11-08 12:11)
+
+## 💄 UI/UX Updates
+-  Add brand assets for Marketplace (#5) ([#5](https://github.com/Jozwiaczek/iphone-alarms-sync/issues/)) [[30b8b055cae1d51a15596a000ecaf4f7d4a359d1](/Jozwiaczek//commit/30b8b055cae1d51a15596a000ecaf4f7d4a359d1)]
+
 # [v1.2.1](https://github.com/Jozwiaczek/iphone-alarms-sync/compare/v1.2.0...v1.2.1) (2026-11-07 23:11)
 
 ## 🐛 Bug Fixes
