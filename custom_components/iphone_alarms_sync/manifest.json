@@ -4,6 +4,9 @@
   "after_dependencies": [
     "mobile_app"
   ],
+  "categories": [
+    "presence_location.phones_companion_apps"
+  ],
   "codeowners": [
     "@Jozwiaczek"
   ],
