@@ -1,3 +1,8 @@
+# [v1.2.3](https://github.com/Jozwiaczek/iphone-alarms-sync/compare/v1.2.2...v1.2.3) (2026-11-08 12:11)
+
+## 🐛 Bug Fixes
+-  Fix next alarm, deleted alarms and duplicate phone setup (#6) ([#6](https://github.com/Jozwiaczek/iphone-alarms-sync/issues/)) [[172056c3e0fd9886e19724e6696811781ed5a76a](/Jozwiaczek//commit/172056c3e0fd9886e19724e6696811781ed5a76a)]
+
 # [v1.2.2](https://github.com/Jozwiaczek/iphone-alarms-sync/compare/v1.2.1...v1.2.2) (2026-11-08 12:11)
 
 ## 💄 UI/UX Updates
