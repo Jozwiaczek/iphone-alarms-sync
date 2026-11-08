@@ -193,12 +193,27 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
 
         for alarm_dict in alarms:
             alarm_id = alarm_dict[CONF_ALARM_ID]
+            if alarm_id not in phone.alarms:  # filtered out (disabled, not synced)
+                continue
             device_registry.async_get_or_create(
                 config_entry_id=entry.entry_id,
                 identifiers={(DOMAIN, phone_id, alarm_id)},
                 name=f"{phone.phone_name} {alarm_dict.get(CONF_LABEL, alarm_id)}",
                 via_device_id=phone_device.id,
             )
+
+        # Alarms gone from the phone take their device and entities with them.
+        for device in dr.async_entries_for_config_entry(
+            device_registry, entry.entry_id
+        ):
+            for identifier in device.identifiers:
+                if (
+                    len(identifier) == 3
+                    and identifier[:2] == (DOMAIN, phone_id)
+                    and identifier[2] not in phone.alarms
+                ):
+                    device_registry.async_remove_device(device.id)
+                    break
 
         if new_alarm_ids:
             entry_data = hass.data.get(DOMAIN, {}).get(entry.entry_id, {})

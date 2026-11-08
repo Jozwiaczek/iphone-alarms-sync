@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import re
 from datetime import datetime, time, timedelta
-from typing import TYPE_CHECKING, cast
+from typing import TYPE_CHECKING
 
 from homeassistant.util import dt as dt_util
 
@@ -31,124 +31,44 @@ def calculate_next_occurrence(
     if not alarm.enabled:
         return None
 
-    if now is None:
-        now = dt_util.utcnow()
-
-    now_local = dt_util.as_local(now)
-    current_time = now_local.time()
-    current_weekday = now_local.weekday()
-    current_date = now_local.date()
-
+    now_local = dt_util.as_local(now or dt_util.utcnow())
     alarm_time = time(hour=alarm.hour, minute=alarm.minute)
+    repeating = bool(alarm.repeats and alarm.repeat_days)
 
-    if alarm.repeats and alarm.repeat_days:
-        min_days_ahead = 7
-        next_datetime = None
-
-        for day_name in alarm.repeat_days:
-            day_num = WEEKDAY_MAP.get(day_name)
-            if day_num is None:
-                continue
-
-            days_ahead = (day_num - current_weekday) % 7
-            if days_ahead == 0 and alarm_time <= current_time:
-                days_ahead = 7
-            candidate_date = current_date + timedelta(days=days_ahead)
-            combined = datetime.combine(candidate_date, alarm_time)
-            candidate_datetime = dt_util.as_utc(combined)
-
-            if days_ahead == 0:
-                if next_datetime is None or candidate_datetime < next_datetime:
-                    next_datetime = candidate_datetime
-                    min_days_ahead = 0
-            elif days_ahead > 0:
-                if days_ahead < min_days_ahead or (
-                    days_ahead == min_days_ahead
-                    and (next_datetime is None or candidate_datetime < next_datetime)
-                ):
-                    next_datetime = candidate_datetime
-                    min_days_ahead = days_ahead
-
-        if next_datetime is None:
-            for day_name in alarm.repeat_days:
-                day_num = WEEKDAY_MAP.get(day_name)
-                if day_num is None:
-                    continue
-                days_ahead = (day_num - current_weekday) % 7
-                if days_ahead > 0:
-                    candidate_date = current_date + timedelta(days=days_ahead)
-                    combined = datetime.combine(candidate_date, alarm_time)
-                    candidate_datetime = dt_util.as_utc(combined)
-                    if next_datetime is None or candidate_datetime < next_datetime:
-                        next_datetime = candidate_datetime
-
-        return next_datetime
+    if repeating:
+        offsets = [
+            (WEEKDAY_MAP[day] - now_local.weekday()) % 7
+            for day in alarm.repeat_days
+            if day in WEEKDAY_MAP
+        ]
     else:
-        combined = datetime.combine(current_date, alarm_time)
-        alarm_datetime = cast(datetime, dt_util.as_utc(combined))
-        if alarm_time > current_time:
-            return alarm_datetime
-        return None
+        offsets = [0]
+
+    candidates = []
+    for days_ahead in offsets:
+        if days_ahead == 0 and alarm_time <= now_local.time():
+            # Passed today: a one-time alarm rings tomorrow, a weekly one next week.
+            days_ahead = 7 if repeating else 1
+        local = datetime.combine(
+            now_local.date() + timedelta(days=days_ahead), alarm_time
+        )
+        candidates.append(dt_util.as_utc(local))
+
+    return min(candidates, default=None)
 
 
 def calculate_next_alarm_datetime(
     phone: PhoneData, now: datetime | None = None
 ) -> tuple[datetime | None, str | None]:
-    if now is None:
-        now = dt_util.utcnow()
-
-    now_local = dt_util.as_local(now)
-    current_time = now_local.time()
-    current_weekday = now_local.weekday()
-    current_date = now_local.date()
-
     next_alarm_datetime: datetime | None = None
     next_alarm_id: str | None = None
-    min_days_ahead = 7
 
     for alarm in phone.alarms.values():
-        if not alarm.enabled:
-            continue
-
-        alarm_time = time(hour=alarm.hour, minute=alarm.minute)
-
-        if alarm.repeats and alarm.repeat_days:
-            for day_name in alarm.repeat_days:
-                day_num = WEEKDAY_MAP.get(day_name)
-                if day_num is None:
-                    continue
-
-                days_ahead = (day_num - current_weekday) % 7
-                candidate_date = current_date + timedelta(days=days_ahead)
-                combined = datetime.combine(candidate_date, alarm_time)
-                candidate_datetime = dt_util.as_utc(combined)
-
-                if days_ahead == 0 and alarm_time > current_time:
-                    if (
-                        next_alarm_datetime is None
-                        or candidate_datetime < next_alarm_datetime
-                    ):
-                        next_alarm_datetime = candidate_datetime
-                        next_alarm_id = alarm.alarm_id
-                        min_days_ahead = 0
-                elif days_ahead > 0:
-                    if days_ahead < min_days_ahead or (
-                        days_ahead == min_days_ahead
-                        and (
-                            next_alarm_datetime is None
-                            or candidate_datetime < next_alarm_datetime
-                        )
-                    ):
-                        next_alarm_datetime = candidate_datetime
-                        next_alarm_id = alarm.alarm_id
-                        min_days_ahead = days_ahead
-        else:
-            alarm_datetime = dt_util.as_utc(datetime.combine(current_date, alarm_time))
-            if alarm_time > current_time:
-                if next_alarm_datetime is None or alarm_datetime < next_alarm_datetime:
-                    next_alarm_datetime = alarm_datetime
-                    next_alarm_id = alarm.alarm_id
-                    min_days_ahead = 0
+        occurrence = calculate_next_occurrence(alarm, now)
+        if occurrence is not None and (
+            next_alarm_datetime is None or occurrence < next_alarm_datetime
+        ):
+            next_alarm_datetime, next_alarm_id = occurrence, alarm.alarm_id
 
     return next_alarm_datetime, next_alarm_id
 
