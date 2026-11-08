@@ -91,13 +91,6 @@ module.exports = {
           partials: {
             commitTemplate: fs.readFileSync(commitTemplateFile, 'utf-8'),
           },
-          issueResolution: {
-            template: '{baseUrl}/{owner}/{repo}/issues/{ref}',
-            baseUrl: 'https://github.com',
-            source: 'github.com',
-            removeFromCommit: false,
-            regex: /#\d+/g,
-          },
         },
       },
     ],
