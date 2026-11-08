@@ -1,3 +1,8 @@
+# [v1.4.0](https://github.com/Jozwiaczek/iphone-alarms-sync/compare/v1.3.0...v1.4.0) (2026-11-08 22:11)
+
+## ✨ New Features
+-  Replace missed-event repair with a sensor ([#13](https://github.com/Jozwiaczek/iphone-alarms-sync/issues/13)) [[7115599cbd7f5147c25041f3b5b9e2e606533a2d](https://github.com/Jozwiaczek/iphone-alarms-sync/commit/7115599cbd7f5147c25041f3b5b9e2e606533a2d)]
+
 # [v1.3.0](https://github.com/Jozwiaczek/iphone-alarms-sync/compare/v1.2.5...v1.3.0) (2026-11-08 19:11)
 
 ## ✨ New Features
