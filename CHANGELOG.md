@@ -1,3 +1,8 @@
+# [v1.2.5](https://github.com/Jozwiaczek/iphone-alarms-sync/compare/v1.2.4...v1.2.5) (2026-11-08 16:11)
+
+## 🔧 Configuration
+-  Fix changelog links ([#9](https://github.com/Jozwiaczek/iphone-alarms-sync/issues/9)) [[1c2771410827c63b79592f46b9ccb92c6e89b827](https://github.com/Jozwiaczek/iphone-alarms-sync/commit/1c2771410827c63b79592f46b9ccb92c6e89b827)]
+
 # [v1.2.4](https://github.com/Jozwiaczek/iphone-alarms-sync/compare/v1.2.3...v1.2.4) (2026-11-08 12:11)
 
 ## ⬆️ Dependencies Upgraded
