@@ -8,14 +8,14 @@
   <img src="https://img.shields.io/github/v/release/Jozwiaczek/iphone-alarms-sync?label=version" alt="Version">
   <img src="https://img.shields.io/github/release-date/Jozwiaczek/iphone-alarms-sync" alt="Release Date">
   <img src="https://img.shields.io/badge/License-GPL--3.0-blue.svg" alt="License">
-  <img src="https://img.shields.io/badge/HACS-Custom-orange" alt="HACS">
+  <img src="https://img.shields.io/badge/Marketplace-integration-FF9500" alt="Marketplace">
   <img src="https://img.shields.io/badge/Home%20Assistant-2026.8%2B-blue?logo=homeassistant" alt="Home Assistant">
   <img src="https://img.shields.io/github/downloads/Jozwiaczek/iphone-alarms-sync/total" alt="Downloads">
   <a href="https://github.com/frinyvonnick/gitmoji-changelog"><img src="https://img.shields.io/badge/Changelog-gitmoji-brightgreen.svg" alt="gitmoji-changelog"></a>
 </p>
 
 <p align="center">
-  <a href="https://my.home-assistant.io/redirect/hacs_repository/?owner=Jozwiaczek&repository=iphone-alarms-sync&category=integration"><img src="https://my.home-assistant.io/badges/hacs_repository.svg" alt="HACS"></a>
+  <a href="https://my.home-assistant.io/redirect/hacs_repository/?owner=Jozwiaczek&repository=iphone-alarms-sync&category=integration"><img src="https://my.home-assistant.io/badges/hacs_repository.svg" alt="Open in the Marketplace"></a>
 </p>
 
 Sync iPhone/iPad alarms to Home Assistant using predefined Apple Shortcuts. This is a **one-way synchronization** from Apple iPhone or iPad to Home Assistant, enabling alarm-based automations like turning on lights, brewing coffee, or opening blinds when your alarm goes off.
@@ -44,12 +44,13 @@ Sync iPhone/iPad alarms to Home Assistant using predefined Apple Shortcuts. This
 
 **Requirements:** Home Assistant 2026.8 or newer, iOS 17+ and the Home Assistant app 2026.9.3 or newer.
 
-### Step 1: Install via HACS
+### Step 1: Install from the Marketplace
 
-1. Open HACS → Integrations → Custom repositories
-2. Add repository: `Jozwiaczek/iphone-alarms-sync`
-3. Install "iPhone Alarms Sync"
-4. Restart Home Assistant
+1. Click **Open in the Marketplace** above, or go to Settings → Marketplace and search for "iPhone Alarms Sync"
+2. Download "iPhone Alarms Sync"
+3. Restart Home Assistant
+
+On Home Assistant 2026.8–2026.10 the button opens HACS instead.
 
 ### Step 2: Configure
 

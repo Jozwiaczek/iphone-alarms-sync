@@ -4,6 +4,9 @@
   "after_dependencies": [
     "mobile_app"
   ],
+  "categories": [
+    "presence_location.phones_companion_apps"
+  ],
   "codeowners": [
     "@Jozwiaczek"
   ],
@@ -14,5 +17,5 @@
   "requirements": [
     "segno==1.6.1"
   ],
-  "version": "1.2.1"
+  "version": "1.2.2"
 }
