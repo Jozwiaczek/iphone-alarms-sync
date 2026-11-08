@@ -130,6 +130,14 @@ def check(wf: dict, service: str) -> list[str]:
             if i not in asked:
                 errors.append(f"text step {i} has no import question")
 
+    # Local-only setups stop the shortcut away from the home Wi-Fi.
+    ids = [a["WFWorkflowActionIdentifier"] for a in actions]
+    first = actions[0].get("WFWorkflowActionParameters", {})
+    if first.get("CustomOutputName") != "Home Wi-Fi" or 0 not in asked:
+        errors.append("first step must be the asked, empty Home Wi-Fi text")
+    if "is.workflow.actions.exit" not in ids[:ha_index]:
+        errors.append("Home Wi-Fi check must stop the shortcut before Home Assistant")
+
     private = []
     if PRIVATE.exists():
         private = [s for s in PRIVATE.read_text().splitlines() if s.strip()]
