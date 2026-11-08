@@ -58,24 +58,25 @@ On Home Assistant 2026.8–2026.10 the button opens HACS instead.
 2. Scan QR code or open link on your iPhone/iPad
 3. Import the **"iPhone Alarms Sync: Sync"** shortcut (required)
 4. Enter your **Phone ID** when prompted, then pick your Home Assistant server and the `iphone_alarms_sync.sync_alarms` action
+   - **Home Wi-Fi** (optional): fill in only if Home Assistant works just at home
 
 #### iPhone Alarms Sync: Sync (Required)
 
-![QR Code](https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=https://www.icloud.com/shortcuts/a26cc99634884f0d9072147bd700b540)
+![QR Code](https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=https://www.icloud.com/shortcuts/3a7ef812167b410f8b429de5bb07587e)
 
-**[Open Shortcut](https://www.icloud.com/shortcuts/a26cc99634884f0d9072147bd700b540)**
+**[Open Shortcut](https://www.icloud.com/shortcuts/3a7ef812167b410f8b429de5bb07587e)**
 
 #### iPhone Alarms Sync: Device Event (Optional)
 
-![QR Code](https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=https://www.icloud.com/shortcuts/2417d7ff1b424c02b189954321e8685a)
+![QR Code](https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=https://www.icloud.com/shortcuts/af592e425fd04cdbb4835f96f35ed793)
 
-**[Open Shortcut](https://www.icloud.com/shortcuts/2417d7ff1b424c02b189954321e8685a)** - For device-level events (Wake-Up, any alarm, sleep events)
+**[Open Shortcut](https://www.icloud.com/shortcuts/af592e425fd04cdbb4835f96f35ed793)** - For device-level events (Wake-Up, any alarm, sleep events)
 
 #### iPhone Alarms Sync: Alarm Event (Optional)
 
-![QR Code](https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=https://www.icloud.com/shortcuts/a0277daefdcb4eb9838743b97c5d1ace)
+![QR Code](https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=https://www.icloud.com/shortcuts/0b78900623dd4269a50fc481971ecea5)
 
-**[Open Shortcut](https://www.icloud.com/shortcuts/a0277daefdcb4eb9838743b97c5d1ace)** - For specific alarm events
+**[Open Shortcut](https://www.icloud.com/shortcuts/0b78900623dd4269a50fc481971ecea5)** - For specific alarm events
 
 ### Step 3: Create iOS Automation
 

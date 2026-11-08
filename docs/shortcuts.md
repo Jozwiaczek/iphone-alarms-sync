@@ -10,15 +10,16 @@ This guide covers setup for all three shortcuts used by iPhone Alarms Sync integ
 
 Scan QR code or open link **on your iPhone/iPad that is synced/integrated with Home Assistant**:
 
-![QR Code](https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=https://www.icloud.com/shortcuts/a26cc99634884f0d9072147bd700b540)
+![QR Code](https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=https://www.icloud.com/shortcuts/3a7ef812167b410f8b429de5bb07587e)
 
-**[Open Shortcut](https://www.icloud.com/shortcuts/a26cc99634884f0d9072147bd700b540)**
+**[Open Shortcut](https://www.icloud.com/shortcuts/3a7ef812167b410f8b429de5bb07587e)**
 
 ### Import Questions
 
 When importing, you'll be asked:
 - **Enter Phone ID**: Enter your Phone ID from Home Assistant
   - Find it in: Settings → Devices & Services → iPhone Alarms Sync → Configure → Sync Shortcut Setup
+- **Home Wi-Fi** (optional): fill in only if Home Assistant works just at home. Use the exact name. On any other network, the shortcut stops.
 - **Server** and **Action**: pick your Home Assistant server, then `iphone_alarms_sync.sync_alarms` (search for `iphone_alarms_sync`).
 
 ### Personal Automation
@@ -40,14 +41,15 @@ Alarms sync automatically when you close the Clock app.
 
 Scan QR code or open link **on your iPhone/iPad that is synced/integrated with Home Assistant**:
 
-![QR Code](https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=https://www.icloud.com/shortcuts/2417d7ff1b424c02b189954321e8685a)
+![QR Code](https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=https://www.icloud.com/shortcuts/af592e425fd04cdbb4835f96f35ed793)
 
-**[Open Shortcut](https://www.icloud.com/shortcuts/2417d7ff1b424c02b189954321e8685a)**
+**[Open Shortcut](https://www.icloud.com/shortcuts/af592e425fd04cdbb4835f96f35ed793)**
 
 ### Import Questions
 
 When importing, you'll be asked:
 - **Enter Phone ID**: Enter your Phone ID (same as in Sync shortcut)
+- **Home Wi-Fi** (optional): as in Sync.
 - **Enter Event Type Number**: Choose from:
   - `1` = Any Alarm Goes Off
   - `2` = Any Alarm Snoozed
@@ -71,7 +73,7 @@ When importing, you'll be asked:
 5. Enable **"Run Immediately"**
 6. Tap **Done**
 
-**Note:** The shortcut will use the event type configured in import questions. You may want to create separate shortcuts for different event types, or use conditional logic within the shortcut.
+**Note:** One copy sends one event. Import it once per event and name each copy, e.g. *iPhone Alarms Sync: Any Alarm Goes Off*.
 
 ## Shortcut 3: Alarm Event
 
@@ -81,14 +83,15 @@ When importing, you'll be asked:
 
 Scan QR code or open link **on your iPhone/iPad that is synced/integrated with Home Assistant**:
 
-![QR Code](https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=https://www.icloud.com/shortcuts/a0277daefdcb4eb9838743b97c5d1ace)
+![QR Code](https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=https://www.icloud.com/shortcuts/0b78900623dd4269a50fc481971ecea5)
 
-**[Open Shortcut](https://www.icloud.com/shortcuts/a0277daefdcb4eb9838743b97c5d1ace)**
+**[Open Shortcut](https://www.icloud.com/shortcuts/0b78900623dd4269a50fc481971ecea5)**
 
 ### Import Questions
 
 When importing, you'll be asked:
 - **Enter Phone ID**: Enter your Phone ID (same as in Sync shortcut)
+- **Home Wi-Fi** (optional): as in Sync.
 - **Enter Event Type Number**: Choose:
   - `1` = Goes Off
   - `2` = Snoozed
@@ -167,9 +170,9 @@ The Home Assistant app (2026.10.1+) waits 10 s for Home Assistant. The phone mus
 
 Home Assistant warns when an alarm rings and no *Goes Off* event arrives within 5 minutes. The check starts after the first *Goes Off* event. The warning clears when the phone sends data.
 
-Home Assistant works just at home? Turn on **Only warn when at home** (Settings → Devices & Services → iPhone Alarms Sync → Configure → Edit Device).
+Home Assistant works just at home? Turn on **Only warn when at home** (Settings → Devices & Services → iPhone Alarms Sync → Configure → Edit Device) and fill in **Home Wi-Fi** in the shortcuts.
 
-It may also show if you changed the alarm outside the Clock app, travelled across time zones or the phone was off.
+It may also show if you changed the alarm outside the Clock app, travelled across time zones, the phone was off or on another Wi-Fi.
 
 To get a notification, add an automation:
 
