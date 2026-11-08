@@ -53,6 +53,7 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):  # type: ignore[call
         self._phone_id: str | None = None
         self._phone_name: str | None = None
         self._mobile_app_device_id: str | None = None
+        self._existing_title: str | None = None
 
     async def async_step_user(
         self, user_input: dict[str, Any] | None = None
@@ -162,7 +163,8 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):  # type: ignore[call
         existing_entries = self.hass.config_entries.async_entries(DOMAIN)
         for entry in existing_entries:
             if entry.unique_id == phone_id:
-                return await self.async_step_already_configured(entry)
+                self._existing_title = entry.title
+                return await self.async_step_already_configured()
 
         return await self.async_step_confirm()
 
@@ -211,9 +213,7 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):  # type: ignore[call
         )
 
     async def async_step_already_configured(
-        self,
-        existing_entry: config_entries.ConfigEntry,
-        user_input: dict[str, Any] | None = None,
+        self, user_input: dict[str, Any] | None = None
     ) -> FlowResult:
         if self._phone_id is None or self._phone_name is None:
             return self.async_abort(reason="unknown")
@@ -233,7 +233,7 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):  # type: ignore[call
                 description_placeholders={
                     "phone_name": self._phone_name,
                     "phone_id": self._phone_id,
-                    "existing_title": existing_entry.title,
+                    "existing_title": self._existing_title,
                 },
             )
 

@@ -269,6 +269,7 @@ class IPhoneAlarmsSyncCoordinator(DataUpdateCoordinator[PhoneData]):
         synced_at = dt_util.utcnow().isoformat()
         new_alarm_ids: list[str] = []
 
+        received_any = bool(alarms)
         if not self._phone.sync_disabled_alarms:
             alarms = [a for a in alarms if a.get(CONF_ENABLED, False)]
 
@@ -304,13 +305,13 @@ class IPhoneAlarmsSyncCoordinator(DataUpdateCoordinator[PhoneData]):
                         CONF_ALLOWS_SNOOZE, alarm.allows_snooze
                     )
 
-        if not self._phone.sync_disabled_alarms:
-            alarms_to_remove = [
-                alarm_id
-                for alarm_id in self._phone.alarms.keys()
-                if alarm_id not in synced_alarm_ids
-            ]
-            for alarm_id in alarms_to_remove:
+        # The shortcut sends every alarm, so a missing one was deleted on the device
+        # (or disabled, when disabled alarms are not synced). An empty payload is more
+        # likely a failed shortcut than a phone without alarms, so it removes nothing.
+        if received_any:
+            for alarm_id in [
+                a for a in self._phone.alarms if a not in synced_alarm_ids
+            ]:
                 del self._phone.alarms[alarm_id]
 
         # Record every sync, not only changes, so "Last Sync" shows the shortcut works.
