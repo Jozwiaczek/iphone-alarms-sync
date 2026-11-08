@@ -15,7 +15,7 @@
 </p>
 
 <p align="center">
-  <a href="https://my.home-assistant.io/redirect/marketplace_repository/?owner=Jozwiaczek&repository=iphone-alarms-sync&category=integration"><img src="https://my.home-assistant.io/badges/marketplace_repository.svg" alt="Open in the Marketplace"></a>
+  <a href="https://my.home-assistant.io/redirect/hacs_repository/?owner=Jozwiaczek&repository=iphone-alarms-sync&category=integration"><img src="https://my.home-assistant.io/badges/hacs_repository.svg" alt="Open in the Marketplace"></a>
 </p>
 
 Sync iPhone/iPad alarms to Home Assistant using predefined Apple Shortcuts. This is a **one-way synchronization** from Apple iPhone or iPad to Home Assistant, enabling alarm-based automations like turning on lights, brewing coffee, or opening blinds when your alarm goes off.
@@ -49,6 +49,8 @@ Sync iPhone/iPad alarms to Home Assistant using predefined Apple Shortcuts. This
 1. Click **Open in the Marketplace** above, or go to Settings → Marketplace and search for "iPhone Alarms Sync"
 2. Download "iPhone Alarms Sync"
 3. Restart Home Assistant
+
+On Home Assistant 2026.8–2026.10 the button opens HACS instead.
 
 ### Step 2: Configure
 
