@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from datetime import datetime, time, timedelta
+from datetime import datetime, timedelta
 from typing import cast
 
 from homeassistant.components.sensor import (
@@ -481,7 +481,7 @@ class IPhoneAlarmsSyncPhoneSensor(
 
     async def async_added_to_hass(self) -> None:
         await super().async_added_to_hass()
-        if self.entity_description.key == "next_alarm_datetime":
+        if self.entity_description.key in {"next_alarm_datetime", "next_alarm_label"}:
             self._setup_refresh_timer()
 
     async def async_will_remove_from_hass(self) -> None:
@@ -493,7 +493,7 @@ class IPhoneAlarmsSyncPhoneSensor(
     @callback
     def _handle_coordinator_update(self) -> None:
         super()._handle_coordinator_update()
-        if self.entity_description.key == "next_alarm_datetime":
+        if self.entity_description.key in {"next_alarm_datetime", "next_alarm_label"}:
             self._setup_refresh_timer()
 
     def _get_next_alarm_datetime(self) -> tuple[datetime | None, str | None]:
@@ -516,7 +516,11 @@ class IPhoneAlarmsSyncPhoneSensor(
         now = dt_util.utcnow()
         if next_dt <= now:
             phone = self.coordinator.get_phone()
-            if phone and next_alarm_id:
+            if (
+                self.entity_description.key == "next_alarm_datetime"
+                and phone
+                and next_alarm_id
+            ):
                 phone.last_alarm_datetime = next_dt.isoformat()
                 phone.last_alarm_id = next_alarm_id
                 self.coordinator._save_to_config()
@@ -546,72 +550,17 @@ class IPhoneAlarmsSyncPhoneSensor(
     @callback
     def _refresh_callback(self, now: datetime) -> None:
         phone = self.coordinator.get_phone()
-        if phone and self._scheduled_alarm_id and self._scheduled_alarm_datetime:
+        if (
+            self.entity_description.key == "next_alarm_datetime"
+            and phone
+            and self._scheduled_alarm_id
+            and self._scheduled_alarm_datetime
+        ):
             phone.last_alarm_datetime = self._scheduled_alarm_datetime.isoformat()
             phone.last_alarm_id = self._scheduled_alarm_id
             self.coordinator._save_to_config()
         self.async_write_ha_state()
         self._setup_refresh_timer()
-
-    def _get_next_alarm(self) -> tuple[time | None, str | None]:
-        phone = self.coordinator.get_phone()
-        if not phone:
-            return None, None
-
-        now = dt_util.utcnow()
-        current_time = now.time()
-        current_weekday = now.weekday()
-
-        next_alarm_time: time | None = None
-        next_alarm_label: str | None = None
-        min_days_ahead = 7
-
-        weekday_map = {
-            "Monday": 0,
-            "Tuesday": 1,
-            "Wednesday": 2,
-            "Thursday": 3,
-            "Friday": 4,
-            "Saturday": 5,
-            "Sunday": 6,
-        }
-
-        for alarm in phone.alarms.values():
-            if not alarm.enabled:
-                continue
-
-            alarm_time = time(hour=alarm.hour, minute=alarm.minute)
-
-            if alarm.repeats and alarm.repeat_days:
-                for day_name in alarm.repeat_days:
-                    day_num = weekday_map.get(day_name)
-                    if day_num is None:
-                        continue
-
-                    days_ahead = (day_num - current_weekday) % 7
-                    if days_ahead == 0 and alarm_time > current_time:
-                        if next_alarm_time is None or alarm_time < next_alarm_time:
-                            next_alarm_time = alarm_time
-                            next_alarm_label = alarm.label
-                            min_days_ahead = 0
-                    elif days_ahead > 0:
-                        if days_ahead < min_days_ahead or (
-                            days_ahead == min_days_ahead
-                            and (
-                                next_alarm_time is None or alarm_time < next_alarm_time
-                            )
-                        ):
-                            next_alarm_time = alarm_time
-                            next_alarm_label = alarm.label
-                            min_days_ahead = days_ahead
-            else:
-                if alarm_time > current_time:
-                    if next_alarm_time is None or alarm_time < next_alarm_time:
-                        next_alarm_time = alarm_time
-                        next_alarm_label = alarm.label
-                        min_days_ahead = 0
-
-        return next_alarm_time, next_alarm_label
 
     @property
     def native_value(self) -> datetime | str | int | None:
@@ -633,8 +582,9 @@ class IPhoneAlarmsSyncPhoneSensor(
             return sum(1 for alarm in phone.alarms.values() if not alarm.enabled)
 
         if self.entity_description.key == "next_alarm_label":
-            _, label = self._get_next_alarm()
-            return label
+            _, alarm_id = self._get_next_alarm_datetime()
+            alarm = self.coordinator.get_alarm(alarm_id) if alarm_id else None
+            return alarm.label if alarm else None
 
         if self.entity_description.key == "next_alarm_datetime":
             next_dt, _ = self._get_next_alarm_datetime()
