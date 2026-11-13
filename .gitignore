@@ -45,3 +45,4 @@ node_modules/
 
 # Signed shortcut templates (scripts/shortcuts.py build)
 dist/
+.next-version

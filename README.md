@@ -5,8 +5,10 @@
 <h1 align="center">iPhone Alarms Sync</h1>
 
 <p align="center">
-  <img src="https://img.shields.io/github/v/release/Jozwiaczek/iphone-alarms-sync?label=version" alt="Version">
-  <img src="https://img.shields.io/github/release-date/Jozwiaczek/iphone-alarms-sync" alt="Release Date">
+  <a href="https://github.com/Jozwiaczek/iphone-alarms-sync/releases/latest"><img src="https://img.shields.io/github/v/release/Jozwiaczek/iphone-alarms-sync?label=stable" alt="Stable version"></a>
+  <a href="https://github.com/Jozwiaczek/iphone-alarms-sync/releases"><img src="https://img.shields.io/github/v/release/Jozwiaczek/iphone-alarms-sync?include_prereleases&label=beta&color=orange" alt="Beta version"></a>
+  <a href="https://github.com/Jozwiaczek/iphone-alarms-sync/actions/workflows/validate.yml"><img src="https://github.com/Jozwiaczek/iphone-alarms-sync/actions/workflows/validate.yml/badge.svg?branch=main" alt="Validate"></a>
+  <a href="https://github.com/Jozwiaczek/iphone-alarms-sync/actions/workflows/hacs.yml"><img src="https://github.com/Jozwiaczek/iphone-alarms-sync/actions/workflows/hacs.yml/badge.svg?branch=main" alt="HACS"></a>
   <img src="https://img.shields.io/badge/License-GPL--3.0-blue.svg" alt="License">
   <img src="https://img.shields.io/badge/Marketplace-integration-FF9500" alt="Marketplace">
   <img src="https://img.shields.io/badge/Home%20Assistant-2026.8%2B-blue?logo=homeassistant" alt="Home Assistant">
@@ -50,6 +52,10 @@ Sync iPhone/iPad alarms to Home Assistant using predefined Apple Shortcuts. This
 3. Restart Home Assistant
 
 On Home Assistant 2026.8–2026.10 the button opens HACS instead.
+
+#### Beta versions
+
+Every change is first published as a beta (`vX.Y.Z-beta.N`) and tested before it becomes a stable release. You get stable releases by default. To help test, enable the **Pre-release** switch (disabled by default) on the iPhone Alarms Sync device of the Marketplace integration, or of HACS on Home Assistant 2026.8–2026.10, and update as usual. Turn it off to return to stable.
 
 ### Step 2: Configure
 

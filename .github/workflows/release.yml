@@ -1,11 +1,18 @@
 name: Release
 
+# Push to main -> beta prerelease (vX.Y.Z-beta.N), tested before it reaches users.
+# Manual run -> stable release with all changes since the last stable one:
+#   gh workflow run release.yml -R Jozwiaczek/iphone-alarms-sync --ref main
 on:
   push:
     branches: [main]
+  workflow_dispatch:
+
+concurrency: release
 
 jobs:
   release:
+    if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -13,6 +20,9 @@ jobs:
       pull-requests: write
     env:
       HUSKY: 0
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      MANIFEST: custom_components/iphone_alarms_sync/manifest.json
     steps:
       - uses: actions/checkout@v7
         with:
@@ -27,7 +37,24 @@ jobs:
       - name: Install dependencies
         run: npm install
 
-      - name: Release
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: npx semantic-release
+      - name: Beta release
+        if: github.event_name == 'push'
+        run: |
+          npx semantic-release --dry-run
+          [ -f .next-version ] || exit 0 # no releasable commits
+          VERSION="$(cat .next-version)-beta.${{ github.run_number }}"
+          jq --arg v "$VERSION" '.version = $v' "$MANIFEST" > tmp.json && mv tmp.json "$MANIFEST"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          # The tagged commit stays off main, so betas add no bot commits there.
+          git commit -m ":bookmark: v$VERSION" -- "$MANIFEST"
+          git tag "v$VERSION"
+          git push origin "v$VERSION"
+          gh release create "v$VERSION" --prerelease --generate-notes --title "v$VERSION"
+
+      - name: Stable release
+        if: github.event_name == 'workflow_dispatch'
+        run: |
+          npx semantic-release
+          gh release list --limit 200 --json tagName,isPrerelease --jq '.[] | select(.isPrerelease) | .tagName' \
+            | xargs -r -n1 gh release delete --yes --cleanup-tag
