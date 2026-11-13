@@ -1,5 +1,8 @@
 from __future__ import annotations
 
+from collections.abc import Callable
+from dataclasses import dataclass
+
 from homeassistant.components.binary_sensor import (
     BinarySensorDeviceClass,
     BinarySensorEntity,
@@ -7,198 +10,81 @@ from homeassistant.components.binary_sensor import (
 )
 from homeassistant.const import EntityCategory
 from homeassistant.core import HomeAssistant
-from homeassistant.helpers.entity import DeviceInfo
-from homeassistant.helpers.entity_platform import AddEntitiesCallback
-from homeassistant.helpers.update_coordinator import CoordinatorEntity
+from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 
-from .const import DOMAIN
-from .coordinator import IPhoneAlarmsSyncConfigEntry, IPhoneAlarmsSyncCoordinator
+from .coordinator import AlarmData, IPhoneAlarmsSyncConfigEntry
+from .entity import AlarmEntity, PhoneEntity, async_add_alarm_entities
+from .utils import WEEKDAY_MAP
 
-BINARY_SENSOR_TYPES: tuple[BinarySensorEntityDescription, ...] = (
-    BinarySensorEntityDescription(
-        key="enabled",
-        name="Enabled",
+
+@dataclass(frozen=True, kw_only=True)
+class AlarmBinarySensorDescription(BinarySensorEntityDescription):
+    is_on_fn: Callable[[AlarmData], bool]
+
+
+def _repeats_on(day: str) -> AlarmBinarySensorDescription:
+    return AlarmBinarySensorDescription(
+        key=f"repeats_{day.lower()}",
+        name=f"Repeats {day}",
+        entity_registry_enabled_default=False,
+        is_on_fn=lambda alarm: day in alarm.repeat_days,
+    )
+
+
+ALARM_BINARY_SENSORS: tuple[AlarmBinarySensorDescription, ...] = (
+    AlarmBinarySensorDescription(
+        key="enabled", name="Enabled", is_on_fn=lambda alarm: alarm.enabled
     ),
-    BinarySensorEntityDescription(
+    AlarmBinarySensorDescription(
         key="repeats",
         name="Repeats",
+        entity_registry_enabled_default=False,
+        is_on_fn=lambda alarm: alarm.repeats,
     ),
-    BinarySensorEntityDescription(
+    AlarmBinarySensorDescription(
         key="allows_snooze",
         name="Allows Snooze",
+        is_on_fn=lambda alarm: alarm.allows_snooze,
     ),
-    BinarySensorEntityDescription(
-        key="repeats_monday",
-        name="Repeats Monday",
-    ),
-    BinarySensorEntityDescription(
-        key="repeats_tuesday",
-        name="Repeats Tuesday",
-    ),
-    BinarySensorEntityDescription(
-        key="repeats_wednesday",
-        name="Repeats Wednesday",
-    ),
-    BinarySensorEntityDescription(
-        key="repeats_thursday",
-        name="Repeats Thursday",
-    ),
-    BinarySensorEntityDescription(
-        key="repeats_friday",
-        name="Repeats Friday",
-    ),
-    BinarySensorEntityDescription(
-        key="repeats_saturday",
-        name="Repeats Saturday",
-    ),
-    BinarySensorEntityDescription(
-        key="repeats_sunday",
-        name="Repeats Sunday",
-    ),
+    *(_repeats_on(day) for day in WEEKDAY_MAP),
 )
 
-
-def _create_binary_sensor_entities(
-    coordinator: IPhoneAlarmsSyncCoordinator,
-    entry: IPhoneAlarmsSyncConfigEntry,
-    phone_id: str,
-    alarm_id: str,
-) -> list[IPhoneAlarmsSyncBinarySensor]:
-    entities = []
-    for description in BINARY_SENSOR_TYPES:
-        entities.append(
-            IPhoneAlarmsSyncBinarySensor(
-                coordinator,
-                entry,
-                phone_id,
-                alarm_id,
-                description,
-            )
-        )
-    return entities
+MISSED_EVENT = BinarySensorEntityDescription(
+    key="alarm_event_missed",
+    name="Alarm Event Missed",
+    device_class=BinarySensorDeviceClass.PROBLEM,
+    entity_category=EntityCategory.DIAGNOSTIC,
+)
 
 
 async def async_setup_entry(
     hass: HomeAssistant,
     entry: IPhoneAlarmsSyncConfigEntry,
-    async_add_entities: AddEntitiesCallback,
+    async_add_entities: AddConfigEntryEntitiesCallback,
 ) -> None:
     coordinator = entry.runtime_data.coordinator
-    phone = coordinator.get_phone()
-    if not phone:
-        return
-    entities: list[BinarySensorEntity] = [
-        IPhoneAlarmsSyncMissedEventSensor(coordinator, entry, phone.phone_id)
-    ]
-
-    hass.data.setdefault(DOMAIN, {})
-    hass.data[DOMAIN].setdefault(entry.entry_id, {})
-    hass.data[DOMAIN][entry.entry_id]["binary_sensor_add_entities"] = async_add_entities
-
-    for alarm_id, alarm in phone.alarms.items():
-        entities.extend(
-            _create_binary_sensor_entities(coordinator, entry, phone.phone_id, alarm_id)
-        )
-
-    async_add_entities(entities)
+    async_add_entities([MissedEventSensor(coordinator, MISSED_EVENT)])
+    async_add_alarm_entities(
+        entry,
+        async_add_entities,
+        lambda alarm_id: (
+            AlarmBinarySensor(coordinator, alarm_id, d) for d in ALARM_BINARY_SENSORS
+        ),
+    )
 
 
-class IPhoneAlarmsSyncBinarySensor(
-    CoordinatorEntity[IPhoneAlarmsSyncCoordinator], BinarySensorEntity
-):
-    def __init__(
-        self,
-        coordinator: IPhoneAlarmsSyncCoordinator,
-        entry: IPhoneAlarmsSyncConfigEntry,
-        phone_id: str,
-        alarm_id: str,
-        description: BinarySensorEntityDescription,
-    ) -> None:
-        super().__init__(coordinator)
-        self._entry = entry
-        self._phone_id = phone_id
-        self._alarm_id = alarm_id
-        self._description = description
-        self._attr_unique_id = (
-            f"{entry.entry_id}_{phone_id}_{alarm_id}_{description.key}"
-        )
-        alarm = coordinator.get_alarm(alarm_id)
-        if alarm is None:
-            raise ValueError(f"Alarm {alarm_id} not found")
-        phone = coordinator.get_phone()
-        if phone is None:
-            raise ValueError("Phone not found")
-        self._attr_name = f"{phone.phone_name} {alarm.label} {description.name}"
-        self._attr_device_info = DeviceInfo(
-            identifiers={(DOMAIN, phone_id, alarm_id)},
-            name=f"{phone.phone_name} {alarm.label}",
-        )
-        if description.key in (
-            "repeats",
-            "repeats_monday",
-            "repeats_tuesday",
-            "repeats_wednesday",
-            "repeats_thursday",
-            "repeats_friday",
-            "repeats_saturday",
-            "repeats_sunday",
-        ):
-            self._attr_entity_registry_enabled_default = False
+class AlarmBinarySensor(AlarmEntity, BinarySensorEntity):
+    entity_description: AlarmBinarySensorDescription
 
     @property
     def is_on(self) -> bool | None:
-        alarm = self.coordinator.get_alarm(self._alarm_id)
-        if not alarm:
-            return None
-        if self._description.key == "enabled":
-            return bool(alarm.enabled)
-        if self._description.key == "repeats":
-            return bool(alarm.repeats)
-        if self._description.key == "allows_snooze":
-            return bool(alarm.allows_snooze)
-        if self._description.key == "repeats_monday":
-            return "Monday" in alarm.repeat_days
-        if self._description.key == "repeats_tuesday":
-            return "Tuesday" in alarm.repeat_days
-        if self._description.key == "repeats_wednesday":
-            return "Wednesday" in alarm.repeat_days
-        if self._description.key == "repeats_thursday":
-            return "Thursday" in alarm.repeat_days
-        if self._description.key == "repeats_friday":
-            return "Friday" in alarm.repeat_days
-        if self._description.key == "repeats_saturday":
-            return "Saturday" in alarm.repeat_days
-        if self._description.key == "repeats_sunday":
-            return "Sunday" in alarm.repeat_days
-        return None
+        alarm = self.alarm
+        return bool(self.entity_description.is_on_fn(alarm)) if alarm else None
 
 
-class IPhoneAlarmsSyncMissedEventSensor(
-    CoordinatorEntity[IPhoneAlarmsSyncCoordinator], BinarySensorEntity
-):
+class MissedEventSensor(PhoneEntity, BinarySensorEntity):
     """On when an alarm rang but its "goes off" event never reached HA."""
-
-    _attr_device_class = BinarySensorDeviceClass.PROBLEM
-    _attr_entity_category = EntityCategory.DIAGNOSTIC
-
-    def __init__(
-        self,
-        coordinator: IPhoneAlarmsSyncCoordinator,
-        entry: IPhoneAlarmsSyncConfigEntry,
-        phone_id: str,
-    ) -> None:
-        super().__init__(coordinator)
-        phone = coordinator.get_phone()
-        if phone is None:
-            raise ValueError("Phone not found")
-        self._attr_unique_id = f"{entry.entry_id}_{phone_id}_alarm_event_missed"
-        self._attr_name = f"{phone.phone_name} Alarm Event Missed"
-        self._attr_device_info = DeviceInfo(
-            identifiers={(DOMAIN, phone_id)},
-            name=phone.phone_name,
-        )
 
     @property
     def is_on(self) -> bool:
-        phone = self.coordinator.get_phone()
-        return bool(phone and phone.missed_alarm_at)
+        return bool(self.coordinator.phone.missed_alarm_at)

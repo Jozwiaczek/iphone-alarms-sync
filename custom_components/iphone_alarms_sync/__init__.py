@@ -2,8 +2,9 @@ from __future__ import annotations
 
 import logging
 from datetime import datetime, timedelta
-from typing import Any, cast
+from typing import cast
 
+from homeassistant.config_entries import ConfigEntryState
 from homeassistant.core import CALLBACK_TYPE, HomeAssistant, ServiceCall, callback
 from homeassistant.exceptions import HomeAssistantError, ServiceValidationError
 from homeassistant.helpers import config_validation as cv
@@ -16,15 +17,11 @@ from homeassistant.helpers.event import (
 from homeassistant.helpers.typing import ConfigType
 from homeassistant.util import dt as dt_util
 
-from .binary_sensor import _create_binary_sensor_entities
 from .const import (
     CONF_ALARM_ID,
     CONF_ALARMS,
     CONF_EVENT,
-    CONF_LABEL,
-    CONF_MOBILE_APP_DEVICE_ID,
     CONF_PHONE_ID,
-    CONF_PHONE_NAME,
     DOCS_TROUBLESHOOTING_URL,
     DOMAIN,
     EVENT_ALARM_EVENT,
@@ -40,15 +37,11 @@ from .const import (
     STALE_CHECK_INTERVAL,
 )
 from .coordinator import (
+    AlarmEvent,
     IPhoneAlarmsSyncConfigEntry,
     IPhoneAlarmsSyncCoordinator,
     IPhoneAlarmsSyncData,
     PhoneData,
-)
-from .number import _create_number_entities
-from .sensor import (
-    _create_alarm_sensor_entities,
-    _create_phone_event_sensor_entities,
 )
 from .utils import (
     calculate_next_alarm_datetime,
@@ -59,6 +52,23 @@ from .utils import (
 _LOGGER = logging.getLogger(__name__)
 
 CONFIG_SCHEMA = cv.config_entry_only_config_schema(DOMAIN)
+
+ALARM_EVENTS = (EVENT_GOES_OFF, EVENT_SNOOZED, EVENT_STOPPED)
+# Device event -> (scope reported as alarm_id, PhoneData field, event name).
+DEVICE_EVENTS: dict[str, tuple[str, str, str]] = {
+    **{f"wakeup_{e}": ("wakeup", f"wakeup_last_event_{e}_at", e) for e in ALARM_EVENTS},
+    **{f"any_{e}": ("any", f"any_last_event_{e}_at", e) for e in ALARM_EVENTS},
+    EVENT_BEDTIME_STARTS: ("bedtime", "bedtime_last_event_at", EVENT_BEDTIME_STARTS),
+    EVENT_WAKING_UP: ("waking_up", "waking_up_last_event_at", EVENT_WAKING_UP),
+    EVENT_WIND_DOWN_STARTS: (
+        "wind_down",
+        "wind_down_last_event_at",
+        EVENT_WIND_DOWN_STARTS,
+    ),
+}
+
+# Where users find the IDs their shortcuts need.
+_OPTIONS = "Settings → Devices & services → iPhone Alarms Sync → Configure"
 
 
 def _mobile_app_device_id(
@@ -71,14 +81,34 @@ def _mobile_app_device_id(
     return None
 
 
-ALARM_EVENTS = (EVENT_GOES_OFF, EVENT_SNOOZED, EVENT_STOPPED)
-DEVICE_EVENTS = (
-    *(f"wakeup_{e}" for e in ALARM_EVENTS),
-    *(f"any_{e}" for e in ALARM_EVENTS),
-    EVENT_BEDTIME_STARTS,
-    EVENT_WAKING_UP,
-    EVENT_WIND_DOWN_STARTS,
-)
+@callback
+def _async_update_devices(
+    hass: HomeAssistant, entry: IPhoneAlarmsSyncConfigEntry, phone: PhoneData
+) -> None:
+    """Create the phone and alarm devices; remove devices of deleted alarms."""
+    registry = dr.async_get(hass)
+    phone_device = registry.async_get_or_create(
+        config_entry_id=entry.entry_id,
+        identifiers={(DOMAIN, phone.phone_id)},
+        name=phone.phone_name,
+        via_device_id=_mobile_app_device_id(registry, phone),
+    )
+    for alarm_id, alarm in phone.alarms.items():
+        registry.async_get_or_create(
+            config_entry_id=entry.entry_id,
+            identifiers={(DOMAIN, phone.phone_id, alarm_id)},  # type: ignore[arg-type]
+            name=f"{phone.phone_name} {alarm.label or alarm_id}",
+            via_device_id=phone_device.id,
+        )
+    # Alarms gone from the phone take their device and entities with them.
+    for device in dr.async_entries_for_config_entry(registry, entry.entry_id):
+        if any(
+            len(identifier) == 3
+            and identifier[:2] == (DOMAIN, phone.phone_id)
+            and identifier[2] not in phone.alarms  # type: ignore[misc]
+            for identifier in device.identifiers
+        ):
+            registry.async_remove_device(device.id)
 
 
 def _log_call(call: ServiceCall) -> None:
@@ -86,10 +116,6 @@ def _log_call(call: ServiceCall) -> None:
     _LOGGER.debug(
         "%s called for phone_id=%s", call.service, call.data.get(CONF_PHONE_ID)
     )
-
-
-# Where users find the IDs their shortcuts need.
-_OPTIONS = "Settings → Devices & services → iPhone Alarms Sync → Configure"
 
 
 def _require_event(call: ServiceCall, allowed: tuple[str, ...]) -> str:
@@ -102,9 +128,13 @@ def _require_event(call: ServiceCall, allowed: tuple[str, ...]) -> str:
     return cast(str, event)
 
 
+def _no_data_issue_id(entry: IPhoneAlarmsSyncConfigEntry) -> str:
+    return f"no_data_{entry.entry_id}"
+
+
 def _resolve_call(
     hass: HomeAssistant, call: ServiceCall
-) -> tuple[IPhoneAlarmsSyncConfigEntry, IPhoneAlarmsSyncCoordinator, PhoneData]:
+) -> tuple[IPhoneAlarmsSyncConfigEntry, IPhoneAlarmsSyncCoordinator]:
     """Find the loaded entry for phone_id or raise an error the shortcut shows."""
     phone_id = call.data.get(CONF_PHONE_ID)
     if not phone_id:
@@ -112,39 +142,49 @@ def _resolve_call(
             f"Phone ID is missing. Copy it from {_OPTIONS} → Sync Shortcut Setup "
             "into the first Text step of this shortcut."
         )
-    entry = next(
-        (
-            e
-            for e in hass.config_entries.async_entries(DOMAIN)
-            if e.unique_id == phone_id
-        ),
-        None,
+    entry: IPhoneAlarmsSyncConfigEntry | None = (
+        hass.config_entries.async_entry_for_domain_unique_id(DOMAIN, phone_id)
     )
     if entry is None:
         raise ServiceValidationError(
             f"Unknown Phone ID '{phone_id}'. Copy the Phone ID from {_OPTIONS} → "
             "Sync Shortcut Setup into the first Text step of this shortcut."
         )
-    if not getattr(entry, "runtime_data", None):
+    if entry.state is not ConfigEntryState.LOADED:
         raise HomeAssistantError(
             f"iPhone Alarms Sync for '{phone_id}' is not loaded. "
             "Check it in Settings → Devices & services."
         )
     coordinator = entry.runtime_data.coordinator
-    phone = coordinator.get_phone()
-    if phone is None:
-        raise HomeAssistantError(
-            f"iPhone Alarms Sync for '{phone_id}' has no data. "
-            "Reload it in Settings → Devices & services."
-        )
     # The phone reached Home Assistant, so the shortcut chain works again.
     ir.async_delete_issue(hass, DOMAIN, _no_data_issue_id(entry))
-    phone.missed_alarm_at = None
-    return entry, coordinator, phone
+    coordinator.phone.missed_alarm_at = None
+    return entry, coordinator
 
 
-def _no_data_issue_id(entry: IPhoneAlarmsSyncConfigEntry) -> str:
-    return f"no_data_{entry.entry_id}"
+def _fire_events(
+    hass: HomeAssistant,
+    entry: IPhoneAlarmsSyncConfigEntry,
+    event: AlarmEvent,
+    device_identifier: tuple[str, ...],
+) -> None:
+    """Fire the generic alarm event and the device trigger event."""
+    hass.bus.async_fire(
+        EVENT_ALARM_EVENT,
+        {
+            "phone_id": event.phone_id,
+            "alarm_id": event.alarm_id,
+            "event": event.event,
+            "event_id": event.event_id,
+            "occurred_at": event.occurred_at,
+        },
+    )
+    device = dr.async_get(hass).async_get_device_by_identifier(
+        device_identifier,  # type: ignore[arg-type]
+        entry.entry_id,
+    )
+    if device:
+        hass.bus.async_fire(f"{DOMAIN}_{event.event}", {"device_id": device.id})
 
 
 @callback
@@ -156,9 +196,9 @@ def _async_check_missed_event(
 ) -> None:
     """Flag the phone when an alarm rang but its "goes off" never arrived."""
     coordinator = entry.runtime_data.coordinator
-    phone = coordinator.get_phone()
-    alarm = phone.alarms.get(alarm_id) if phone and alarm_id else None
-    if phone is None or alarm is None:
+    phone = coordinator.phone
+    alarm = phone.alarms.get(alarm_id) if alarm_id else None
+    if alarm is None:
         return
     # Only expect an event when this phone reports "any alarm" or this very alarm.
     if not (phone.any_last_event_goes_off_at or alarm.last_event_goes_off_at):
@@ -176,7 +216,7 @@ def _async_check_missed_event(
     # iOS may run the automation a few seconds before the scheduled minute.
     missed = last is None or last < alarm_at - timedelta(minutes=1)
     phone.missed_alarm_at = alarm_at.isoformat() if missed else None
-    coordinator._save_to_config()
+    coordinator.save()
     coordinator.async_set_updated_data(phone)
 
 
@@ -204,8 +244,6 @@ def _async_check_stale(hass: HomeAssistant, entry: IPhoneAlarmsSyncConfigEntry) 
 
 
 async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
-    hass.data.setdefault(DOMAIN, {})
-
     async def handle_sync_alarms(call: ServiceCall) -> None:
         _log_call(call)
         alarms = call.data.get(CONF_ALARMS)
@@ -216,68 +254,15 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
                 "The shortcut sent no valid alarm list (each alarm needs an "
                 f"'alarm_id'). Re-import it from {_OPTIONS} → Sync Shortcut Setup."
             )
-        entry, coordinator, phone = _resolve_call(hass, call)
-        phone_id = call.data[CONF_PHONE_ID]
-
-        device_registry = dr.async_get(hass)
-        phone_device = device_registry.async_get_or_create(
-            config_entry_id=entry.entry_id,
-            identifiers={(DOMAIN, phone_id)},
-            name=phone.phone_name,
-            via_device_id=_mobile_app_device_id(device_registry, phone),
-        )
-
-        for alarm_dict in alarms:
-            original_alarm_id = alarm_dict[CONF_ALARM_ID]
-            alarm_dict[CONF_ALARM_ID] = extract_alarm_uuid(original_alarm_id)
-
-        new_alarm_ids = coordinator.sync_alarms(alarms)
-
-        for alarm_dict in alarms:
-            alarm_id = alarm_dict[CONF_ALARM_ID]
-            if alarm_id not in phone.alarms:  # filtered out (disabled, not synced)
-                continue
-            device_registry.async_get_or_create(
-                config_entry_id=entry.entry_id,
-                identifiers={(DOMAIN, phone_id, alarm_id)},
-                name=f"{phone.phone_name} {alarm_dict.get(CONF_LABEL, alarm_id)}",
-                via_device_id=phone_device.id,
-            )
-
-        # Alarms gone from the phone take their device and entities with them.
-        for device in dr.async_entries_for_config_entry(
-            device_registry, entry.entry_id
-        ):
-            for identifier in device.identifiers:
-                if (
-                    len(identifier) == 3
-                    and identifier[:2] == (DOMAIN, phone_id)
-                    and identifier[2] not in phone.alarms
-                ):
-                    device_registry.async_remove_device(device.id)
-                    break
-
-        if new_alarm_ids:
-            entry_data = hass.data.get(DOMAIN, {}).get(entry.entry_id, {})
-            for alarm_id in new_alarm_ids:
-                if sensor_add := entry_data.get("sensor_add_entities"):
-                    sensor_entities = _create_alarm_sensor_entities(
-                        coordinator, entry, phone_id, alarm_id
-                    )
-                    sensor_add(sensor_entities)
-                if binary_sensor_add := entry_data.get("binary_sensor_add_entities"):
-                    binary_sensor_entities = _create_binary_sensor_entities(
-                        coordinator, entry, phone_id, alarm_id
-                    )
-                    binary_sensor_add(binary_sensor_entities)
-                if number_add := entry_data.get("number_add_entities"):
-                    number_entities = _create_number_entities(
-                        coordinator, entry, phone_id, alarm_id
-                    )
-                    number_add(number_entities)
-
-        # Always push: "Last Sync" changes on every call.
-        coordinator.async_set_updated_data(phone)
+        entry, coordinator = _resolve_call(hass, call)
+        alarms = [
+            {**a, CONF_ALARM_ID: extract_alarm_uuid(a[CONF_ALARM_ID])} for a in alarms
+        ]
+        coordinator.sync_alarms(alarms)
+        _async_update_devices(hass, entry, coordinator.phone)
+        # Always push: "Last Sync" changes on every call, and the platforms add
+        # entities for new alarms.
+        coordinator.async_set_updated_data(coordinator.phone)
 
     async def handle_report_alarm_event(call: ServiceCall) -> None:
         _log_call(call)
@@ -288,295 +273,23 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
                 "Setup into the second Text step of this shortcut."
             )
         alarm_id = extract_alarm_uuid(call.data[CONF_ALARM_ID])
-        entry, coordinator, phone = _resolve_call(hass, call)
-        phone_id = call.data[CONF_PHONE_ID]
-
-        alarm = coordinator.get_alarm(alarm_id)
-        if alarm is None:
+        entry, coordinator = _resolve_call(hass, call)
+        if coordinator.get_alarm(alarm_id) is None:
             raise ServiceValidationError(
                 f"Unknown Alarm ID '{alarm_id}'. Run the Sync shortcut, then copy "
                 f"the Alarm ID from {_OPTIONS} → Event Shortcuts Setup."
             )
-        was_first_event = not getattr(alarm, f"last_event_{event}_at")
-
         event_obj = coordinator.report_alarm_event(alarm_id, event)
-        coordinator.async_set_updated_data(phone)
-
-        if was_first_event:
-            entry_data = hass.data.get(DOMAIN, {}).get(entry.entry_id, {})
-            if sensor_add := entry_data.get("sensor_add_entities"):
-                sensor_entities = _create_alarm_sensor_entities(
-                    coordinator, entry, phone_id, alarm_id
-                )
-                target_key = f"last_event_{event}_at"
-                new_entities = [
-                    e for e in sensor_entities if e.entity_description.key == target_key
-                ]
-                if new_entities:
-                    sensor_add(new_entities)
-
-        hass.bus.async_fire(
-            EVENT_ALARM_EVENT,
-            {
-                "phone_id": phone_id,
-                "alarm_id": alarm_id,
-                "event": event,
-                "event_id": event_obj.event_id,
-                "occurred_at": event_obj.occurred_at,
-            },
+        _fire_events(
+            hass, entry, event_obj, (DOMAIN, coordinator.phone.phone_id, alarm_id)
         )
-
-        device_registry = dr.async_get(hass)
-        device = device_registry.async_get_device_by_identifier(
-            (DOMAIN, phone_id, alarm_id), entry.entry_id
-        )
-        if device:
-            hass.bus.async_fire(
-                f"{DOMAIN}_{event}",
-                {
-                    "device_id": device.id,
-                },
-            )
 
     async def handle_report_device_event(call: ServiceCall) -> None:
         _log_call(call)
-        event = _require_event(call, DEVICE_EVENTS)
-        entry, coordinator, phone = _resolve_call(hass, call)
-        phone_id = call.data[CONF_PHONE_ID]
-
-        if event.startswith("wakeup_"):
-            event_name = event.replace("wakeup_", "")
-            was_first_event = False
-            if event_name == "goes_off" and not phone.wakeup_last_event_goes_off_at:
-                was_first_event = True
-            elif event_name == "snoozed" and not phone.wakeup_last_event_snoozed_at:
-                was_first_event = True
-            elif event_name == "stopped" and not phone.wakeup_last_event_stopped_at:
-                was_first_event = True
-
-            event_obj = coordinator.report_wakeup_event(event_name)
-            coordinator.async_set_updated_data(phone)
-
-            if was_first_event:
-                entry_data = hass.data.get(DOMAIN, {}).get(entry.entry_id, {})
-                if sensor_add := entry_data.get("sensor_add_entities"):
-                    sensor_entities = _create_phone_event_sensor_entities(
-                        coordinator, entry, phone_id
-                    )
-                    target_key = f"wakeup_last_event_{event_name}_at"
-                    new_entities = [
-                        e
-                        for e in sensor_entities
-                        if e.entity_description.key == target_key
-                    ]
-                    if new_entities:
-                        sensor_add(new_entities)
-
-            hass.bus.async_fire(
-                EVENT_ALARM_EVENT,
-                {
-                    "phone_id": phone_id,
-                    "alarm_id": "wakeup",
-                    "event": event_name,
-                    "event_id": event_obj.event_id,
-                    "occurred_at": event_obj.occurred_at,
-                },
-            )
-
-            device_registry = dr.async_get(hass)
-            device = device_registry.async_get_device_by_identifier(
-                (DOMAIN, phone_id), entry.entry_id
-            )
-            if device:
-                hass.bus.async_fire(
-                    f"{DOMAIN}_{event_name}",
-                    {
-                        "device_id": device.id,
-                    },
-                )
-
-        elif event.startswith("any_"):
-            event_name = event.replace("any_", "")
-            was_first_event = False
-            if event_name == "goes_off" and not phone.any_last_event_goes_off_at:
-                was_first_event = True
-            elif event_name == "snoozed" and not phone.any_last_event_snoozed_at:
-                was_first_event = True
-            elif event_name == "stopped" and not phone.any_last_event_stopped_at:
-                was_first_event = True
-
-            event_obj = coordinator.report_any_event(event_name)
-            coordinator.async_set_updated_data(phone)
-
-            if was_first_event:
-                entry_data = hass.data.get(DOMAIN, {}).get(entry.entry_id, {})
-                if sensor_add := entry_data.get("sensor_add_entities"):
-                    sensor_entities = _create_phone_event_sensor_entities(
-                        coordinator, entry, phone_id
-                    )
-                    target_key = f"any_last_event_{event_name}_at"
-                    new_entities = [
-                        e
-                        for e in sensor_entities
-                        if e.entity_description.key == target_key
-                    ]
-                    if new_entities:
-                        sensor_add(new_entities)
-
-            hass.bus.async_fire(
-                EVENT_ALARM_EVENT,
-                {
-                    "phone_id": phone_id,
-                    "alarm_id": "any",
-                    "event": event_name,
-                    "event_id": event_obj.event_id,
-                    "occurred_at": event_obj.occurred_at,
-                },
-            )
-
-            device_registry = dr.async_get(hass)
-            device = device_registry.async_get_device_by_identifier(
-                (DOMAIN, phone_id), entry.entry_id
-            )
-            if device:
-                hass.bus.async_fire(
-                    f"{DOMAIN}_{event_name}",
-                    {
-                        "device_id": device.id,
-                    },
-                )
-
-        elif event == "bedtime_starts":
-            was_first_event = not phone.bedtime_last_event_at
-
-            event_obj = coordinator.report_bedtime_event()
-            coordinator.async_set_updated_data(phone)
-
-            if was_first_event:
-                entry_data = hass.data.get(DOMAIN, {}).get(entry.entry_id, {})
-                if sensor_add := entry_data.get("sensor_add_entities"):
-                    sensor_entities = _create_phone_event_sensor_entities(
-                        coordinator, entry, phone_id
-                    )
-                    target_key = "bedtime_last_event_at"
-                    new_entities = [
-                        e
-                        for e in sensor_entities
-                        if e.entity_description.key == target_key
-                    ]
-                    if new_entities:
-                        sensor_add(new_entities)
-
-            hass.bus.async_fire(
-                EVENT_ALARM_EVENT,
-                {
-                    "phone_id": phone_id,
-                    "alarm_id": "bedtime",
-                    "event": EVENT_BEDTIME_STARTS,
-                    "event_id": event_obj.event_id,
-                    "occurred_at": event_obj.occurred_at,
-                },
-            )
-
-            device_registry = dr.async_get(hass)
-            device = device_registry.async_get_device_by_identifier(
-                (DOMAIN, phone_id), entry.entry_id
-            )
-            if device:
-                hass.bus.async_fire(
-                    f"{DOMAIN}_{EVENT_BEDTIME_STARTS}",
-                    {
-                        "device_id": device.id,
-                    },
-                )
-
-        elif event == "waking_up":
-            was_first_event = not phone.waking_up_last_event_at
-
-            event_obj = coordinator.report_waking_up_event()
-            coordinator.async_set_updated_data(phone)
-
-            if was_first_event:
-                entry_data = hass.data.get(DOMAIN, {}).get(entry.entry_id, {})
-                if sensor_add := entry_data.get("sensor_add_entities"):
-                    sensor_entities = _create_phone_event_sensor_entities(
-                        coordinator, entry, phone_id
-                    )
-                    target_key = "waking_up_last_event_at"
-                    new_entities = [
-                        e
-                        for e in sensor_entities
-                        if e.entity_description.key == target_key
-                    ]
-                    if new_entities:
-                        sensor_add(new_entities)
-
-            hass.bus.async_fire(
-                EVENT_ALARM_EVENT,
-                {
-                    "phone_id": phone_id,
-                    "alarm_id": "waking_up",
-                    "event": EVENT_WAKING_UP,
-                    "event_id": event_obj.event_id,
-                    "occurred_at": event_obj.occurred_at,
-                },
-            )
-
-            device_registry = dr.async_get(hass)
-            device = device_registry.async_get_device_by_identifier(
-                (DOMAIN, phone_id), entry.entry_id
-            )
-            if device:
-                hass.bus.async_fire(
-                    f"{DOMAIN}_{EVENT_WAKING_UP}",
-                    {
-                        "device_id": device.id,
-                    },
-                )
-
-        elif event == "wind_down_starts":
-            was_first_event = not phone.wind_down_last_event_at
-
-            event_obj = coordinator.report_wind_down_event()
-            coordinator.async_set_updated_data(phone)
-
-            if was_first_event:
-                entry_data = hass.data.get(DOMAIN, {}).get(entry.entry_id, {})
-                if sensor_add := entry_data.get("sensor_add_entities"):
-                    sensor_entities = _create_phone_event_sensor_entities(
-                        coordinator, entry, phone_id
-                    )
-                    target_key = "wind_down_last_event_at"
-                    new_entities = [
-                        e
-                        for e in sensor_entities
-                        if e.entity_description.key == target_key
-                    ]
-                    if new_entities:
-                        sensor_add(new_entities)
-
-            hass.bus.async_fire(
-                EVENT_ALARM_EVENT,
-                {
-                    "phone_id": phone_id,
-                    "alarm_id": "wind_down",
-                    "event": EVENT_WIND_DOWN_STARTS,
-                    "event_id": event_obj.event_id,
-                    "occurred_at": event_obj.occurred_at,
-                },
-            )
-
-            device_registry = dr.async_get(hass)
-            device = device_registry.async_get_device_by_identifier(
-                (DOMAIN, phone_id), entry.entry_id
-            )
-            if device:
-                hass.bus.async_fire(
-                    f"{DOMAIN}_{EVENT_WIND_DOWN_STARTS}",
-                    {
-                        "device_id": device.id,
-                    },
-                )
+        scope, attr, event = DEVICE_EVENTS[_require_event(call, tuple(DEVICE_EVENTS))]
+        entry, coordinator = _resolve_call(hass, call)
+        event_obj = coordinator.report_device_event(scope, attr, event)
+        _fire_events(hass, entry, event_obj, (DOMAIN, coordinator.phone.phone_id))
 
     hass.services.async_register(DOMAIN, "sync_alarms", handle_sync_alarms)
     hass.services.async_register(
@@ -589,106 +302,99 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
     return True
 
 
-async def async_migrate_entry(
-    hass: HomeAssistant, config_entry: IPhoneAlarmsSyncConfigEntry
-) -> bool:
-    if config_entry.version == 1:
-        if CONF_PHONE_ID in config_entry.data:
-            phone_id = config_entry.data[CONF_PHONE_ID]
-            phone_name = config_entry.data.get(CONF_PHONE_NAME, phone_id)
-            mobile_app_device_id = config_entry.data.get(CONF_MOBILE_APP_DEVICE_ID)
-            alarms_data = config_entry.options.get(CONF_ALARMS, {})
+@callback
+def _async_track_alarm_times(
+    hass: HomeAssistant,
+    entry: IPhoneAlarmsSyncConfigEntry,
+    coordinator: IPhoneAlarmsSyncCoordinator,
+) -> None:
+    """At each alarm's time, record it so Last Alarm and Last Occurrence update."""
+    tick_at: datetime | None = None
+    cancel_tick: CALLBACK_TYPE | None = None
 
-            phones_dict = {
-                phone_id: {
-                    CONF_PHONE_ID: phone_id,
-                    CONF_PHONE_NAME: phone_name,
-                    CONF_MOBILE_APP_DEVICE_ID: mobile_app_device_id,
-                    "alarms": alarms_data,
-                }
-            }
+    @callback
+    def _schedule() -> None:
+        nonlocal tick_at, cancel_tick
+        next_at, _ = calculate_next_alarm_datetime(coordinator.phone)
+        if next_at == tick_at:
+            return
+        if cancel_tick:
+            cancel_tick()
+            cancel_tick = None
+        tick_at = next_at
+        if next_at is None:
+            return
 
-            other_entries = [
-                e
-                for e in hass.config_entries.async_entries(DOMAIN)
-                if e.entry_id != config_entry.entry_id and CONF_PHONE_ID in e.data
-            ]
+        @callback
+        def _tick(_now: datetime) -> None:
+            nonlocal tick_at, cancel_tick
+            tick_at = cancel_tick = None
+            coordinator.record_alarm_time(next_at)
+            _schedule()
 
-            for other_entry in other_entries:
-                other_phone_id = other_entry.data[CONF_PHONE_ID]
-                other_phone_name = other_entry.data.get(CONF_PHONE_NAME, other_phone_id)
-                other_mobile_app_device_id = other_entry.data.get(
-                    CONF_MOBILE_APP_DEVICE_ID
-                )
-                other_alarms_data = other_entry.options.get(CONF_ALARMS, {})
+        cancel_tick = async_track_point_in_time(hass, _tick, next_at)
 
-                if other_phone_id not in phones_dict:
-                    phones_dict[other_phone_id] = {
-                        CONF_PHONE_ID: other_phone_id,
-                        CONF_PHONE_NAME: other_phone_name,
-                        CONF_MOBILE_APP_DEVICE_ID: other_mobile_app_device_id,
-                        "alarms": other_alarms_data,
-                    }
+    @callback
+    def _cancel() -> None:
+        if cancel_tick:
+            cancel_tick()
 
-            new_data: dict[str, Any] = {}
-            new_options = {"phones": phones_dict}
+    _schedule()
+    entry.async_on_unload(coordinator.async_add_listener(_schedule))
+    entry.async_on_unload(_cancel)
 
-            hass.config_entries.async_update_entry(
-                config_entry, data=new_data, options=new_options, version=2
-            )
 
-            for other_entry in other_entries:
-                await hass.config_entries.async_remove(other_entry.entry_id)
+@callback
+def _async_track_missed_events(
+    hass: HomeAssistant,
+    entry: IPhoneAlarmsSyncConfigEntry,
+    coordinator: IPhoneAlarmsSyncCoordinator,
+) -> None:
+    """Shortly after each alarm, check that its "goes off" event arrived."""
+    check_at: datetime | None = None
+    cancel_check: CALLBACK_TYPE | None = None
 
-    if config_entry.version == 2:
-        phones_dict = config_entry.options.get("phones", {})
-        if not phones_dict:
-            hass.config_entries.async_update_entry(config_entry, version=3)
-            return True
+    @callback
+    def _schedule() -> None:
+        nonlocal check_at, cancel_check
+        # A pending check owns the alarm that just rang; it reschedules itself.
+        if check_at is not None and check_at <= dt_util.utcnow():
+            return
+        # Look back one grace period so an alarm that rang a moment ago (a second
+        # alarm minutes after the first, or an HA restart) still gets its check.
+        next_at, alarm_id = calculate_next_alarm_datetime(
+            coordinator.phone, dt_util.utcnow() - MISSED_EVENT_GRACE
+        )
+        if next_at == check_at:
+            return
+        if cancel_check:
+            cancel_check()
+            cancel_check = None
+        check_at = next_at
+        if next_at is None:
+            return
 
-        first_phone_id = next(iter(phones_dict))
-        first_phone = phones_dict[first_phone_id]
+        @callback
+        def _check(_now: datetime) -> None:
+            nonlocal check_at, cancel_check
+            check_at = cancel_check = None
+            # The next alarm is already later, so check the one remembered here.
+            _async_check_missed_event(hass, entry, next_at, alarm_id)
+            _schedule()
 
-        hass.config_entries.async_update_entry(
-            config_entry,
-            unique_id=first_phone_id,
-            title=first_phone[CONF_PHONE_NAME],
-            data={
-                CONF_PHONE_ID: first_phone_id,
-                CONF_PHONE_NAME: first_phone[CONF_PHONE_NAME],
-                CONF_MOBILE_APP_DEVICE_ID: first_phone.get(CONF_MOBILE_APP_DEVICE_ID),
-            },
-            options={"alarms": first_phone.get("alarms", {})},
-            version=3,
+        _LOGGER.debug("Next missed-event check for alarm at %s", next_at)
+        cancel_check = async_track_point_in_time(
+            hass, _check, next_at + MISSED_EVENT_GRACE
         )
 
-        for phone_id, phone_data in phones_dict.items():
-            if phone_id == first_phone_id:
-                continue
+    @callback
+    def _cancel() -> None:
+        if cancel_check:
+            cancel_check()
 
-            result = await hass.config_entries.flow.async_init(
-                DOMAIN,
-                context={"source": "import"},
-                data={
-                    CONF_PHONE_ID: phone_id,
-                    CONF_PHONE_NAME: phone_data[CONF_PHONE_NAME],
-                    CONF_MOBILE_APP_DEVICE_ID: phone_data.get(
-                        CONF_MOBILE_APP_DEVICE_ID
-                    ),
-                },
-            )
-            if (
-                hasattr(result, "type")
-                and result.type == "create_entry"  # type: ignore[attr-defined]
-                and hasattr(result, "result")
-            ):
-                new_entry = result.result  # type: ignore[attr-defined]
-                hass.config_entries.async_update_entry(
-                    new_entry,
-                    options={"alarms": phone_data.get("alarms", {})},
-                )
-
-    return True
+    _schedule()
+    entry.async_on_unload(coordinator.async_add_listener(_schedule))
+    entry.async_on_unload(_cancel)
 
 
 async def async_setup_entry(
@@ -696,26 +402,10 @@ async def async_setup_entry(
 ) -> bool:
     coordinator = IPhoneAlarmsSyncCoordinator(hass, entry)
     await coordinator.async_config_entry_first_refresh()
-
     entry.runtime_data = IPhoneAlarmsSyncData(coordinator=coordinator)
 
-    device_registry = dr.async_get(hass)
-    phone = coordinator.get_phone()
-    if phone:
-        phone_device = device_registry.async_get_or_create(
-            config_entry_id=entry.entry_id,
-            identifiers={(DOMAIN, phone.phone_id)},
-            name=phone.phone_name,
-            via_device_id=_mobile_app_device_id(device_registry, phone),
-        )
-        # Entities only describe alarm devices; link them to the phone here.
-        for alarm_id, alarm in phone.alarms.items():
-            device_registry.async_get_or_create(
-                config_entry_id=entry.entry_id,
-                identifiers={(DOMAIN, phone.phone_id, alarm_id)},
-                name=f"{phone.phone_name} {alarm.label}",
-                via_device_id=phone_device.id,
-            )
+    # Entities only describe alarm devices; link them to the phone here.
+    _async_update_devices(hass, entry, coordinator.phone)
 
     await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
     # v1.3.0 raised a repair instead of the Alarm Event Missed sensor.
@@ -733,59 +423,12 @@ async def async_setup_entry(
         lambda: ir.async_delete_issue(hass, DOMAIN, _no_data_issue_id(entry))
     )
 
-    check_at: datetime | None = None
-    cancel_check: CALLBACK_TYPE | None = None
-
-    @callback
-    def _schedule_missed_check() -> None:
-        nonlocal check_at, cancel_check
-        # A pending check owns the alarm that just rang; it reschedules itself.
-        if check_at is not None and check_at <= dt_util.utcnow():
-            return
-        phone = coordinator.get_phone()
-        # Look back one grace period so an alarm that rang a moment ago (a second
-        # alarm minutes after the first, or an HA restart) still gets its check.
-        next_at, alarm_id = (
-            calculate_next_alarm_datetime(phone, dt_util.utcnow() - MISSED_EVENT_GRACE)
-            if phone
-            else (None, None)
-        )
-        if next_at == check_at:
-            return
-        if cancel_check:
-            cancel_check()
-            cancel_check = None
-        check_at = next_at
-        if next_at is None:
-            return
-
-        @callback
-        def _check(_now: datetime) -> None:
-            nonlocal check_at, cancel_check
-            check_at = cancel_check = None
-            # The next alarm is already later, so check the one remembered here.
-            _async_check_missed_event(hass, entry, next_at, alarm_id)
-            _schedule_missed_check()
-
-        _LOGGER.debug("Next missed-event check for alarm at %s", next_at)
-        cancel_check = async_track_point_in_time(
-            hass, _check, next_at + MISSED_EVENT_GRACE
-        )
-
-    @callback
-    def _cancel_missed_check() -> None:
-        if cancel_check:
-            cancel_check()
-
-    _schedule_missed_check()
-    entry.async_on_unload(coordinator.async_add_listener(_schedule_missed_check))
-    entry.async_on_unload(_cancel_missed_check)
-
+    _async_track_alarm_times(hass, entry, coordinator)
+    _async_track_missed_events(hass, entry, coordinator)
     return True
 
 
 async def async_unload_entry(
     hass: HomeAssistant, entry: IPhoneAlarmsSyncConfigEntry
 ) -> bool:
-    unload_ok = await hass.config_entries.async_unload_platforms(entry, PLATFORMS)
-    return bool(unload_ok)
+    return await hass.config_entries.async_unload_platforms(entry, PLATFORMS)

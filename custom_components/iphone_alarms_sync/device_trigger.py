@@ -2,11 +2,14 @@ from __future__ import annotations
 
 from typing import Any
 
+import voluptuous as vol
 from homeassistant.components.device_automation import DEVICE_TRIGGER_BASE_SCHEMA
 from homeassistant.components.homeassistant.triggers import event as event_trigger
-from homeassistant.core import HomeAssistant, callback
+from homeassistant.const import CONF_TYPE
+from homeassistant.core import CALLBACK_TYPE, HomeAssistant
 from homeassistant.helpers import device_registry as dr
-from homeassistant.helpers.typing import ConfigType, VolSchemaType
+from homeassistant.helpers.trigger import TriggerInfo
+from homeassistant.helpers.typing import ConfigType
 
 from .const import (
     DOMAIN,
@@ -20,20 +23,10 @@ from .const import (
 
 ALARM_TRIGGER_TYPES = {EVENT_GOES_OFF, EVENT_SNOOZED, EVENT_STOPPED}
 SLEEP_TRIGGER_TYPES = {EVENT_BEDTIME_STARTS, EVENT_WAKING_UP, EVENT_WIND_DOWN_STARTS}
-PHONE_IDENTIFIER_LENGTH = 2
 
 TRIGGER_SCHEMA = DEVICE_TRIGGER_BASE_SCHEMA.extend(
-    {
-        "type": str,
-    }
+    {vol.Required(CONF_TYPE): vol.In(ALARM_TRIGGER_TYPES | SLEEP_TRIGGER_TYPES)}
 )
-
-
-def _is_phone_device(device: dr.DeviceEntry) -> bool:
-    for identifier in device.identifiers:
-        if identifier[0] == DOMAIN:
-            return len(identifier) == PHONE_IDENTIFIER_LENGTH
-    return False
 
 
 async def async_get_triggers(
@@ -45,7 +38,8 @@ async def async_get_triggers(
     if device is None:
         return []
 
-    is_phone = _is_phone_device(device)
+    # Alarm devices have (DOMAIN, phone_id, alarm_id) identifiers.
+    is_phone = any(i[0] == DOMAIN and len(i) == 2 for i in device.identifiers)
     trigger_types = (
         ALARM_TRIGGER_TYPES | SLEEP_TRIGGER_TYPES if is_phone else ALARM_TRIGGER_TYPES
     )
@@ -64,20 +58,12 @@ async def async_get_triggers(
     ]
 
 
-async def async_get_trigger_capabilities(
-    hass: HomeAssistant, config: ConfigType
-) -> dict[str, VolSchemaType]:
-    return {
-        "extra_fields": event_trigger.TRIGGER_SCHEMA.schema,
-    }
-
-
 async def async_attach_trigger(
     hass: HomeAssistant,
     config: ConfigType,
     action: Any,
-    trigger_info: dict[str, Any],
-) -> callback.CALLBACK_TYPE:
+    trigger_info: TriggerInfo,
+) -> CALLBACK_TYPE:
     event_config = event_trigger.TRIGGER_SCHEMA(
         {
             event_trigger.CONF_PLATFORM: "event",

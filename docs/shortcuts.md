@@ -205,7 +205,7 @@ Every call from a shortcut then logs `<action> called for phone_id=...`. No log 
 
 ### Alarms not syncing
 
-- Verify Phone ID matches in shortcut and Home Assistant
+- Verify Phone ID matches in shortcut and Home Assistant. Renaming the phone in **Edit Device** can change it: enter the new Phone ID in all three shortcuts
 - Test manually: Shortcuts app → Run "iPhone Alarms Sync: Sync"
 - Check the **Last Sync** sensor: it updates on every successful sync
 
