@@ -13,9 +13,10 @@
     "step": {
       "user": {
         "title": "iPhone Alarms Sync",
-        "description": "Choose how to add your iPhone/iPad:\n\n- **Mobile App devices** - Links to your HA mobile app device\n- **Custom name** - Standalone device",
-        "data": {
-          "method": "Method"
+        "description": "Choose how to add your iPhone/iPad:\n\n- **Mobile App device** - links it to your Home Assistant app device\n- **Custom name** - standalone device",
+        "menu_options": {
+          "select_mobile_app": "Select from Mobile App devices",
+          "custom_name": "Enter custom device name"
         }
       },
       "select_mobile_app": {
@@ -38,29 +39,14 @@
         "data": {
           "sync_disabled_alarms": "Sync disabled alarms"
         }
-      },
-      "already_configured": {
-        "title": "Device Already Configured",
-        "description": "Device with Phone ID `{phone_id}` already exists as \"{existing_title}\".\n\nChoose a different name or edit the existing device in Settings → Integrations.",
-        "data": {
-          "action": "Action"
-        }
       }
     },
     "error": {
-      "cannot_connect": "Unable to connect",
-      "invalid_auth": "Invalid authentication",
-      "unknown": "Unexpected error",
-      "required": "This field is required",
-      "device_not_found": "Selected device not found",
-      "phone_id_exists": "A device with this Phone ID already exists. Choose a different name."
+      "required": "Enter a name with at least one letter or digit."
     },
     "abort": {
-      "no_mobile_app_devices": "No Mobile App devices found. Use custom name option.",
-      "integration_not_ready": "Integration not ready. Reload and try again.",
-      "invalid_import_data": "Invalid import data",
-      "already_configured": "Device with Phone ID `{phone_id}` already exists as \"{existing_title}\".",
-      "unknown": "Unknown error occurred"
+      "no_mobile_app_devices": "No Mobile App devices found. Use the custom name option.",
+      "already_configured": "A phone with Phone ID `{phone_id}` is already set up. Choose a different name, or change that phone in its options."
     }
   },
   "options": {
@@ -69,7 +55,6 @@
         "title": "iPhone Alarms Sync",
         "menu_options": {
           "edit_device": "Edit Device",
-          "overview": "Overview",
           "events": "Events History",
           "sync_shortcut": "Sync Shortcut Setup",
           "event_shortcuts": "Event Shortcuts Setup"
@@ -77,16 +62,12 @@
       },
       "edit_device": {
         "title": "Edit Device",
-        "description": "⚠️ Changing device name generates a new Phone ID. Update your shortcut if changed.",
+        "description": "Current Phone ID: `{phone_id}`\n\n⚠️ A new name can give a new Phone ID. Devices, entities, history and automations move to it, but the shortcuts on the phone keep the old one: enter the new Phone ID in each of them (Sync, Device Event, Alarm Event).",
         "data": {
           "phone_name": "Device Name",
           "mobile_app_device_id": "Mobile App Device (optional)",
           "sync_disabled_alarms": "Sync disabled alarms"
         }
-      },
-      "overview": {
-        "title": "Overview",
-        "description": "**Device:** {phone_name}\n**Phone ID:** `{phone_id}`\n**Alarms:** {alarm_count}\n**Last Sync:** {last_sync}\n**Recent Events:** {recent_events}"
       },
       "events": {
         "title": "Events History",
@@ -94,7 +75,7 @@
       },
       "sync_shortcut": {
         "title": "Sync Shortcut Setup",
-        "description": "**Phone ID:** `{phone_id}`\n\n## Step 1: Import Shortcut\n\nScan QR code or open link **on your iPhone/iPad that is synced/integrated with this device**:\n\n![QR Code]({qr_code})\n\n[Open Shortcut]({shortcut_url})\n\nWhen importing, pick your Home Assistant server and the action `iphone_alarms_sync.sync_alarms`. If the **Perform action** step shows **Choose** or the shortcut says *No server provided*, pick the **Server** and then the **Action** again (needs the Home Assistant app 2026.9.3+, [troubleshooting]({troubleshooting_url})).\n\nWhen prompted, enter Phone ID: `{phone_id}`\n\n**Home Wi-Fi** (optional): fill in only if Home Assistant works just at home.\n\n## Step 2: Create Automation\n\n1. Shortcuts app → Automation → +\n2. App → Clock → Is Closed\n3. Run Shortcut → \"iPhone Alarms Sync: Sync\"\n4. Enable \"Run Immediately\" → Done"
+        "description": "**Phone ID:** `{phone_id}`\n\n## Step 1: Import Shortcut\n\nScan QR code or open link **on your iPhone/iPad that is synced/integrated with this device**:\n\n![QR Code]({sync_qr_code})\n\n[Open Shortcut]({sync_shortcut_url})\n\nWhen importing, pick your Home Assistant server and the action `iphone_alarms_sync.sync_alarms`. If the **Perform action** step shows **Choose** or the shortcut says *No server provided*, pick the **Server** and then the **Action** again (needs the Home Assistant app 2026.9.3+, [troubleshooting]({troubleshooting_url})).\n\nWhen prompted, enter Phone ID: `{phone_id}`\n\n**Home Wi-Fi** (optional): fill in only if Home Assistant works just at home.\n\n## Step 2: Create Automation\n\n1. Shortcuts app → Automation → +\n2. App → Clock → Is Closed\n3. Run Shortcut → \"iPhone Alarms Sync: Sync\"\n4. Enable \"Run Immediately\" → Done"
       },
       "event_shortcuts": {
         "title": "Event Shortcuts Setup",
@@ -102,9 +83,11 @@
       }
     },
     "error": {
-      "required": "This field is required",
-      "phone_id_exists": "A device with this Phone ID already exists.",
-      "phone_not_found": "Phone not found"
+      "required": "Enter a name with at least one letter or digit.",
+      "phone_id_exists": "Another phone already uses the Phone ID this name gives. Choose a different name."
+    },
+    "abort": {
+      "integration_not_ready": "iPhone Alarms Sync is not loaded. Reload it and try again."
     }
   },
   "issues": {

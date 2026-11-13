@@ -1,75 +1,70 @@
 from __future__ import annotations
 
+import logging
 import uuid
-from dataclasses import dataclass
-from datetime import datetime
-from typing import TYPE_CHECKING, Any
+from collections import deque
+from dataclasses import asdict, dataclass, field, fields
+from datetime import datetime, timedelta
+from typing import Any
 
+from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator
 from homeassistant.util import dt as dt_util
 
-if TYPE_CHECKING:
-    from homeassistant.config_entries import ConfigEntry
-else:
-    ConfigEntry = Any
-
 from .const import (
     CONF_ALARM_ID,
-    CONF_ALLOWS_SNOOZE,
-    CONF_ANY_LAST_EVENT_GOES_OFF_AT,
-    CONF_ANY_LAST_EVENT_SNOOZED_AT,
-    CONF_ANY_LAST_EVENT_STOPPED_AT,
-    CONF_BEDTIME_LAST_EVENT_AT,
+    CONF_ALARMS,
     CONF_ENABLED,
-    CONF_HOUR,
-    CONF_ICON,
-    CONF_LABEL,
-    CONF_LAST_ALARM_DATETIME,
-    CONF_LAST_ALARM_ID,
-    CONF_LAST_EVENT_GOES_OFF_AT,
-    CONF_LAST_EVENT_SNOOZED_AT,
-    CONF_LAST_EVENT_STOPPED_AT,
-    CONF_LAST_OCCURRENCE_DATETIME,
-    CONF_MINUTE,
-    CONF_MISSED_ALARM_AT,
     CONF_MOBILE_APP_DEVICE_ID,
     CONF_PHONE_ID,
     CONF_PHONE_NAME,
-    CONF_REPEAT_DAYS,
-    CONF_REPEATS,
-    CONF_SNOOZE_TIME,
     CONF_SYNC_DISABLED_ALARMS,
-    CONF_SYNCED_AT,
-    CONF_WAKEUP_LAST_EVENT_GOES_OFF_AT,
-    CONF_WAKEUP_LAST_EVENT_SNOOZED_AT,
-    CONF_WAKEUP_LAST_EVENT_STOPPED_AT,
-    CONF_WAKING_UP_LAST_EVENT_AT,
-    CONF_WIND_DOWN_LAST_EVENT_AT,
     DEFAULT_SNOOZE_TIME,
-    EVENT_GOES_OFF,
-    EVENT_SNOOZED,
-    EVENT_STOPPED,
+    DOMAIN,
 )
-from .utils import extract_alarm_uuid
+from .utils import calculate_next_occurrence, extract_alarm_uuid
+
+_LOGGER = logging.getLogger(__name__)
+
+# The options flow lists this many recent events; older ones are not kept.
+MAX_EVENTS = 20
 
 
 @dataclass
 class AlarmData:
     alarm_id: str
-    label: str
-    enabled: bool
-    hour: int
-    minute: int
-    repeats: bool
-    repeat_days: list[str]
-    allows_snooze: bool
+    label: str = ""
+    enabled: bool = False
+    hour: int = 0
+    minute: int = 0
+    repeats: bool = False
+    repeat_days: list[str] = field(default_factory=list)
+    allows_snooze: bool = False
     snooze_time: int = DEFAULT_SNOOZE_TIME
     last_event_goes_off_at: str | None = None
     last_event_snoozed_at: str | None = None
     last_event_stopped_at: str | None = None
     last_occurrence_datetime: str | None = None
-    icon: str = "mdi:alarm"
+
+
+ALARM_FIELDS = frozenset(f.name for f in fields(AlarmData))
+ALARM_EVENT_FIELDS = (
+    "last_event_goes_off_at",
+    "last_event_snoozed_at",
+    "last_event_stopped_at",
+)
+# Fields the Sync shortcut sends; snooze_time is only taken for a new alarm,
+# afterwards it belongs to the Snooze Time number entity.
+SYNCED_FIELDS = (
+    "label",
+    "enabled",
+    "hour",
+    "minute",
+    "repeats",
+    "repeat_days",
+    "allows_snooze",
+)
 
 
 @dataclass
@@ -87,10 +82,9 @@ class PhoneData:
     phone_name: str
     mobile_app_device_id: str | None
     alarms: dict[str, AlarmData]
-    synced_at: str | None = None
     sync_disabled_alarms: bool = True
+    synced_at: str | None = None
     last_alarm_datetime: str | None = None
-    last_alarm_id: str | None = None
     wakeup_last_event_goes_off_at: str | None = None
     wakeup_last_event_snoozed_at: str | None = None
     wakeup_last_event_stopped_at: str | None = None
@@ -103,513 +97,160 @@ class PhoneData:
     missed_alarm_at: str | None = None
 
 
+PHONE_EVENT_FIELDS = (
+    "wakeup_last_event_goes_off_at",
+    "wakeup_last_event_snoozed_at",
+    "wakeup_last_event_stopped_at",
+    "any_last_event_goes_off_at",
+    "any_last_event_snoozed_at",
+    "any_last_event_stopped_at",
+    "bedtime_last_event_at",
+    "waking_up_last_event_at",
+    "wind_down_last_event_at",
+)
+# Runtime state kept in entry.options under the same keys as the field names.
+PHONE_STATE_FIELDS = (
+    "synced_at",
+    "last_alarm_datetime",
+    *PHONE_EVENT_FIELDS,
+    "missed_alarm_at",
+)
+
+
 @dataclass
 class IPhoneAlarmsSyncData:
     coordinator: IPhoneAlarmsSyncCoordinator
 
 
-if TYPE_CHECKING:
-    IPhoneAlarmsSyncConfigEntry = ConfigEntry[IPhoneAlarmsSyncData]
-else:
-    IPhoneAlarmsSyncConfigEntry = Any
+type IPhoneAlarmsSyncConfigEntry = ConfigEntry[IPhoneAlarmsSyncData]
+
+
+def _alarm_from_options(key: str, stored: dict[str, Any]) -> AlarmData:
+    values = {k: v for k, v in stored.items() if k in ALARM_FIELDS}
+    values[CONF_ALARM_ID] = extract_alarm_uuid(stored.get(CONF_ALARM_ID, key))
+    return AlarmData(**values)
 
 
 class IPhoneAlarmsSyncCoordinator(DataUpdateCoordinator[PhoneData]):
+    """Holds one phone's alarms; the phone pushes data through the actions."""
+
     def __init__(self, hass: HomeAssistant, entry: ConfigEntry) -> None:
         super().__init__(
             hass,
-            logger=__import__("logging").getLogger(__name__),
-            name=entry.domain,
+            _LOGGER,
+            config_entry=entry,
+            name=DOMAIN,
             update_interval=None,
         )
         self.entry = entry
-        self._phone: PhoneData | None = None
-        self._events: list[AlarmEvent] = []
-        self._load_from_config()
-
-    def _load_from_config(self) -> None:
-        phone_id = self.entry.data.get(CONF_PHONE_ID, "")
-        phone_name = self.entry.data.get(CONF_PHONE_NAME, "")
-        mobile_app_device_id = self.entry.data.get(CONF_MOBILE_APP_DEVICE_ID)
-        sync_disabled_alarms = self.entry.data.get(CONF_SYNC_DISABLED_ALARMS, True)
-
-        alarms_data = self.entry.options.get("alarms", {})
-        alarms = {}
-        for original_alarm_id, alarm_dict in alarms_data.items():
-            alarm_id = extract_alarm_uuid(original_alarm_id)
-            stored_alarm_id = alarm_dict.get(CONF_ALARM_ID, original_alarm_id)
-            parsed_stored_id = extract_alarm_uuid(stored_alarm_id)
-            alarms[alarm_id] = AlarmData(
-                alarm_id=parsed_stored_id,
-                label=alarm_dict.get(CONF_LABEL, ""),
-                enabled=alarm_dict.get(CONF_ENABLED, False),
-                hour=alarm_dict.get(CONF_HOUR, 0),
-                minute=alarm_dict.get(CONF_MINUTE, 0),
-                repeats=alarm_dict.get(CONF_REPEATS, False),
-                repeat_days=alarm_dict.get(CONF_REPEAT_DAYS, []),
-                allows_snooze=alarm_dict.get(CONF_ALLOWS_SNOOZE, False),
-                snooze_time=alarm_dict.get(CONF_SNOOZE_TIME, DEFAULT_SNOOZE_TIME),
-                last_event_goes_off_at=alarm_dict.get(CONF_LAST_EVENT_GOES_OFF_AT),
-                last_event_snoozed_at=alarm_dict.get(CONF_LAST_EVENT_SNOOZED_AT),
-                last_event_stopped_at=alarm_dict.get(CONF_LAST_EVENT_STOPPED_AT),
-                last_occurrence_datetime=alarm_dict.get(CONF_LAST_OCCURRENCE_DATETIME),
-                icon=alarm_dict.get(CONF_ICON, "mdi:alarm"),
-            )
-
-        synced_at = self.entry.options.get(CONF_SYNCED_AT)
-
-        self._phone = PhoneData(
-            phone_id=phone_id,
-            phone_name=phone_name,
-            mobile_app_device_id=mobile_app_device_id,
-            alarms=alarms,
-            synced_at=synced_at,
-            sync_disabled_alarms=sync_disabled_alarms,
-            last_alarm_datetime=self.entry.options.get(CONF_LAST_ALARM_DATETIME),
-            last_alarm_id=self.entry.options.get(CONF_LAST_ALARM_ID),
-            wakeup_last_event_goes_off_at=self.entry.options.get(
-                CONF_WAKEUP_LAST_EVENT_GOES_OFF_AT
-            ),
-            wakeup_last_event_snoozed_at=self.entry.options.get(
-                CONF_WAKEUP_LAST_EVENT_SNOOZED_AT
-            ),
-            wakeup_last_event_stopped_at=self.entry.options.get(
-                CONF_WAKEUP_LAST_EVENT_STOPPED_AT
-            ),
-            any_last_event_goes_off_at=self.entry.options.get(
-                CONF_ANY_LAST_EVENT_GOES_OFF_AT
-            ),
-            any_last_event_snoozed_at=self.entry.options.get(
-                CONF_ANY_LAST_EVENT_SNOOZED_AT
-            ),
-            any_last_event_stopped_at=self.entry.options.get(
-                CONF_ANY_LAST_EVENT_STOPPED_AT
-            ),
-            bedtime_last_event_at=self.entry.options.get(CONF_BEDTIME_LAST_EVENT_AT),
-            waking_up_last_event_at=self.entry.options.get(
-                CONF_WAKING_UP_LAST_EVENT_AT
-            ),
-            wind_down_last_event_at=self.entry.options.get(
-                CONF_WIND_DOWN_LAST_EVENT_AT
-            ),
-            missed_alarm_at=self.entry.options.get(CONF_MISSED_ALARM_AT),
+        self._events: deque[AlarmEvent] = deque(maxlen=MAX_EVENTS)
+        options = entry.options
+        self.phone = PhoneData(
+            phone_id=entry.data.get(CONF_PHONE_ID, ""),
+            phone_name=entry.data.get(CONF_PHONE_NAME, ""),
+            mobile_app_device_id=entry.data.get(CONF_MOBILE_APP_DEVICE_ID),
+            sync_disabled_alarms=entry.data.get(CONF_SYNC_DISABLED_ALARMS, True),
+            alarms={
+                extract_alarm_uuid(key): _alarm_from_options(key, stored)
+                for key, stored in options.get(CONF_ALARMS, {}).items()
+            },
+            **{name: options.get(name) for name in PHONE_STATE_FIELDS},
         )
 
     async def _async_update_data(self) -> PhoneData:
-        if self._phone is None:
-            raise ValueError("Phone not initialized")
-        return self._phone
+        return self.phone
 
-    def update_phone(
-        self,
-        phone_name: str | None = None,
-        mobile_app_device_id: str | None = None,
-        sync_disabled_alarms: bool | None = None,
-    ) -> None:
-        if self._phone is None:
-            raise ValueError("Phone not initialized")
-        if phone_name is not None:
-            self._phone.phone_name = phone_name
-        if mobile_app_device_id is not None:
-            self._phone.mobile_app_device_id = mobile_app_device_id
-        if sync_disabled_alarms is not None:
-            self._phone.sync_disabled_alarms = sync_disabled_alarms
-        self._save_to_config()
+    def get_alarm(self, alarm_id: str) -> AlarmData | None:
+        return self.phone.alarms.get(alarm_id)
 
-    def get_phone(self) -> PhoneData | None:
-        return self._phone
+    def get_events(self) -> list[AlarmEvent]:
+        return list(self._events)
 
     def last_activity_at(self) -> datetime | None:
         """Return when the phone last sent anything (sync or event)."""
-        if self._phone is None:
-            return None
-        phone = self._phone
-        timestamps = [
-            phone.synced_at,
-            phone.wakeup_last_event_goes_off_at,
-            phone.wakeup_last_event_snoozed_at,
-            phone.wakeup_last_event_stopped_at,
-            phone.any_last_event_goes_off_at,
-            phone.any_last_event_snoozed_at,
-            phone.any_last_event_stopped_at,
-            phone.bedtime_last_event_at,
-            phone.waking_up_last_event_at,
-            phone.wind_down_last_event_at,
-        ]
+        phone = self.phone
+        timestamps = [phone.synced_at]
+        timestamps += [getattr(phone, name) for name in PHONE_EVENT_FIELDS]
         for alarm in phone.alarms.values():
-            timestamps += [
-                alarm.last_event_goes_off_at,
-                alarm.last_event_snoozed_at,
-                alarm.last_event_stopped_at,
-            ]
+            timestamps += [getattr(alarm, name) for name in ALARM_EVENT_FIELDS]
         parsed = [dt_util.parse_datetime(t) for t in timestamps if t]
         return max((t for t in parsed if t), default=None)
 
-    def get_all_phones(self) -> dict[str, PhoneData]:
-        if self._phone is None:
-            return {}
-        return {self._phone.phone_id: self._phone}
-
-    def _alarm_data_changed(
-        self,
-        existing: AlarmData,
-        new_dict: dict[str, Any],
-    ) -> bool:
-        return (
-            existing.label != new_dict.get(CONF_LABEL)
-            or existing.enabled != new_dict.get(CONF_ENABLED)
-            or existing.hour != new_dict.get(CONF_HOUR)
-            or existing.minute != new_dict.get(CONF_MINUTE)
-            or existing.repeats != new_dict.get(CONF_REPEATS)
-            or existing.repeat_days != new_dict.get(CONF_REPEAT_DAYS, [])
-            or existing.allows_snooze != new_dict.get(CONF_ALLOWS_SNOOZE)
-        )
-
-    def sync_alarms(self, alarms: list[dict[str, Any]]) -> list[str]:
-        if self._phone is None:
-            raise ValueError("Phone not initialized")
-
-        synced_at = dt_util.utcnow().isoformat()
-        new_alarm_ids: list[str] = []
-
+    def sync_alarms(self, alarms: list[dict[str, Any]]) -> None:
+        """Store the alarms the phone sent."""
+        phone = self.phone
         received_any = bool(alarms)
-        if not self._phone.sync_disabled_alarms:
+        if not phone.sync_disabled_alarms:
             alarms = [a for a in alarms if a.get(CONF_ENABLED, False)]
 
-        synced_alarm_ids = set()
         for alarm_dict in alarms:
             alarm_id = alarm_dict[CONF_ALARM_ID]
-            synced_alarm_ids.add(alarm_id)
-            if alarm_id not in self._phone.alarms:
-                self._phone.alarms[alarm_id] = AlarmData(
-                    alarm_id=alarm_id,
-                    label=alarm_dict.get(CONF_LABEL, ""),
-                    enabled=alarm_dict.get(CONF_ENABLED, False),
-                    hour=alarm_dict.get(CONF_HOUR, 0),
-                    minute=alarm_dict.get(CONF_MINUTE, 0),
-                    repeats=alarm_dict.get(CONF_REPEATS, False),
-                    repeat_days=alarm_dict.get(CONF_REPEAT_DAYS, []),
-                    allows_snooze=alarm_dict.get(CONF_ALLOWS_SNOOZE, False),
-                    snooze_time=alarm_dict.get(CONF_SNOOZE_TIME, DEFAULT_SNOOZE_TIME),
-                )
-                new_alarm_ids.append(alarm_id)
-            else:
-                alarm = self._phone.alarms[alarm_id]
-                if self._alarm_data_changed(alarm, alarm_dict):
-                    alarm.label = alarm_dict.get(CONF_LABEL, alarm.label)
-                    alarm.enabled = alarm_dict.get(CONF_ENABLED, alarm.enabled)
-                    alarm.hour = alarm_dict.get(CONF_HOUR, alarm.hour)
-                    alarm.minute = alarm_dict.get(CONF_MINUTE, alarm.minute)
-                    alarm.repeats = alarm_dict.get(CONF_REPEATS, alarm.repeats)
-                    alarm.repeat_days = alarm_dict.get(
-                        CONF_REPEAT_DAYS, alarm.repeat_days
-                    )
-                    alarm.allows_snooze = alarm_dict.get(
-                        CONF_ALLOWS_SNOOZE, alarm.allows_snooze
-                    )
+            values = {k: alarm_dict[k] for k in SYNCED_FIELDS if k in alarm_dict}
+            if alarm := phone.alarms.get(alarm_id):
+                for name, value in values.items():
+                    setattr(alarm, name, value)
+                continue
+            if "snooze_time" in alarm_dict:
+                values["snooze_time"] = alarm_dict["snooze_time"]
+            phone.alarms[alarm_id] = AlarmData(alarm_id=alarm_id, **values)
 
         # The shortcut sends every alarm, so a missing one was deleted on the device
         # (or disabled, when disabled alarms are not synced). An empty payload is more
         # likely a failed shortcut than a phone without alarms, so it removes nothing.
         if received_any:
-            for alarm_id in [
-                a for a in self._phone.alarms if a not in synced_alarm_ids
-            ]:
-                del self._phone.alarms[alarm_id]
+            synced_ids = {a[CONF_ALARM_ID] for a in alarms}
+            for alarm_id in [a for a in phone.alarms if a not in synced_ids]:
+                del phone.alarms[alarm_id]
 
         # Record every sync, not only changes, so "Last Sync" shows the shortcut works.
-        self._phone.synced_at = synced_at
-        self._save_to_config()
-
-        return new_alarm_ids
+        phone.synced_at = dt_util.utcnow().isoformat()
+        self.save()
 
     def report_alarm_event(self, alarm_id: str, event: str) -> AlarmEvent:
-        if self._phone is None:
-            raise ValueError("Phone not initialized")
-        if alarm_id not in self._phone.alarms:
-            raise ValueError(f"Alarm {alarm_id} not found")
+        return self._record(
+            self.phone.alarms[alarm_id], f"last_event_{event}_at", alarm_id, event
+        )
+
+    def report_device_event(self, scope: str, attr: str, event: str) -> AlarmEvent:
+        return self._record(self.phone, attr, scope, event)
+
+    def _record(self, target: Any, attr: str, alarm_id: str, event: str) -> AlarmEvent:
         event_obj = AlarmEvent(
             event_id=str(uuid.uuid4()),
             alarm_id=alarm_id,
-            phone_id=self._phone.phone_id,
+            phone_id=self.phone.phone_id,
             event=event,
             occurred_at=dt_util.utcnow().isoformat(),
         )
         self._events.append(event_obj)
-        alarm = self._phone.alarms[alarm_id]
-        if event == EVENT_GOES_OFF:
-            alarm.last_event_goes_off_at = event_obj.occurred_at
-        elif event == EVENT_SNOOZED:
-            alarm.last_event_snoozed_at = event_obj.occurred_at
-        elif event == EVENT_STOPPED:
-            alarm.last_event_stopped_at = event_obj.occurred_at
-        self._save_to_config()
+        setattr(target, attr, event_obj.occurred_at)
+        self.save()
+        self.async_set_updated_data(self.phone)
         return event_obj
 
-    def report_wakeup_event(self, event: str) -> AlarmEvent:
-        if self._phone is None:
-            raise ValueError("Phone not initialized")
-        event_obj = AlarmEvent(
-            event_id=str(uuid.uuid4()),
-            alarm_id="wakeup",
-            phone_id=self._phone.phone_id,
-            event=event,
-            occurred_at=dt_util.utcnow().isoformat(),
-        )
-        self._events.append(event_obj)
-        if event == EVENT_GOES_OFF:
-            self._phone.wakeup_last_event_goes_off_at = event_obj.occurred_at
-        elif event == EVENT_SNOOZED:
-            self._phone.wakeup_last_event_snoozed_at = event_obj.occurred_at
-        elif event == EVENT_STOPPED:
-            self._phone.wakeup_last_event_stopped_at = event_obj.occurred_at
-        self._save_to_config()
-        return event_obj
-
-    def report_any_event(self, event: str) -> AlarmEvent:
-        if self._phone is None:
-            raise ValueError("Phone not initialized")
-        event_obj = AlarmEvent(
-            event_id=str(uuid.uuid4()),
-            alarm_id="any",
-            phone_id=self._phone.phone_id,
-            event=event,
-            occurred_at=dt_util.utcnow().isoformat(),
-        )
-        self._events.append(event_obj)
-        if event == EVENT_GOES_OFF:
-            self._phone.any_last_event_goes_off_at = event_obj.occurred_at
-        elif event == EVENT_SNOOZED:
-            self._phone.any_last_event_snoozed_at = event_obj.occurred_at
-        elif event == EVENT_STOPPED:
-            self._phone.any_last_event_stopped_at = event_obj.occurred_at
-        self._save_to_config()
-        return event_obj
-
-    def report_bedtime_event(self) -> AlarmEvent:
-        if self._phone is None:
-            raise ValueError("Phone not initialized")
-        event_obj = AlarmEvent(
-            event_id=str(uuid.uuid4()),
-            alarm_id="bedtime",
-            phone_id=self._phone.phone_id,
-            event="bedtime_starts",
-            occurred_at=dt_util.utcnow().isoformat(),
-        )
-        self._events.append(event_obj)
-        self._phone.bedtime_last_event_at = event_obj.occurred_at
-        self._save_to_config()
-        return event_obj
-
-    def report_waking_up_event(self) -> AlarmEvent:
-        if self._phone is None:
-            raise ValueError("Phone not initialized")
-        event_obj = AlarmEvent(
-            event_id=str(uuid.uuid4()),
-            alarm_id="waking_up",
-            phone_id=self._phone.phone_id,
-            event="waking_up",
-            occurred_at=dt_util.utcnow().isoformat(),
-        )
-        self._events.append(event_obj)
-        self._phone.waking_up_last_event_at = event_obj.occurred_at
-        self._save_to_config()
-        return event_obj
-
-    def report_wind_down_event(self) -> AlarmEvent:
-        if self._phone is None:
-            raise ValueError("Phone not initialized")
-        event_obj = AlarmEvent(
-            event_id=str(uuid.uuid4()),
-            alarm_id="wind_down",
-            phone_id=self._phone.phone_id,
-            event="wind_down_starts",
-            occurred_at=dt_util.utcnow().isoformat(),
-        )
-        self._events.append(event_obj)
-        self._phone.wind_down_last_event_at = event_obj.occurred_at
-        self._save_to_config()
-        return event_obj
-
-    def get_alarm(self, alarm_id: str) -> AlarmData | None:
-        if self._phone is None:
-            return None
-        return self._phone.alarms.get(alarm_id)
-
-    def get_all_alarms(self) -> dict[str, AlarmData]:
-        if self._phone is None:
-            return {}
-        return self._phone.alarms.copy()
-
-    def delete_alarm(self, alarm_id: str) -> None:
-        if self._phone is None:
-            raise ValueError("Phone not initialized")
-        if alarm_id in self._phone.alarms:
-            del self._phone.alarms[alarm_id]
-            self._save_to_config()
-
-    def update_alarm_metadata(
-        self,
-        alarm_id: str,
-        label: str | None = None,
-        icon: str | None = None,
-    ) -> None:
-        if self._phone is None:
-            raise ValueError("Phone not initialized")
-        if alarm_id not in self._phone.alarms:
-            raise ValueError(f"Alarm {alarm_id} not found")
-        alarm = self._phone.alarms[alarm_id]
-        if label is not None:
-            alarm.label = label
-        if icon is not None:
-            alarm.icon = icon
-        self._save_to_config()
-
-    def update_alarm_snooze_time(
-        self,
-        alarm_id: str,
-        snooze_time: int,
-    ) -> None:
-        if self._phone is None:
-            raise ValueError("Phone not initialized")
-        if alarm_id not in self._phone.alarms:
-            raise ValueError(f"Alarm {alarm_id} not found")
-        alarm = self._phone.alarms[alarm_id]
-        alarm.snooze_time = snooze_time
-        self._save_to_config()
-
-    def get_events(
-        self,
-        alarm_id: str | None = None,
-        limit: int | None = None,
-    ) -> list[AlarmEvent]:
-        events = self._events
-        if alarm_id:
-            events = [e for e in events if e.alarm_id == alarm_id]
-        if limit:
-            events = events[-limit:]
-        return events
-
-    def _save_to_config(self) -> None:
-        if self._phone is None:
+    def record_alarm_time(self, at: datetime) -> None:
+        """Mark the alarms scheduled for `at` as rung (Last Alarm, Last Occurrence)."""
+        before = at - timedelta(minutes=1)
+        rang = [
+            alarm
+            for alarm in self.phone.alarms.values()
+            if calculate_next_occurrence(alarm, before) == at
+        ]
+        if not rang:
             return
+        self.phone.last_alarm_datetime = at.isoformat()
+        for alarm in rang:
+            alarm.last_occurrence_datetime = at.isoformat()
+        self.save()
+        self.async_set_updated_data(self.phone)
 
-        current_options = self.entry.options.copy()
-        current_alarms = current_options.get("alarms", {})
-        alarms_dict = {}
-        has_changes = False
-
-        for alarm_id, alarm in self._phone.alarms.items():
-            alarm_data = {
-                CONF_ALARM_ID: alarm.alarm_id,
-                CONF_LABEL: alarm.label,
-                CONF_ENABLED: alarm.enabled,
-                CONF_HOUR: alarm.hour,
-                CONF_MINUTE: alarm.minute,
-                CONF_REPEATS: alarm.repeats,
-                CONF_REPEAT_DAYS: alarm.repeat_days,
-                CONF_ALLOWS_SNOOZE: alarm.allows_snooze,
-                CONF_SNOOZE_TIME: alarm.snooze_time,
-                CONF_LAST_EVENT_GOES_OFF_AT: alarm.last_event_goes_off_at,
-                CONF_LAST_EVENT_SNOOZED_AT: alarm.last_event_snoozed_at,
-                CONF_LAST_EVENT_STOPPED_AT: alarm.last_event_stopped_at,
-                CONF_LAST_OCCURRENCE_DATETIME: alarm.last_occurrence_datetime,
-                CONF_ICON: alarm.icon,
-            }
-
-            if alarm_id not in current_alarms or current_alarms[alarm_id] != alarm_data:
-                has_changes = True
-
-            alarms_dict[alarm_id] = alarm_data
-
-        if current_alarms.keys() != alarms_dict.keys():
-            has_changes = True
-
-        if self._phone.synced_at != current_options.get(CONF_SYNCED_AT):
-            has_changes = True
-
-        if self._phone.last_alarm_datetime != current_options.get(
-            CONF_LAST_ALARM_DATETIME
-        ):
-            has_changes = True
-
-        if self._phone.last_alarm_id != current_options.get(CONF_LAST_ALARM_ID):
-            has_changes = True
-
-        if self._phone.wakeup_last_event_goes_off_at != current_options.get(
-            CONF_WAKEUP_LAST_EVENT_GOES_OFF_AT
-        ):
-            has_changes = True
-
-        if self._phone.wakeup_last_event_snoozed_at != current_options.get(
-            CONF_WAKEUP_LAST_EVENT_SNOOZED_AT
-        ):
-            has_changes = True
-
-        if self._phone.wakeup_last_event_stopped_at != current_options.get(
-            CONF_WAKEUP_LAST_EVENT_STOPPED_AT
-        ):
-            has_changes = True
-
-        if self._phone.any_last_event_goes_off_at != current_options.get(
-            CONF_ANY_LAST_EVENT_GOES_OFF_AT
-        ):
-            has_changes = True
-
-        if self._phone.any_last_event_snoozed_at != current_options.get(
-            CONF_ANY_LAST_EVENT_SNOOZED_AT
-        ):
-            has_changes = True
-
-        if self._phone.any_last_event_stopped_at != current_options.get(
-            CONF_ANY_LAST_EVENT_STOPPED_AT
-        ):
-            has_changes = True
-
-        if self._phone.bedtime_last_event_at != current_options.get(
-            CONF_BEDTIME_LAST_EVENT_AT
-        ):
-            has_changes = True
-
-        if self._phone.waking_up_last_event_at != current_options.get(
-            CONF_WAKING_UP_LAST_EVENT_AT
-        ):
-            has_changes = True
-
-        if self._phone.wind_down_last_event_at != current_options.get(
-            CONF_WIND_DOWN_LAST_EVENT_AT
-        ):
-            has_changes = True
-
-        if self._phone.missed_alarm_at != current_options.get(CONF_MISSED_ALARM_AT):
-            has_changes = True
-
-        if has_changes:
-            new_options = {
-                "alarms": alarms_dict,
-                CONF_SYNCED_AT: self._phone.synced_at,
-                CONF_LAST_ALARM_DATETIME: self._phone.last_alarm_datetime,
-                CONF_LAST_ALARM_ID: self._phone.last_alarm_id,
-                CONF_WAKEUP_LAST_EVENT_GOES_OFF_AT: (
-                    self._phone.wakeup_last_event_goes_off_at
-                ),
-                CONF_WAKEUP_LAST_EVENT_SNOOZED_AT: (
-                    self._phone.wakeup_last_event_snoozed_at
-                ),
-                CONF_WAKEUP_LAST_EVENT_STOPPED_AT: (
-                    self._phone.wakeup_last_event_stopped_at
-                ),
-                CONF_ANY_LAST_EVENT_GOES_OFF_AT: (
-                    self._phone.any_last_event_goes_off_at
-                ),
-                CONF_ANY_LAST_EVENT_SNOOZED_AT: (self._phone.any_last_event_snoozed_at),
-                CONF_ANY_LAST_EVENT_STOPPED_AT: (self._phone.any_last_event_stopped_at),
-                CONF_BEDTIME_LAST_EVENT_AT: self._phone.bedtime_last_event_at,
-                CONF_WAKING_UP_LAST_EVENT_AT: self._phone.waking_up_last_event_at,
-                CONF_WIND_DOWN_LAST_EVENT_AT: self._phone.wind_down_last_event_at,
-                CONF_MISSED_ALARM_AT: self._phone.missed_alarm_at,
-            }
-            self.hass.config_entries.async_update_entry(
-                self.entry,
-                options=new_options,
-            )
+    def save(self) -> None:
+        """Persist the runtime state; HA skips the write when nothing changed."""
+        phone = self.phone
+        options = {
+            CONF_ALARMS: {
+                alarm_id: asdict(alarm) for alarm_id, alarm in phone.alarms.items()
+            },
+            **{name: getattr(phone, name) for name in PHONE_STATE_FIELDS},
+        }
+        self.hass.config_entries.async_update_entry(self.entry, options=options)

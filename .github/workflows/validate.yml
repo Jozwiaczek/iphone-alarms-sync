@@ -33,3 +33,29 @@ jobs:
 
       - name: Check shortcut templates
         run: python scripts/shortcuts.py check
+
+      - name: Check strings.json matches translations/en.json
+        run: >-
+          cmp custom_components/iphone_alarms_sync/strings.json
+          custom_components/iphone_alarms_sync/translations/en.json
+
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Set up Python
+        uses: actions/setup-python@v7
+        with:
+          python-version: "3.14"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install pytest-homeassistant-custom-component==0.13.375 segno mypy
+
+      - name: Run mypy
+        run: mypy custom_components/iphone_alarms_sync
+
+      - name: Run tests
+        run: pytest
