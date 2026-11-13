@@ -103,6 +103,8 @@ module.exports = {
     [
       '@semantic-release/exec',
       {
+        // Runs in --dry-run too: the beta job reads the next version from this file.
+        verifyReleaseCmd: 'echo ${nextRelease.version} > .next-version',
         prepareCmd:
           'jq --arg v "${nextRelease.version}" \'.version = $v\' custom_components/iphone_alarms_sync/manifest.json > tmp.json && mv tmp.json custom_components/iphone_alarms_sync/manifest.json',
       },
