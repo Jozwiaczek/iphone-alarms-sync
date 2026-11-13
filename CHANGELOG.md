@@ -1,3 +1,8 @@
+# [v1.4.1](https://github.com/Jozwiaczek/iphone-alarms-sync/compare/v1.4.0...v1.4.1) (2026-11-13 20:11)
+
+## 🐛 Bug Fixes
+-  Fix Edit Device changes lost on reload ([#16](https://github.com/Jozwiaczek/iphone-alarms-sync/issues/16)) [[3910fe70911629cad20b71f4d2cf64b67cc1b5a5](https://github.com/Jozwiaczek/iphone-alarms-sync/commit/3910fe70911629cad20b71f4d2cf64b67cc1b5a5)]
+
 # [v1.4.0](https://github.com/Jozwiaczek/iphone-alarms-sync/compare/v1.3.0...v1.4.0) (2026-11-08 22:11)
 
 ## ✨ New Features
