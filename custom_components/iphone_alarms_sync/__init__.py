@@ -92,6 +92,8 @@ ALARM_SCHEMA = vol.Schema(
 
 # Where users find the IDs their shortcuts need.
 _OPTIONS = "Settings → Devices & services → iPhone Alarms Sync → Configure"
+# Which step of the shortcut holds the Phone ID.
+_PHONE_ID_STEP = "the second Text step of this shortcut (the first is Home Wi-Fi)"
 
 
 def _mobile_app_device_id(
@@ -163,7 +165,7 @@ def _resolve_call(
     if not phone_id:
         raise ServiceValidationError(
             f"Phone ID is missing. Copy it from {_OPTIONS} → Sync Shortcut Setup "
-            "into the first Text step of this shortcut."
+            f"into {_PHONE_ID_STEP}."
         )
     entry: IPhoneAlarmsSyncConfigEntry | None = (
         hass.config_entries.async_entry_for_domain_unique_id(DOMAIN, phone_id)
@@ -171,7 +173,7 @@ def _resolve_call(
     if entry is None:
         raise ServiceValidationError(
             f"Unknown Phone ID '{phone_id}'. Copy the Phone ID from {_OPTIONS} → "
-            "Sync Shortcut Setup into the first Text step of this shortcut."
+            f"Sync Shortcut Setup into {_PHONE_ID_STEP}."
         )
     if entry.state is not ConfigEntryState.LOADED:
         raise HomeAssistantError(
@@ -297,7 +299,7 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
         if not call.data.get(CONF_ALARM_ID):
             raise ServiceValidationError(
                 f"Alarm ID is missing. Copy it from {_OPTIONS} → Event Shortcuts "
-                "Setup into the second Text step of this shortcut."
+                "Setup into the last Text step of this shortcut."
             )
         alarm_id = extract_alarm_uuid(call.data[CONF_ALARM_ID])
         entry, coordinator = _resolve_call(hass, call)
