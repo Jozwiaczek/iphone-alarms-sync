@@ -174,3 +174,15 @@ async def test_events_history_shows_local_time_and_names(
         "- 2026-11-14 09:33:02 · Bedtime starts\n"
         "- 2026-11-14 09:33:02 · Any alarm: Stopped"
     )
+
+
+async def test_event_shortcuts_lists_alarm_time_label_and_id(
+    hass: HomeAssistant, entry: MockConfigEntry
+) -> None:
+    result = await hass.config_entries.options.async_init(entry.entry_id)
+    result = await hass.config_entries.options.async_configure(
+        result["flow_id"], {"next_step_id": "event_shortcuts"}
+    )
+    assert result["description_placeholders"]["alarms_list"] == (
+        f"- 07:00 Wake: `{ALARM_ID}`"
+    )
