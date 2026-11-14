@@ -1,0 +1,61 @@
+{
+  "entity": {
+    "sensor": {
+      "next_alarm_label": {
+        "default": "mdi:label-outline"
+      },
+      "enabled_alarms": {
+        "default": "mdi:alarm-check"
+      },
+      "total_alarms": {
+        "default": "mdi:alarm-multiple"
+      },
+      "disabled_alarms": {
+        "default": "mdi:alarm-off"
+      },
+      "alarm_id": {
+        "default": "mdi:identifier"
+      }
+    },
+    "binary_sensor": {
+      "enabled": {
+        "default": "mdi:alarm-off",
+        "state": {
+          "on": "mdi:alarm"
+        }
+      },
+      "allows_snooze": {
+        "default": "mdi:alarm-snooze"
+      },
+      "repeats": {
+        "default": "mdi:calendar-sync"
+      },
+      "repeats_monday": {
+        "default": "mdi:calendar-sync"
+      },
+      "repeats_tuesday": {
+        "default": "mdi:calendar-sync"
+      },
+      "repeats_wednesday": {
+        "default": "mdi:calendar-sync"
+      },
+      "repeats_thursday": {
+        "default": "mdi:calendar-sync"
+      },
+      "repeats_friday": {
+        "default": "mdi:calendar-sync"
+      },
+      "repeats_saturday": {
+        "default": "mdi:calendar-sync"
+      },
+      "repeats_sunday": {
+        "default": "mdi:calendar-sync"
+      }
+    },
+    "number": {
+      "snooze_time": {
+        "default": "mdi:alarm-snooze"
+      }
+    }
+  }
+}

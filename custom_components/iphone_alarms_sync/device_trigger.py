@@ -21,11 +21,12 @@ from .const import (
     EVENT_WIND_DOWN_STARTS,
 )
 
-ALARM_TRIGGER_TYPES = {EVENT_GOES_OFF, EVENT_SNOOZED, EVENT_STOPPED}
-SLEEP_TRIGGER_TYPES = {EVENT_BEDTIME_STARTS, EVENT_WAKING_UP, EVENT_WIND_DOWN_STARTS}
+# Tuples keep the order shown in the automation editor.
+ALARM_TRIGGER_TYPES = (EVENT_GOES_OFF, EVENT_SNOOZED, EVENT_STOPPED)
+SLEEP_TRIGGER_TYPES = (EVENT_BEDTIME_STARTS, EVENT_WAKING_UP, EVENT_WIND_DOWN_STARTS)
 
 TRIGGER_SCHEMA = DEVICE_TRIGGER_BASE_SCHEMA.extend(
-    {vol.Required(CONF_TYPE): vol.In(ALARM_TRIGGER_TYPES | SLEEP_TRIGGER_TYPES)}
+    {vol.Required(CONF_TYPE): vol.In(ALARM_TRIGGER_TYPES + SLEEP_TRIGGER_TYPES)}
 )
 
 
@@ -41,7 +42,7 @@ async def async_get_triggers(
     # Alarm devices have (DOMAIN, phone_id, alarm_id) identifiers.
     is_phone = any(i[0] == DOMAIN and len(i) == 2 for i in device.identifiers)
     trigger_types = (
-        ALARM_TRIGGER_TYPES | SLEEP_TRIGGER_TYPES if is_phone else ALARM_TRIGGER_TYPES
+        ALARM_TRIGGER_TYPES + SLEEP_TRIGGER_TYPES if is_phone else ALARM_TRIGGER_TYPES
     )
 
     entry = hass.config_entries.async_get_entry(device.config_entry_id)

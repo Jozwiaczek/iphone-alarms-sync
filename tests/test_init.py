@@ -65,7 +65,7 @@ async def test_disabled_alarms_not_synced_when_turned_off(hass: HomeAssistant) -
 async def test_device_event_updates_sensor_and_fires_events(
     hass: HomeAssistant, entry
 ) -> None:
-    sensor = "sensor.john_iphone_wake_up_last_goes_off_at"
+    sensor = "sensor.john_iphone_wake_up_alarm_last_went_off"
     assert hass.states.get(sensor).state == "unknown"
     events = async_capture_events(hass, EVENT_ALARM_EVENT)
     triggers = async_capture_events(hass, f"{DOMAIN}_goes_off")
@@ -103,9 +103,7 @@ async def test_alarm_event_fires_trigger_for_alarm_device(
         (DOMAIN, PHONE_ID, ALARM_ID), entry.entry_id
     )
     assert triggers[0].data == {"device_id": alarm_device.id}
-    assert hass.states.get("sensor.john_iphone_wake_last_snoozed_at").state != (
-        "unknown"
-    )
+    assert hass.states.get("sensor.john_iphone_wake_last_snoozed").state != ("unknown")
 
 
 async def test_alarm_time_updates_last_alarm(

@@ -102,5 +102,115 @@
       "title": "{phone_name} stopped sending alarm data",
       "description": "{phone_name} hasn't sent anything to iPhone Alarms Sync for {days} days.\n\nThis usually means the iOS shortcuts stopped working, for example after a Home Assistant app update reset the **Action** field of the **Perform action** step.\n\n1. Open the Shortcuts app and run the Sync shortcut manually.\n2. If it shows an error, *No server provided* or **Choose** in the Perform action step, pick the **Server** and then `iphone_alarms_sync.sync_alarms` as the **Action** (or re-import the shortcuts from the integration options).\n3. Check the same in the event shortcuts.\n\nThis issue disappears automatically when the phone sends data again. If you rarely open the Clock app, you can ignore it."
     }
+  },
+  "entity": {
+    "sensor": {
+      "next_alarm_datetime": {
+        "name": "Next alarm"
+      },
+      "next_alarm_label": {
+        "name": "Next alarm label"
+      },
+      "last_alarm_datetime": {
+        "name": "Last alarm"
+      },
+      "last_sync": {
+        "name": "Last sync"
+      },
+      "enabled_alarms": {
+        "name": "Enabled alarms"
+      },
+      "total_alarms": {
+        "name": "Total alarms"
+      },
+      "disabled_alarms": {
+        "name": "Disabled alarms"
+      },
+      "wakeup_last_event_goes_off_at": {
+        "name": "Wake-up alarm last went off"
+      },
+      "wakeup_last_event_snoozed_at": {
+        "name": "Wake-up alarm last snoozed"
+      },
+      "wakeup_last_event_stopped_at": {
+        "name": "Wake-up alarm last stopped"
+      },
+      "any_last_event_goes_off_at": {
+        "name": "Any alarm last went off"
+      },
+      "any_last_event_snoozed_at": {
+        "name": "Any alarm last snoozed"
+      },
+      "any_last_event_stopped_at": {
+        "name": "Any alarm last stopped"
+      },
+      "bedtime_last_event_at": {
+        "name": "Bedtime last started"
+      },
+      "waking_up_last_event_at": {
+        "name": "Last woke up"
+      },
+      "wind_down_last_event_at": {
+        "name": "Wind down last started"
+      },
+      "alarm_id": {
+        "name": "Alarm ID"
+      },
+      "next_occurrence_datetime": {
+        "name": "Next occurrence"
+      },
+      "last_occurrence_datetime": {
+        "name": "Last occurrence"
+      },
+      "last_event_goes_off_at": {
+        "name": "Last went off"
+      },
+      "last_event_snoozed_at": {
+        "name": "Last snoozed"
+      },
+      "last_event_stopped_at": {
+        "name": "Last stopped"
+      }
+    },
+    "binary_sensor": {
+      "enabled": {
+        "name": "Enabled"
+      },
+      "repeats": {
+        "name": "Repeats"
+      },
+      "allows_snooze": {
+        "name": "Allows snooze"
+      },
+      "alarm_event_missed": {
+        "name": "Alarm event missed"
+      },
+      "repeats_monday": {
+        "name": "Repeats on Monday"
+      },
+      "repeats_tuesday": {
+        "name": "Repeats on Tuesday"
+      },
+      "repeats_wednesday": {
+        "name": "Repeats on Wednesday"
+      },
+      "repeats_thursday": {
+        "name": "Repeats on Thursday"
+      },
+      "repeats_friday": {
+        "name": "Repeats on Friday"
+      },
+      "repeats_saturday": {
+        "name": "Repeats on Saturday"
+      },
+      "repeats_sunday": {
+        "name": "Repeats on Sunday"
+      }
+    },
+    "number": {
+      "snooze_time": {
+        "name": "Snooze time"
+      }
+    }
   }
 }
