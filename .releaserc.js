@@ -12,8 +12,9 @@ module.exports = {
       {
         releaseRules: {
           major: [':boom:'],
-          minor: [':sparkles:', ':tada:', ':construction_worker:'],
+          minor: [':sparkles:', ':tada:'],
           patch: [
+            ':construction_worker:',
             ':bug:',
             ':ambulance:',
             ':lock:',
