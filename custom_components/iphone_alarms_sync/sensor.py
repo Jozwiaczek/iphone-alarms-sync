@@ -142,3 +142,24 @@ class AlarmSensor(AlarmEntity, SensorEntity):
     def native_value(self) -> SensorValue:
         alarm = self.alarm
         return self.entity_description.value_fn(alarm) if alarm else None
+
+    @property
+    def extra_state_attributes(self) -> dict[str, object] | None:
+        if self.entity_description.key != "alarm_id":
+            return None
+
+        alarm = self.alarm
+        if alarm is None:
+            return None
+
+        return {
+            "label": alarm.label,
+            "time": f"{alarm.hour:02d}:{alarm.minute:02d}",
+            "hour": alarm.hour,
+            "minute": alarm.minute,
+            "enabled": alarm.enabled,
+            "repeats": alarm.repeats,
+            "repeat_days": list(alarm.repeat_days),
+            "allows_snooze": alarm.allows_snooze,
+            "snooze_time": alarm.snooze_time if alarm.allows_snooze else None,
+        }
