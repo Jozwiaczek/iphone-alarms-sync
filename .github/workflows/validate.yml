@@ -7,6 +7,15 @@ on:
   pull_request:
     branches:
       - main
+  # The Release workflow runs these checks before it publishes anything.
+  workflow_call:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-validate-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
   validate:
