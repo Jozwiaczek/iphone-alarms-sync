@@ -110,13 +110,6 @@ module.exports = {
       },
     ],
     [
-      '@semantic-release/exec',
-      {
-        prepareCmd:
-          'cd custom_components && zip -r ../iphone-alarms-sync.zip iphone_alarms_sync',
-      },
-    ],
-    [
       '@semantic-release/git',
       {
         assets: [
@@ -126,14 +119,7 @@ module.exports = {
         message: ':bookmark: v${nextRelease.version} [skip ci]',
       },
     ],
-    [
-      '@semantic-release/github',
-      {
-        assets: [
-          { path: 'iphone-alarms-sync.zip', label: 'iphone-alarms-sync.zip' },
-        ],
-      },
-    ],
+    '@semantic-release/github',
   ],
 };
 

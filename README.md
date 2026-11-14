@@ -12,8 +12,6 @@
   <img src="https://img.shields.io/badge/License-GPL--3.0-blue.svg" alt="License">
   <img src="https://img.shields.io/badge/Marketplace-integration-FF9500" alt="Marketplace">
   <img src="https://img.shields.io/badge/Home%20Assistant-2026.8%2B-blue?logo=homeassistant" alt="Home Assistant">
-  <img src="https://img.shields.io/github/downloads/Jozwiaczek/iphone-alarms-sync/total" alt="Downloads">
-  <a href="https://github.com/frinyvonnick/gitmoji-changelog"><img src="https://img.shields.io/badge/Changelog-gitmoji-brightgreen.svg" alt="gitmoji-changelog"></a>
 </p>
 
 <p align="center">
