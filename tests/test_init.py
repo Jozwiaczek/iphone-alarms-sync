@@ -9,6 +9,7 @@ from freezegun.api import FrozenDateTimeFactory
 from homeassistant.core import HomeAssistant
 from homeassistant.exceptions import ServiceValidationError
 from homeassistant.helpers import device_registry as dr
+from homeassistant.helpers import issue_registry as ir
 from homeassistant.util import dt as dt_util
 from pytest_homeassistant_custom_component.common import (
     async_capture_events,
@@ -19,6 +20,8 @@ from custom_components.iphone_alarms_sync.const import (
     DOMAIN,
     EVENT_ALARM_EVENT,
     MISSED_EVENT_GRACE,
+    STALE_AFTER,
+    STALE_CHECK_INTERVAL,
 )
 
 from .conftest import ALARM_ID, PHONE_ID, alarm_payload, make_entry
@@ -254,3 +257,39 @@ async def test_rejected_call_still_clears_missed_sensor(
         )
     await hass.async_block_till_done()
     assert hass.states.get(sensor).state == "off"
+
+
+async def test_empty_sync_removes_nothing(hass: HomeAssistant, entry) -> None:
+    await _sync(hass, [])
+    assert ALARM_ID in entry.runtime_data.coordinator.phone.alarms
+    assert hass.states.get("sensor.john_iphone_last_sync").state != "unknown"
+
+
+async def test_snooze_time_is_kept_and_needs_snooze(hass: HomeAssistant, entry) -> None:
+    number = "number.john_iphone_wake_snooze_time"
+    set_value = {"entity_id": number, "value": 5}
+    await hass.services.async_call("number", "set_value", set_value, blocking=True)
+    assert hass.states.get(number).state == "5"
+    assert entry.options["alarms"][ALARM_ID]["snooze_time"] == 5
+
+    await _sync(hass, [alarm_payload(allows_snooze=False)])
+    assert hass.states.get(number).state == "unknown"
+    with pytest.raises(ServiceValidationError, match="does not allow snooze"):
+        await hass.services.async_call("number", "set_value", set_value, blocking=True)
+
+
+async def test_silent_phone_raises_repair_until_it_sends_data(
+    hass: HomeAssistant, entry, freezer: FrozenDateTimeFactory
+) -> None:
+    issue_id = f"no_data_{entry.entry_id}"
+    issues = ir.async_get(hass)
+    await _sync(hass, [alarm_payload()])
+    assert issues.async_get_issue(DOMAIN, issue_id) is None
+
+    freezer.tick(STALE_AFTER + STALE_CHECK_INTERVAL)
+    async_fire_time_changed(hass)
+    await hass.async_block_till_done()
+    assert issues.async_get_issue(DOMAIN, issue_id)
+
+    await _sync(hass, [alarm_payload()])
+    assert issues.async_get_issue(DOMAIN, issue_id) is None
