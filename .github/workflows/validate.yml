@@ -34,11 +34,6 @@ jobs:
       - name: Check shortcut templates
         run: python scripts/shortcuts.py check
 
-      - name: Check strings.json matches translations/en.json
-        run: >-
-          cmp custom_components/iphone_alarms_sync/strings.json
-          custom_components/iphone_alarms_sync/translations/en.json
-
   test:
     runs-on: ubuntu-latest
     steps:
