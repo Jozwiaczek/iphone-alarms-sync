@@ -353,8 +353,11 @@ class OptionsFlowHandler(OptionsFlow):
         if user_input is not None:
             return await self.async_step_init()
         phone = self._coordinator.phone
+        # The time tells apart alarms that share a label.
         alarms_list = "\n".join(
-            f"- {alarm.label}: `{alarm_id}`" for alarm_id, alarm in phone.alarms.items()
+            f"- {alarm.hour:02d}:{alarm.minute:02d} {alarm.label}".rstrip()
+            + f": `{alarm_id}`"
+            for alarm_id, alarm in phone.alarms.items()
         )
         return self.async_show_form(
             step_id="event_shortcuts",
