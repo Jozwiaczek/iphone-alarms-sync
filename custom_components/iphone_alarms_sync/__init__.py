@@ -2,8 +2,9 @@ from __future__ import annotations
 
 import logging
 from datetime import datetime, timedelta
-from typing import cast
+from typing import Any, cast
 
+import voluptuous as vol
 from homeassistant.config_entries import ConfigEntryState
 from homeassistant.core import CALLBACK_TYPE, HomeAssistant, ServiceCall, callback
 from homeassistant.exceptions import HomeAssistantError, ServiceValidationError
@@ -66,6 +67,28 @@ DEVICE_EVENTS: dict[str, tuple[str, str, str]] = {
         EVENT_WIND_DOWN_STARTS,
     ),
 }
+
+
+def _label(value: Any) -> str:
+    return str(value or "").strip()
+
+
+# One alarm as the Sync shortcut sends it. A wrong type stored here would break
+# every sensor of the phone, so it is rejected before anything is saved.
+ALARM_SCHEMA = vol.Schema(
+    {
+        vol.Required(CONF_ALARM_ID): vol.All(cv.string, vol.Length(min=1)),
+        vol.Optional("label"): _label,
+        vol.Optional("enabled"): cv.boolean,
+        vol.Optional("hour"): vol.All(vol.Coerce(int), vol.Range(0, 23)),
+        vol.Optional("minute"): vol.All(vol.Coerce(int), vol.Range(0, 59)),
+        vol.Optional("repeats"): cv.boolean,
+        vol.Optional("repeat_days"): vol.All(cv.ensure_list, [cv.string]),
+        vol.Optional("allows_snooze"): cv.boolean,
+        vol.Optional("snooze_time"): vol.All(vol.Coerce(int), vol.Range(1, 30)),
+    },
+    extra=vol.REMOVE_EXTRA,
+)
 
 # Where users find the IDs their shortcuts need.
 _OPTIONS = "Settings → Devices & services → iPhone Alarms Sync → Configure"
@@ -158,7 +181,11 @@ def _resolve_call(
     coordinator = entry.runtime_data.coordinator
     # The phone reached Home Assistant, so the shortcut chain works again.
     ir.async_delete_issue(hass, DOMAIN, _no_data_issue_id(entry))
-    coordinator.phone.missed_alarm_at = None
+    if coordinator.phone.missed_alarm_at:
+        # Update now: the call may still be rejected and store nothing.
+        coordinator.phone.missed_alarm_at = None
+        coordinator.save()
+        coordinator.async_set_updated_data(coordinator.phone)
     return entry, coordinator
 
 
@@ -246,14 +273,14 @@ def _async_check_stale(hass: HomeAssistant, entry: IPhoneAlarmsSyncConfigEntry) 
 async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
     async def handle_sync_alarms(call: ServiceCall) -> None:
         _log_call(call)
-        alarms = call.data.get(CONF_ALARMS)
-        if not isinstance(alarms, list) or not all(
-            isinstance(a, dict) and a.get(CONF_ALARM_ID) for a in alarms
-        ):
+        try:
+            alarms = vol.Schema([ALARM_SCHEMA])(call.data.get(CONF_ALARMS))
+        except vol.Invalid as err:
             raise ServiceValidationError(
                 "The shortcut sent no valid alarm list (each alarm needs an "
-                f"'alarm_id'). Re-import it from {_OPTIONS} → Sync Shortcut Setup."
-            )
+                f"'alarm_id'; {err}). Re-import it from {_OPTIONS} → Sync "
+                "Shortcut Setup."
+            ) from err
         entry, coordinator = _resolve_call(hass, call)
         alarms = [
             {**a, CONF_ALARM_ID: extract_alarm_uuid(a[CONF_ALARM_ID])} for a in alarms

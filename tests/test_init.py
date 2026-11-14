@@ -221,3 +221,38 @@ async def test_loads_and_keeps_v1_4_options(
     assert "icon" not in alarm
     assert "last_alarm_id" not in config_entry.options
     assert hass.states.get("number.john_iphone_wake_snooze_time").state == "5"
+
+
+async def test_malformed_alarm_is_rejected_and_nothing_stored(
+    hass: HomeAssistant, entry
+) -> None:
+    with pytest.raises(ServiceValidationError, match="no valid alarm list"):
+        await _sync(hass, [alarm_payload(hour="soon")])
+    assert entry.options["alarms"][ALARM_ID]["hour"] == 7
+    assert hass.states.get("sensor.john_iphone_next_alarm").state != "unavailable"
+
+
+async def test_sync_coerces_and_trims_values(hass: HomeAssistant, entry) -> None:
+    await _sync(hass, [alarm_payload(label=" Wake ", hour="6", repeat_days=None)])
+    alarm = entry.runtime_data.coordinator.phone.alarms[ALARM_ID]
+    assert (alarm.label, alarm.hour, alarm.repeat_days) == ("Wake", 6, [])
+
+
+async def test_rejected_call_still_clears_missed_sensor(
+    hass: HomeAssistant, entry
+) -> None:
+    coordinator = entry.runtime_data.coordinator
+    coordinator.phone.missed_alarm_at = "2026-11-13T06:00:00+00:00"
+    coordinator.async_set_updated_data(coordinator.phone)
+    sensor = "binary_sensor.john_iphone_alarm_event_missed"
+    assert hass.states.get(sensor).state == "on"
+
+    with pytest.raises(ServiceValidationError, match="Unknown Alarm ID"):
+        await hass.services.async_call(
+            DOMAIN,
+            "report_alarm_event",
+            {"phone_id": PHONE_ID, "alarm_id": OTHER_ID, "event": "stopped"},
+            blocking=True,
+        )
+    await hass.async_block_till_done()
+    assert hass.states.get(sensor).state == "off"
