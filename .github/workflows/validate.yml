@@ -20,37 +20,9 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v7
         with:
-          python-version: "3.13"
-
-      - name: Install dependencies
-        run: |
-          python -m pip install --upgrade pip
-          pip install ruff
-
-      - name: Run ruff
-        run: |
-          ruff check custom_components/iphone_alarms_sync/ scripts/
-
-      - name: Check shortcut templates
-        run: python scripts/shortcuts.py check
-
-  test:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v7
-
-      - name: Set up Python
-        uses: actions/setup-python@v7
-        with:
           python-version: "3.14"
 
-      - name: Install dependencies
+      - name: Run checks
         run: |
-          python -m pip install --upgrade pip
-          pip install pytest-homeassistant-custom-component==0.13.375 segno mypy
-
-      - name: Run mypy
-        run: mypy custom_components/iphone_alarms_sync
-
-      - name: Run tests
-        run: pytest
+          python -m pip install uv
+          uv run --locked scripts/check.sh
