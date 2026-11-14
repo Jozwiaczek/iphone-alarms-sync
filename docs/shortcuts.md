@@ -128,14 +128,7 @@ The shared templates contain no personal data: the Phone ID, Alarm ID, Server an
 
 The templates are built from the files in [`shortcuts/`](../shortcuts), so you can read exactly what each one does. Never share a shortcut from your own library: it contains your Phone ID and server name.
 
-## Maintaining the templates
-
-For maintainers, on a Mac:
-
-1. Edit the template in `shortcuts/*.plist` and run `python3 scripts/shortcuts.py check` (CI runs it too). To catch your own values, list them one per line in `~/.config/iphone-alarms-sync/private.txt`.
-2. `python3 scripts/shortcuts.py build` signs the templates into `dist/`.
-3. Open each file, add it with the import questions left empty, then **Share → Copy iCloud Link**.
-4. `python3 scripts/shortcuts.py verify <link>…` checks what each link really serves. Only then update the links in `const.py`, the README and this guide.
+Maintainers: see [Shortcut templates](../CONTRIBUTING.md#shortcut-templates) for how the templates are built and published.
 
 ## Troubleshooting
 
@@ -158,7 +151,7 @@ Home Assistant app 2026.9 replaced the old *Call service* shortcut action with *
 1. Update the Home Assistant app to 2026.9.3 or newer.
 2. Open each shortcut, tap **Choose** in the **Perform action** step and pick the action from the table above. This keeps your automations working.
 3. If the app has more than one server, pick the **Server** first, then the action. A shortcut saved with a server from another device (for example synced through iCloud from an iPad or Mac) fails with *No server provided* until you pick both again on this device.
-4. Run each shortcut manually once and check that the **Last Sync** sensor (or the event sensor) updates.
+4. Run each shortcut manually once and check that the **Last sync** sensor (or the event sensor) updates.
 
 You can instead import the new templates from the links above. They are named *iPhone Alarms Sync: …* and already have the action set. Point your automations to the new shortcuts, then delete the old ones.
 
@@ -166,9 +159,9 @@ You can instead import the new templates from the links above. They are named *i
 
 The Home Assistant app (2026.10.1+) waits 10 s for Home Assistant. The phone must reach it then, also when locked. Using a VPN? Make sure it reconnects after your home IP changes.
 
-### Alarm Event Missed
+### Alarm event missed
 
-The **Alarm Event Missed** sensor turns on when an alarm rings and no *Goes Off* event arrives within 5 minutes. It turns off when the phone sends data. It works after the first *Goes Off* event.
+The **Alarm event missed** sensor turns on when an alarm rings and no *Goes Off* event arrives within 5 minutes. It turns off when the phone sends data. It works after the first *Goes Off* event.
 
 It may also turn on if you changed the alarm outside the Clock app, travelled across time zones, or the phone was off or away from your **Home Wi-Fi**.
 
@@ -207,7 +200,7 @@ Every call from a shortcut then logs `<action> called for phone_id=...`. No log 
 
 - Verify Phone ID matches in shortcut and Home Assistant. Renaming the phone in **Edit Device** can change it: enter the new Phone ID in all three shortcuts
 - Test manually: Shortcuts app → Run "iPhone Alarms Sync: Sync"
-- Check the **Last Sync** sensor: it updates on every successful sync
+- Check the **Last sync** sensor: it updates on every successful sync
 
 ### Events not appearing
 

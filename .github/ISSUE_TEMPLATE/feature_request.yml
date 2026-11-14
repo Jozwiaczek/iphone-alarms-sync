@@ -1,0 +1,19 @@
+name: Feature request
+description: Suggest an improvement
+labels: [enhancement]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: What do you want to do?
+      description: Describe the automation or situation, not only the solution.
+    validations:
+      required: true
+  - type: textarea
+    id: idea
+    attributes:
+      label: How could the integration help?
+  - type: markdown
+    attributes:
+      value: |
+        iOS limits what a shortcut can read: Home Assistant only learns about alarms when a shortcut runs (see [Limitations](https://github.com/Jozwiaczek/iphone-alarms-sync#limitations)).
