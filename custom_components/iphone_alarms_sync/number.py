@@ -15,7 +15,7 @@ from .entity import AlarmEntity, async_add_alarm_entities
 
 SNOOZE_TIME = NumberEntityDescription(
     key="snooze_time",
-    name="Snooze Time",
+    translation_key="snooze_time",
     native_min_value=1,
     native_max_value=30,
     native_step=1,

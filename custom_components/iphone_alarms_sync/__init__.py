@@ -116,6 +116,7 @@ def _async_update_devices(
         config_entry_id=entry.entry_id,
         identifiers={(DOMAIN, phone.phone_id)},
         name=phone.phone_name,
+        manufacturer="Apple",
         via_device_id=_mobile_app_device_id(registry, phone),
     )
     for alarm_id, alarm in phone.alarms.items():
@@ -123,6 +124,8 @@ def _async_update_devices(
             config_entry_id=entry.entry_id,
             identifiers={(DOMAIN, phone.phone_id, alarm_id)},  # type: ignore[arg-type]
             name=f"{phone.phone_name} {alarm.label or alarm_id}",
+            manufacturer="Apple",
+            model="Alarm",
             via_device_id=phone_device.id,
         )
     # Alarms gone from the phone take their device and entities with them.

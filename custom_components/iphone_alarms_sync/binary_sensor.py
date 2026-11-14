@@ -25,7 +25,7 @@ class AlarmBinarySensorDescription(BinarySensorEntityDescription):
 def _repeats_on(day: str) -> AlarmBinarySensorDescription:
     return AlarmBinarySensorDescription(
         key=f"repeats_{day.lower()}",
-        name=f"Repeats {day}",
+        translation_key=f"repeats_{day.lower()}",
         entity_registry_enabled_default=False,
         is_on_fn=lambda alarm: day in alarm.repeat_days,
     )
@@ -33,17 +33,17 @@ def _repeats_on(day: str) -> AlarmBinarySensorDescription:
 
 ALARM_BINARY_SENSORS: tuple[AlarmBinarySensorDescription, ...] = (
     AlarmBinarySensorDescription(
-        key="enabled", name="Enabled", is_on_fn=lambda alarm: alarm.enabled
+        key="enabled", translation_key="enabled", is_on_fn=lambda alarm: alarm.enabled
     ),
     AlarmBinarySensorDescription(
         key="repeats",
-        name="Repeats",
+        translation_key="repeats",
         entity_registry_enabled_default=False,
         is_on_fn=lambda alarm: alarm.repeats,
     ),
     AlarmBinarySensorDescription(
         key="allows_snooze",
-        name="Allows Snooze",
+        translation_key="allows_snooze",
         is_on_fn=lambda alarm: alarm.allows_snooze,
     ),
     *(_repeats_on(day) for day in WEEKDAY_MAP),
@@ -51,7 +51,7 @@ ALARM_BINARY_SENSORS: tuple[AlarmBinarySensorDescription, ...] = (
 
 MISSED_EVENT = BinarySensorEntityDescription(
     key="alarm_event_missed",
-    name="Alarm Event Missed",
+    translation_key="alarm_event_missed",
     device_class=BinarySensorDeviceClass.PROBLEM,
     entity_category=EntityCategory.DIAGNOSTIC,
 )

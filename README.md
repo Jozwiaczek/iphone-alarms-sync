@@ -111,25 +111,25 @@ Alarms sync automatically when you close the Clock app.
 
 | Entity | Description |
 |---|---|
-| Next Alarm, Next Alarm Label | Time and label of the next enabled alarm |
-| Last Alarm | When the last alarm was scheduled to ring |
-| Last Sync | Last successful run of the Sync shortcut |
-| Enabled / Disabled / Total Alarms | Alarm counts |
-| Wake-Up Last Goes Off/Snoozed/Stopped At | Last Wake-Up alarm events (Device Event shortcut) |
-| Any Last Goes Off/Snoozed/Stopped At | Last events of any alarm (Device Event shortcut) |
-| Bedtime / Wind Down / Waking Up Last At | Last sleep events (Device Event shortcut) |
-| Alarm Event Missed | On when an alarm rang but no *Goes Off* event arrived ([details](docs/shortcuts.md#alarm-event-missed)) |
+| Next alarm, Next alarm label | Time and label of the next enabled alarm |
+| Last alarm | When the last alarm was scheduled to ring |
+| Last sync | Last successful run of the Sync shortcut (diagnostic) |
+| Enabled / Disabled / Total alarms | Alarm counts |
+| Wake-up alarm last went off / snoozed / stopped | Last Wake-Up alarm events (Device Event shortcut) |
+| Any alarm last went off / snoozed / stopped | Last events of any alarm (Device Event shortcut) |
+| Bedtime last started, Wind down last started, Last woke up | Last sleep events (Device Event shortcut) |
+| Alarm event missed | On when an alarm rang but no *Goes Off* event arrived ([details](docs/shortcuts.md#alarm-event-missed)) |
 
 **Alarm device** (one per alarm)
 
 | Entity | Description |
 |---|---|
-| ID | Alarm ID for the Alarm Event shortcut |
-| Next Occurrence, Last Occurrence | Next and last scheduled ring |
-| Last Goes Off/Snoozed/Stopped At | Last events of this alarm (Alarm Event shortcut) |
-| Enabled, Allows Snooze | Alarm state on the phone |
-| Repeats, Repeats Monday … Sunday | Repeat schedule (disabled by default) |
-| Snooze Time | Snooze length for your automations, 1-30 min. iOS does not share it, so set it yourself (default 9) |
+| Alarm ID | Alarm ID for the Alarm Event shortcut (diagnostic); its attributes hold the alarm's time, label and settings |
+| Next occurrence, Last occurrence | Next and last scheduled ring |
+| Last went off / snoozed / stopped | Last events of this alarm (Alarm Event shortcut) |
+| Enabled, Allows snooze | Alarm state on the phone |
+| Repeats, Repeats on Monday … Sunday | Repeat schedule (disabled by default) |
+| Snooze time | Snooze length for your automations, 1-30 min. iOS does not share it, so set it yourself (default 9) |
 
 Event timestamps stay *unknown* until the matching shortcut reports the first event.
 

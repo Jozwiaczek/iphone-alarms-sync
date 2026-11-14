@@ -1,39 +1,39 @@
 sync_alarms:
   name: Sync alarms
-  description: Synchronize all alarms from iPhone
+  description: Store all alarms of a phone. Called by the Sync shortcut.
   fields:
     phone_id:
       name: Phone ID
-      description: The phone identifier
+      description: Phone ID shown in the integration options.
       required: true
       selector:
         text:
     alarms:
       name: Alarms
-      description: List of alarm objects
+      description: Every alarm on the phone, each with alarm_id, label, enabled, hour, minute, repeats, repeat_days and allows_snooze. Alarms missing from the list are removed.
       required: true
       selector:
         object:
 
 report_alarm_event:
   name: Report alarm event
-  description: Report an alarm event for a specific alarm (goes_off, snoozed, stopped)
+  description: Report that one alarm went off, was snoozed or stopped. Called by the Alarm Event shortcut.
   fields:
     phone_id:
       name: Phone ID
-      description: The phone identifier
+      description: Phone ID shown in the integration options.
       required: true
       selector:
         text:
     alarm_id:
-      name: ID
-      description: The alarm identifier (UUID). The UUID will be automatically extracted from formats like "x-apple-clock:alarm?id=UUID" or "x-apple-clock://alarm/UUID".
+      name: Alarm ID
+      description: Alarm ID from the integration options. A UUID inside "x-apple-clock:alarm?id=UUID" is extracted.
       required: true
       selector:
         text:
     event:
       name: Event
-      description: Event type (goes_off, snoozed, stopped)
+      description: What happened to the alarm.
       required: true
       selector:
         select:
@@ -44,17 +44,17 @@ report_alarm_event:
 
 report_device_event:
   name: Report device event
-  description: Report an event for device-level alarms (Wake-Up, any alarm, or sleep events)
+  description: Report an event of any alarm, the Wake-Up alarm or sleep. Called by the Device Event shortcut.
   fields:
     phone_id:
       name: Phone ID
-      description: The phone identifier
+      description: Phone ID shown in the integration options.
       required: true
       selector:
         text:
     event:
       name: Event
-      description: Event type (wakeup_goes_off, wakeup_snoozed, wakeup_stopped, any_goes_off, any_snoozed, any_stopped, bedtime_starts, waking_up, wind_down_starts)
+      description: What happened on the phone.
       required: true
       selector:
         select:
@@ -68,5 +68,3 @@ report_device_event:
             - bedtime_starts
             - waking_up
             - wind_down_starts
-
-
