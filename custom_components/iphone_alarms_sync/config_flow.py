@@ -13,6 +13,7 @@ from homeassistant.config_entries import (
 from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers import device_registry as dr
 from homeassistant.helpers import entity_registry as er
+from homeassistant.util import dt as dt_util
 
 from .const import (
     CONF_MOBILE_APP_DEVICE_ID,
@@ -21,11 +22,21 @@ from .const import (
     CONF_SYNC_DISABLED_ALARMS,
     DOCS_TROUBLESHOOTING_URL,
     DOMAIN,
+    EVENT_BEDTIME_STARTS,
+    EVENT_GOES_OFF,
+    EVENT_SNOOZED,
+    EVENT_STOPPED,
+    EVENT_WAKING_UP,
+    EVENT_WIND_DOWN_STARTS,
     SHORTCUT_ALARM_EVENT_URL,
     SHORTCUT_DEVICE_EVENT_URL,
     SHORTCUT_SYNC_URL,
 )
-from .coordinator import IPhoneAlarmsSyncConfigEntry, IPhoneAlarmsSyncCoordinator
+from .coordinator import (
+    AlarmEvent,
+    IPhoneAlarmsSyncConfigEntry,
+    IPhoneAlarmsSyncCoordinator,
+)
 from .qr_code import generate_qr_code_data_url
 
 # HA 2026.9+ types data_schema as probatio (API-compatible with voluptuous), which
@@ -34,6 +45,24 @@ from .qr_code import generate_qr_code_data_url
 MOBILE_APP_DOMAIN = "mobile_app"
 # Shown in the device select for "no linked Mobile App device".
 NO_DEVICE = "none"
+
+# Events History wording.
+EVENT_NAMES = {
+    EVENT_GOES_OFF: "Goes off",
+    EVENT_SNOOZED: "Snoozed",
+    EVENT_STOPPED: "Stopped",
+    EVENT_BEDTIME_STARTS: "Bedtime starts",
+    EVENT_WAKING_UP: "Waking up",
+    EVENT_WIND_DOWN_STARTS: "Wind down starts",
+}
+# Device events report a scope instead of an alarm; sleep events need no prefix.
+SCOPE_NAMES = {
+    "any": "Any alarm",
+    "wakeup": "Wake-Up alarm",
+    "bedtime": "",
+    "waking_up": "",
+    "wind_down": "",
+}
 
 
 def slugify(text: str) -> str:
@@ -278,10 +307,7 @@ class OptionsFlowHandler(OptionsFlow):
         if user_input is not None:
             return await self.async_step_init()
         events = self._coordinator.get_events()
-        event_list = "\n".join(
-            f"- {event.occurred_at}: {event.event} (alarm: {event.alarm_id})"
-            for event in reversed(events)
-        )
+        event_list = "\n".join(self._event_line(e) for e in reversed(events))
         return self.async_show_form(
             step_id="events",
             description_placeholders={
@@ -290,6 +316,23 @@ class OptionsFlowHandler(OptionsFlow):
                 "when alarms go off, are snoozed, or stopped."
             },
         )
+
+    def _event_line(self, event: AlarmEvent) -> str:
+        occurred_at = dt_util.parse_datetime(event.occurred_at)
+        when = (
+            f"{dt_util.as_local(occurred_at):%Y-%m-%d %H:%M:%S}"
+            if occurred_at
+            else event.occurred_at
+        )
+        alarm = self._coordinator.get_alarm(event.alarm_id)
+        # An alarm without a label, or deleted since, shows its ID.
+        scope = (
+            alarm.label or event.alarm_id
+            if alarm
+            else SCOPE_NAMES.get(event.alarm_id, event.alarm_id)
+        )
+        name = EVENT_NAMES.get(event.event, event.event)
+        return f"- {when} · {scope}: {name}" if scope else f"- {when} · {name}"
 
     async def async_step_sync_shortcut(
         self, user_input: dict[str, Any] | None = None

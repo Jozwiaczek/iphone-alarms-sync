@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from freezegun.api import FrozenDateTimeFactory
 from homeassistant import config_entries
 from homeassistant.core import HomeAssistant
 from homeassistant.data_entry_flow import FlowResultType
@@ -149,3 +150,27 @@ async def test_edit_device_rejects_taken_phone_id(
     )
     assert result["errors"] == {"base": "phone_id_exists"}
     assert entry.unique_id == PHONE_ID
+
+
+async def test_events_history_shows_local_time_and_names(
+    hass: HomeAssistant, entry: MockConfigEntry, freezer: FrozenDateTimeFactory
+) -> None:
+    freezer.move_to("2026-11-14 08:33:02+00:00")
+    for service, data in (
+        ("report_device_event", {"event": "any_stopped"}),
+        ("report_device_event", {"event": "bedtime_starts"}),
+        ("report_alarm_event", {"alarm_id": ALARM_ID, "event": "goes_off"}),
+    ):
+        await hass.services.async_call(
+            DOMAIN, service, {"phone_id": PHONE_ID, **data}, blocking=True
+        )
+    result = await hass.config_entries.options.async_init(entry.entry_id)
+    result = await hass.config_entries.options.async_configure(
+        result["flow_id"], {"next_step_id": "events"}
+    )
+    # Europe/Warsaw is UTC+1 in November; newest first.
+    assert result["description_placeholders"]["event_list"] == (
+        "- 2026-11-14 09:33:02 · Wake: Goes off\n"
+        "- 2026-11-14 09:33:02 · Bedtime starts\n"
+        "- 2026-11-14 09:33:02 · Any alarm: Stopped"
+    )
