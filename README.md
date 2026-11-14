@@ -58,9 +58,10 @@ Every change is first published as a beta (`vX.Y.Z-beta.N`) and tested before it
 ### Step 2: Configure
 
 1. Settings → Devices & Services → Add Integration → "iPhone Alarms Sync"
-2. Scan QR code or open link on your iPhone/iPad
-3. Import the **"iPhone Alarms Sync: Sync"** shortcut (required)
-4. Enter your **Phone ID** when prompted, then pick your Home Assistant server and the `iphone_alarms_sync.sync_alarms` action
+2. Pick your Home Assistant app device or enter a name; the next screen shows your **Phone ID**
+3. Scan QR code or open link on your iPhone/iPad
+4. Import the **"iPhone Alarms Sync: Sync"** shortcut (required)
+5. Enter your **Phone ID** when prompted, then pick your Home Assistant server and the `iphone_alarms_sync.sync_alarms` action
    - **Home Wi-Fi** (optional): fill in only if Home Assistant works just at home
 
 #### iPhone Alarms Sync: Sync (Required)
@@ -189,12 +190,16 @@ Settings → Devices & services → iPhone Alarms Sync → **Configure**:
 - **Shortcut not working:** Verify Phone ID is correct during import
 - **Stopped working after a Home Assistant app update, or *No server provided*:** the shortcut's *Perform action* step may show **Choose** or point to a server from another device. Pick the **Server** and then the `iphone_alarms_sync.*` action again or re-import the shortcuts. See [Troubleshooting](docs/shortcuts.md#troubleshooting).
 - **Repair issue "stopped sending alarm data":** Home Assistant raises it when a phone sends nothing for 7 days. Run the shortcut manually to see the error.
-- **Alarm Event Missed is on:** the phone couldn't reach Home Assistant when the alarm rang. See [Troubleshooting](docs/shortcuts.md#troubleshooting).
+- **Alarm event missed is on:** the phone couldn't reach Home Assistant when the alarm rang. See [Troubleshooting](docs/shortcuts.md#troubleshooting).
 
 ## 📚 Documentation
 
 - [Shortcuts Setup Guide](docs/shortcuts.md) - Detailed setup and troubleshooting
 - [Issue Tracker](https://github.com/Jozwiaczek/iphone-alarms-sync/issues)
+
+## 🤝 Contributing
+
+Bug reports, ideas and pull requests are welcome. [CONTRIBUTING.md](CONTRIBUTING.md) shows how to set up, check a change and write the commit message.
 
 ## ☕ Support
 
