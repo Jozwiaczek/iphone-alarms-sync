@@ -40,7 +40,7 @@ async def _sync(hass: HomeAssistant, alarms: list[dict]) -> None:
 
 
 async def test_sync_adds_and_removes_alarm_entities(hass: HomeAssistant, entry) -> None:
-    other = "binary_sensor.john_iphone_gym_enabled"
+    other = "binary_sensor.john_iphone_07_00_gym_enabled"
     assert hass.states.get(other) is None
 
     await _sync(hass, [alarm_payload(), alarm_payload(alarm_id=OTHER_ID, label="Gym")])
@@ -87,7 +87,7 @@ async def test_device_event_updates_sensor_and_fires_events(
     phone_device = dr.async_get(hass).async_get_device_by_identifier(
         (DOMAIN, PHONE_ID), entry.entry_id
     )
-    assert triggers[0].data == {"device_id": phone_device.id}
+    assert triggers[0].data == {"device_id": phone_device.id, "subtype": "wakeup"}
 
 
 async def test_alarm_event_fires_trigger_for_alarm_device(
@@ -105,8 +105,10 @@ async def test_alarm_event_fires_trigger_for_alarm_device(
     alarm_device = dr.async_get(hass).async_get_device_by_identifier(
         (DOMAIN, PHONE_ID, ALARM_ID), entry.entry_id
     )
-    assert triggers[0].data == {"device_id": alarm_device.id}
-    assert hass.states.get("sensor.john_iphone_wake_last_snoozed").state != ("unknown")
+    assert triggers[0].data == {"device_id": alarm_device.id, "subtype": "alarm"}
+    assert hass.states.get("sensor.john_iphone_07_00_wake_last_snoozed").state != (
+        "unknown"
+    )
 
 
 async def test_alarm_time_updates_last_alarm(
@@ -137,7 +139,7 @@ async def test_alarm_time_updates_last_alarm(
     )
     assert (
         dt_util.parse_datetime(
-            hass.states.get("sensor.john_iphone_wake_last_occurrence").state
+            hass.states.get("sensor.john_iphone_07_00_wake_last_occurrence").state
         )
         == alarm_at
     )
@@ -221,7 +223,7 @@ async def test_loads_and_keeps_v1_4_options(
     assert alarm["last_event_goes_off_at"] == "2026-11-12T06:00:00+00:00"
     assert "icon" not in alarm
     assert "last_alarm_id" not in config_entry.options
-    assert hass.states.get("number.john_iphone_wake_snooze_time").state == "5"
+    assert hass.states.get("number.john_iphone_07_00_wake_snooze_time").state == "5"
 
 
 async def test_malformed_alarm_is_rejected_and_nothing_stored(
@@ -266,7 +268,7 @@ async def test_empty_sync_removes_nothing(hass: HomeAssistant, entry) -> None:
 
 
 async def test_snooze_time_is_kept_and_needs_snooze(hass: HomeAssistant, entry) -> None:
-    number = "number.john_iphone_wake_snooze_time"
+    number = "number.john_iphone_07_00_wake_snooze_time"
     set_value = {"entity_id": number, "value": 5}
     await hass.services.async_call("number", "set_value", set_value, blocking=True)
     assert hass.states.get(number).state == "5"

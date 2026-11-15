@@ -20,10 +20,18 @@ EVENT_STOPPED = "stopped"
 EVENT_BEDTIME_STARTS = "bedtime_starts"
 EVENT_WAKING_UP = "waking_up"
 EVENT_WIND_DOWN_STARTS = "wind_down_starts"
+# Tuples keep the order shown in Home Assistant, the same as in iOS.
+ALARM_EVENTS = (EVENT_GOES_OFF, EVENT_SNOOZED, EVENT_STOPPED)
+SLEEP_EVENTS = (EVENT_WIND_DOWN_STARTS, EVENT_BEDTIME_STARTS, EVENT_WAKING_UP)
+
+# Which alarm a device trigger listens to; "any" and "wakeup" are also event scopes.
+TRIGGER_SUBTYPE_ALARM = "alarm"
+TRIGGER_SUBTYPE_ANY = "any"
+TRIGGER_SUBTYPE_WAKEUP = "wakeup"
 
 DEFAULT_SNOOZE_TIME = 9
 
-PLATFORMS = ["binary_sensor", "number", "sensor"]
+PLATFORMS = ["binary_sensor", "event", "number", "sensor"]
 
 SHORTCUT_SYNC_URL = "https://www.icloud.com/shortcuts/3a7ef812167b410f8b429de5bb07587e"
 SHORTCUT_ALARM_EVENT_URL = (

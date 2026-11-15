@@ -12,21 +12,27 @@ from homeassistant.helpers.trigger import TriggerInfo
 from homeassistant.helpers.typing import ConfigType
 
 from .const import (
+    ALARM_EVENTS,
     DOMAIN,
-    EVENT_BEDTIME_STARTS,
-    EVENT_GOES_OFF,
-    EVENT_SNOOZED,
-    EVENT_STOPPED,
-    EVENT_WAKING_UP,
-    EVENT_WIND_DOWN_STARTS,
+    SLEEP_EVENTS,
+    TRIGGER_SUBTYPE_ALARM,
+    TRIGGER_SUBTYPE_ANY,
+    TRIGGER_SUBTYPE_WAKEUP,
 )
 
-# Tuples keep the order shown in the automation editor.
-ALARM_TRIGGER_TYPES = (EVENT_GOES_OFF, EVENT_SNOOZED, EVENT_STOPPED)
-SLEEP_TRIGGER_TYPES = (EVENT_BEDTIME_STARTS, EVENT_WAKING_UP, EVENT_WIND_DOWN_STARTS)
+CONF_SUBTYPE = "subtype"
+
+# As in the iOS Alarm automation: "Any" or "Wake-Up" on the phone.
+PHONE_ALARM_SUBTYPES = (TRIGGER_SUBTYPE_ANY, TRIGGER_SUBTYPE_WAKEUP)
 
 TRIGGER_SCHEMA = DEVICE_TRIGGER_BASE_SCHEMA.extend(
-    {vol.Required(CONF_TYPE): vol.In(ALARM_TRIGGER_TYPES + SLEEP_TRIGGER_TYPES)}
+    {
+        vol.Required(CONF_TYPE): vol.In(ALARM_EVENTS + SLEEP_EVENTS),
+        # Optional: phone triggers saved before subtypes fire for Any and Wake-Up.
+        vol.Optional(CONF_SUBTYPE): vol.In(
+            PHONE_ALARM_SUBTYPES + (TRIGGER_SUBTYPE_ALARM,)
+        ),
+    }
 )
 
 
@@ -39,24 +45,23 @@ async def async_get_triggers(
     if device is None:
         return []
 
-    # Alarm devices have (DOMAIN, phone_id, alarm_id) identifiers.
-    is_phone = any(i[0] == DOMAIN and len(i) == 2 for i in device.identifiers)
-    trigger_types = (
-        ALARM_TRIGGER_TYPES + SLEEP_TRIGGER_TYPES if is_phone else ALARM_TRIGGER_TYPES
-    )
-
     entry = hass.config_entries.async_get_entry(device.config_entry_id)
     if entry is None or entry.domain != DOMAIN:
         return []
+
+    # Alarm devices have (DOMAIN, phone_id, alarm_id) identifiers.
+    is_phone = any(i[0] == DOMAIN and len(i) == 2 for i in device.identifiers)
+    base = {"platform": "device", "domain": DOMAIN, "device_id": device_id}
+    if not is_phone:
+        return [
+            {**base, CONF_TYPE: t, CONF_SUBTYPE: TRIGGER_SUBTYPE_ALARM}
+            for t in ALARM_EVENTS
+        ]
     return [
-        {
-            "platform": "device",
-            "domain": DOMAIN,
-            "device_id": device_id,
-            "type": trigger_type,
-        }
-        for trigger_type in trigger_types
-    ]
+        {**base, CONF_TYPE: t, CONF_SUBTYPE: s}
+        for s in PHONE_ALARM_SUBTYPES
+        for t in ALARM_EVENTS
+    ] + [{**base, CONF_TYPE: t} for t in SLEEP_EVENTS]
 
 
 async def async_attach_trigger(
@@ -68,9 +73,10 @@ async def async_attach_trigger(
     event_config = event_trigger.TRIGGER_SCHEMA(
         {
             event_trigger.CONF_PLATFORM: "event",
-            event_trigger.CONF_EVENT_TYPE: f"{DOMAIN}_{config['type']}",
+            event_trigger.CONF_EVENT_TYPE: f"{DOMAIN}_{config[CONF_TYPE]}",
+            # Event data must contain these keys, so a missing subtype matches all.
             event_trigger.CONF_EVENT_DATA: {
-                "device_id": config["device_id"],
+                k: config[k] for k in ("device_id", CONF_SUBTYPE) if k in config
             },
         }
     )
