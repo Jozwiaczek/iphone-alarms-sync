@@ -8,7 +8,6 @@
   <a href="https://github.com/Jozwiaczek/iphone-alarms-sync/releases/latest"><img src="https://img.shields.io/github/v/release/Jozwiaczek/iphone-alarms-sync?label=stable" alt="Stable version"></a>
   <a href="https://github.com/Jozwiaczek/iphone-alarms-sync/releases"><img src="https://img.shields.io/github/v/release/Jozwiaczek/iphone-alarms-sync?include_prereleases&label=beta&color=orange" alt="Beta version"></a>
   <a href="https://github.com/Jozwiaczek/iphone-alarms-sync/actions/workflows/validate.yml"><img src="https://github.com/Jozwiaczek/iphone-alarms-sync/actions/workflows/validate.yml/badge.svg?branch=main" alt="Validate"></a>
-  <a href="https://github.com/Jozwiaczek/iphone-alarms-sync/actions/workflows/hacs.yml"><img src="https://github.com/Jozwiaczek/iphone-alarms-sync/actions/workflows/hacs.yml/badge.svg?branch=main" alt="HACS"></a>
   <img src="https://img.shields.io/badge/License-GPL--3.0-blue.svg" alt="License">
   <img src="https://img.shields.io/badge/Marketplace-integration-FF9500" alt="Marketplace">
   <img src="https://img.shields.io/badge/Home%20Assistant-2026.8%2B-blue?logo=homeassistant" alt="Home Assistant">

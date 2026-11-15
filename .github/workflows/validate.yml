@@ -35,3 +35,13 @@ jobs:
         run: |
           python -m pip install uv
           uv run --locked scripts/check.sh
+
+  hacs:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: HACS validation
+        uses: hacs/action@main
+        with:
+          category: integration

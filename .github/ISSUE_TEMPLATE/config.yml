@@ -3,3 +3,6 @@ contact_links:
   - name: Troubleshooting guide
     url: https://github.com/Jozwiaczek/iphone-alarms-sync/blob/main/docs/shortcuts.md#troubleshooting
     about: Shortcut shows "Choose", "No server provided" or nothing syncs? Start here.
+  - name: Ask a question
+    url: https://github.com/Jozwiaczek/iphone-alarms-sync/discussions/categories/q-a
+    about: Not sure how to set something up? Ask in Discussions.
