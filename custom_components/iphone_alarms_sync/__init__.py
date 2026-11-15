@@ -19,6 +19,7 @@ from homeassistant.helpers.typing import ConfigType
 from homeassistant.util import dt as dt_util
 
 from .const import (
+    ALARM_EVENTS,
     CONF_ALARM_ID,
     CONF_ALARMS,
     CONF_EVENT,
@@ -27,15 +28,15 @@ from .const import (
     DOMAIN,
     EVENT_ALARM_EVENT,
     EVENT_BEDTIME_STARTS,
-    EVENT_GOES_OFF,
-    EVENT_SNOOZED,
-    EVENT_STOPPED,
     EVENT_WAKING_UP,
     EVENT_WIND_DOWN_STARTS,
     MISSED_EVENT_GRACE,
     PLATFORMS,
     STALE_AFTER,
     STALE_CHECK_INTERVAL,
+    TRIGGER_SUBTYPE_ALARM,
+    TRIGGER_SUBTYPE_ANY,
+    TRIGGER_SUBTYPE_WAKEUP,
 )
 from .coordinator import (
     AlarmEvent,
@@ -54,11 +55,13 @@ _LOGGER = logging.getLogger(__name__)
 
 CONFIG_SCHEMA = cv.config_entry_only_config_schema(DOMAIN)
 
-ALARM_EVENTS = (EVENT_GOES_OFF, EVENT_SNOOZED, EVENT_STOPPED)
 # Device event -> (scope reported as alarm_id, PhoneData field, event name).
 DEVICE_EVENTS: dict[str, tuple[str, str, str]] = {
-    **{f"wakeup_{e}": ("wakeup", f"wakeup_last_event_{e}_at", e) for e in ALARM_EVENTS},
-    **{f"any_{e}": ("any", f"any_last_event_{e}_at", e) for e in ALARM_EVENTS},
+    **{
+        f"{scope}_{e}": (scope, f"{scope}_last_event_{e}_at", e)
+        for scope in (TRIGGER_SUBTYPE_WAKEUP, TRIGGER_SUBTYPE_ANY)
+        for e in ALARM_EVENTS
+    },
     EVENT_BEDTIME_STARTS: ("bedtime", "bedtime_last_event_at", EVENT_BEDTIME_STARTS),
     EVENT_WAKING_UP: ("waking_up", "waking_up_last_event_at", EVENT_WAKING_UP),
     EVENT_WIND_DOWN_STARTS: (
@@ -120,10 +123,13 @@ def _async_update_devices(
         via_device_id=_mobile_app_device_id(registry, phone),
     )
     for alarm_id, alarm in phone.alarms.items():
+        # As the Clock app lists it; the time also tells apart alarms that keep
+        # the default label "Alarm".
+        alarm_time = f"{alarm.hour:02d}:{alarm.minute:02d}"
         registry.async_get_or_create(
             config_entry_id=entry.entry_id,
             identifiers={(DOMAIN, phone.phone_id, alarm_id)},  # type: ignore[arg-type]
-            name=f"{phone.phone_name} {alarm.label or alarm_id}",
+            name=f"{phone.phone_name} {alarm_time} {alarm.label}".strip(),
             manufacturer="Apple",
             model="Alarm",
             via_device_id=phone_device.id,
@@ -199,6 +205,7 @@ def _fire_events(
     entry: IPhoneAlarmsSyncConfigEntry,
     event: AlarmEvent,
     device_identifier: tuple[str, ...],
+    subtype: str,
 ) -> None:
     """Fire the generic alarm event and the device trigger event."""
     hass.bus.async_fire(
@@ -216,7 +223,9 @@ def _fire_events(
         entry.entry_id,
     )
     if device:
-        hass.bus.async_fire(f"{DOMAIN}_{event.event}", {"device_id": device.id})
+        hass.bus.async_fire(
+            f"{DOMAIN}_{event.event}", {"device_id": device.id, "subtype": subtype}
+        )
 
 
 @callback
@@ -313,7 +322,11 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
             )
         event_obj = coordinator.report_alarm_event(alarm_id, event)
         _fire_events(
-            hass, entry, event_obj, (DOMAIN, coordinator.phone.phone_id, alarm_id)
+            hass,
+            entry,
+            event_obj,
+            (DOMAIN, coordinator.phone.phone_id, alarm_id),
+            TRIGGER_SUBTYPE_ALARM,
         )
 
     async def handle_report_device_event(call: ServiceCall) -> None:
@@ -321,7 +334,9 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
         scope, attr, event = DEVICE_EVENTS[_require_event(call, tuple(DEVICE_EVENTS))]
         entry, coordinator = _resolve_call(hass, call)
         event_obj = coordinator.report_device_event(scope, attr, event)
-        _fire_events(hass, entry, event_obj, (DOMAIN, coordinator.phone.phone_id))
+        _fire_events(
+            hass, entry, event_obj, (DOMAIN, coordinator.phone.phone_id), scope
+        )
 
     hass.services.async_register(DOMAIN, "sync_alarms", handle_sync_alarms)
     hass.services.async_register(

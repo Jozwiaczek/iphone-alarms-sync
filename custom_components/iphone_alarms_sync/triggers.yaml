@@ -1,0 +1,7 @@
+goes_off: &alarm
+  target:
+    entity:
+      integration: iphone_alarms_sync
+      domain: event
+snoozed: *alarm
+stopped: *alarm

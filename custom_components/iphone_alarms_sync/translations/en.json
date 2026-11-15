@@ -1,12 +1,17 @@
 {
   "device_automation": {
     "trigger_type": {
-      "bedtime_starts": "Sleep: Bedtime starts",
-      "waking_up": "Sleep: Waking up",
-      "wind_down_starts": "Sleep: Wind down starts",
-      "goes_off": "Alarm: Goes off",
-      "snoozed": "Alarm: Snoozed",
-      "stopped": "Alarm: Stopped"
+      "goes_off": "{subtype} goes off",
+      "snoozed": "{subtype} is snoozed",
+      "stopped": "{subtype} is stopped",
+      "wind_down_starts": "Wind Down begins",
+      "bedtime_starts": "Bedtime begins",
+      "waking_up": "Waking up"
+    },
+    "trigger_subtype": {
+      "alarm": "Alarm",
+      "any": "Any alarm",
+      "wakeup": "Wake-Up alarm"
     }
   },
   "config": {
@@ -211,6 +216,70 @@
       "snooze_time": {
         "name": "Snooze time"
       }
+    },
+    "event": {
+      "alarm": {
+        "name": "Alarm",
+        "state_attributes": {
+          "event_type": {
+            "state": {
+              "goes_off": "Goes off",
+              "snoozed": "Is snoozed",
+              "stopped": "Is stopped"
+            }
+          }
+        }
+      },
+      "any_alarm": {
+        "name": "Any alarm",
+        "state_attributes": {
+          "event_type": {
+            "state": {
+              "goes_off": "Goes off",
+              "snoozed": "Is snoozed",
+              "stopped": "Is stopped"
+            }
+          }
+        }
+      },
+      "wakeup_alarm": {
+        "name": "Wake-Up alarm",
+        "state_attributes": {
+          "event_type": {
+            "state": {
+              "goes_off": "Goes off",
+              "snoozed": "Is snoozed",
+              "stopped": "Is stopped"
+            }
+          }
+        }
+      },
+      "sleep": {
+        "name": "Sleep",
+        "state_attributes": {
+          "event_type": {
+            "state": {
+              "wind_down_starts": "Wind Down begins",
+              "bedtime_starts": "Bedtime begins",
+              "waking_up": "Waking up"
+            }
+          }
+        }
+      }
+    }
+  },
+  "triggers": {
+    "goes_off": {
+      "name": "Alarm goes off",
+      "description": "Triggers when one or more of the chosen alarms goes off. Choose alarm devices, Any alarm or Wake-Up alarm."
+    },
+    "snoozed": {
+      "name": "Alarm is snoozed",
+      "description": "Triggers when one or more of the chosen alarms is snoozed. Choose alarm devices, Any alarm or Wake-Up alarm."
+    },
+    "stopped": {
+      "name": "Alarm is stopped",
+      "description": "Triggers when one or more of the chosen alarms is stopped. Choose alarm devices, Any alarm or Wake-Up alarm."
     }
   }
 }

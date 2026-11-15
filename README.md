@@ -35,7 +35,7 @@ Sync iPhone/iPad alarms to Home Assistant using predefined Apple Shortcuts. This
 - **Missed event warning** - a sensor turns on when an alarm rang but its event never reached Home Assistant
 
 ### Smart Home Integration
-- **Device triggers** and an **event** for automations
+- **Alarm triggers** for one or more alarms, device triggers and an event for automations
 - **Sensors** - next alarm, next occurrence per alarm, last sync, repeat schedule
 - **Several iPhones/iPads** - add the integration once per device
 
@@ -119,7 +119,7 @@ Alarms sync automatically when you close the Clock app.
 | Bedtime last started, Wind down last started, Last woke up | Last sleep events (Device Event shortcut) |
 | Alarm event missed | On when an alarm rang but no *Goes Off* event arrived ([details](docs/shortcuts.md#alarm-event-missed)) |
 
-**Alarm device** (one per alarm)
+**Alarm device** (one per alarm, named like in the Clock app, e.g. *John's iPhone 07:00 Wake*; the name follows the alarm's time and label)
 
 | Entity | Description |
 |---|---|
@@ -132,9 +132,35 @@ Alarms sync automatically when you close the Clock app.
 
 Event timestamps stay *unknown* until the matching shortcut reports the first event.
 
-### Events and device triggers
+### Triggers
 
-Each reported event fires `iphone_alarms_sync_alarm_event`:
+The easiest way: add the trigger **Alarm goes off**, **Alarm is snoozed** or **Alarm is stopped** and pick one or more alarms (or an area or label). It fires when any of them rings, so "when *07:00 Wake* or *06:30 Gym* goes off" is one trigger.
+
+```yaml
+triggers:
+  - trigger: iphone_alarms_sync.goes_off
+    target:
+      entity_id:
+        - event.johns_iphone_07_00_wake_alarm
+        - event.johns_iphone_06_30_gym_alarm
+actions:
+  - action: light.turn_on
+    target:
+      entity_id: light.bedroom
+```
+
+The alarms you can pick are event entities, named like the iOS automations:
+
+| Device | Event entity | Events | Needs |
+|---|---|---|---|
+| Alarm | *Alarm* | Goes off, Is snoozed, Is stopped | Alarm Event shortcut for this alarm |
+| Phone | *Any alarm* | Goes off, Is snoozed, Is stopped | Device Event shortcut, events 1-3 |
+| Phone | *Wake-Up alarm* | Goes off, Is snoozed, Is stopped | Device Event shortcut, events 4-6 |
+| Phone | *Sleep* | Wind Down begins, Bedtime begins, Waking up | Device Event shortcut, events 7-9 |
+
+For sleep events use the built-in **Event received** trigger on the *Sleep* entity. The same events also work as device triggers (pick the phone or alarm device). Phone alarm device triggers saved before 2026-11 still fire for both Any and Wake-Up, but show without a subject in the editor. Pick them again to choose one.
+
+Each reported event also fires `iphone_alarms_sync_alarm_event`, for templates and advanced use:
 
 | Field | Value |
 |---|---|
@@ -142,23 +168,6 @@ Each reported event fires `iphone_alarms_sync_alarm_event`:
 | `alarm_id` | Alarm UUID, or `wakeup`, `any`, `bedtime`, `waking_up`, `wind_down` |
 | `event` | `goes_off`, `snoozed`, `stopped`, `bedtime_starts`, `waking_up`, `wind_down_starts` |
 | `event_id`, `occurred_at` | Unique ID and UTC time of the event |
-
-Device triggers: an alarm device offers *Goes off*, *Snoozed* and *Stopped*. The phone device offers them too (fired by both Wake-Up and any-alarm events; use the event above to tell them apart) plus *Bedtime starts*, *Wind down starts* and *Waking up*.
-
-Example: turn on the bedroom light when any alarm goes off.
-
-```yaml
-triggers:
-  - trigger: event
-    event_type: iphone_alarms_sync_alarm_event
-    event_data:
-      phone_id: johns_iphone
-      event: goes_off
-actions:
-  - action: light.turn_on
-    target:
-      entity_id: light.bedroom
-```
 
 ### Actions
 

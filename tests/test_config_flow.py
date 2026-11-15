@@ -105,7 +105,7 @@ async def test_edit_device_new_phone_id_moves_devices_and_entities(
         (DOMAIN, PHONE_ID, ALARM_ID), entry.entry_id
     )
     assert alarm_device
-    entity_id = "sensor.john_iphone_wake_next_occurrence"
+    entity_id = "sensor.john_iphone_07_00_wake_next_occurrence"
     assert entity_registry.async_get(entity_id)
 
     await _edit_device(hass, entry, phone_name="Jane iPhone")
