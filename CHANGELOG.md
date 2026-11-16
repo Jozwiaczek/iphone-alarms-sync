@@ -1,3 +1,64 @@
+# [v1.5.0](https://github.com/Jozwiaczek/iphone-alarms-sync/compare/v1.4.1...v1.5.0) (2026-11-16 22:02)
+
+## ✨ New Features
+-  Expose alarm settings as attributes on the ID sensor (#14) ([#14](https://github.com/Jozwiaczek/iphone-alarms-sync/issues/14)) [[83596415825cced6f526e701fd4eaf244dcc588b](https://github.com/Jozwiaczek/iphone-alarms-sync/commit/83596415825cced6f526e701fd4eaf244dcc588b)]
+
+-  Add alarm event entities and &quot;Alarm goes off&quot; triggers [[a7697242829c31ed1504c439cf604477ff9a75d1](https://github.com/Jozwiaczek/iphone-alarms-sync/commit/a7697242829c31ed1504c439cf604477ff9a75d1)]
+
+-  Add diagnostics download and clearer issue forms (#23) ([#23](https://github.com/Jozwiaczek/iphone-alarms-sync/issues/23)) [[803cad0a04653c24f7c9d77ae24cb0baabec6ea5](https://github.com/Jozwiaczek/iphone-alarms-sync/commit/803cad0a04653c24f7c9d77ae24cb0baabec6ea5)]
+
+## 🐛 Bug Fixes
+-  Reject malformed alarms from the Sync shortcut [[da1f0c4b53626bac3eca5b6ff13ffdd002d0def0](https://github.com/Jozwiaczek/iphone-alarms-sync/commit/da1f0c4b53626bac3eca5b6ff13ffdd002d0def0)]
+
+-  Point shortcut errors to the right step [[1c6b2c50a63fd37630fb0998206b17f03aafa1a6](https://github.com/Jozwiaczek/iphone-alarms-sync/commit/1c6b2c50a63fd37630fb0998206b17f03aafa1a6)]
+
+-  Fix empty Home Wi-Fi stopping shortcuts (#27) ([#27](https://github.com/Jozwiaczek/iphone-alarms-sync/issues/27)) [[d74deb0efa2882e08f102c7343ba8c462fcba036](https://github.com/Jozwiaczek/iphone-alarms-sync/commit/d74deb0efa2882e08f102c7343ba8c462fcba036)]
+
+## 💄 UI/UX Updates
+-  Show readable times and names in Events History [[2ed206484fc0168c6356df2ee0be4246527e3330](https://github.com/Jozwiaczek/iphone-alarms-sync/commit/2ed206484fc0168c6356df2ee0be4246527e3330)]
+
+-  Put alarm IDs first and shorten the setup screens [[d3544fef95f05fd58e315e571775508edc84a132](https://github.com/Jozwiaczek/iphone-alarms-sync/commit/d3544fef95f05fd58e315e571775508edc84a132)]
+
+## 🔧 Configuration
+-  Add beta release channel (#17) ([#17](https://github.com/Jozwiaczek/iphone-alarms-sync/issues/17)) [[85c6254674358e28f2ff09d5b3aaff3e835afb4f](https://github.com/Jozwiaczek/iphone-alarms-sync/commit/85c6254674358e28f2ff09d5b3aaff3e835afb4f)]
+
+-  Fix release time, CI bump level and install step [[42eefc2fd7812b1032586098b82cfbb5fba28247](https://github.com/Jozwiaczek/iphone-alarms-sync/commit/42eefc2fd7812b1032586098b82cfbb5fba28247)]
+
+## 📝 Documentation
+-  Add contributing guide and issue and PR templates [[ff7f9634c7f8924103c3a4cdfb5e937f083dfc65](https://github.com/Jozwiaczek/iphone-alarms-sync/commit/ff7f9634c7f8924103c3a4cdfb5e937f083dfc65)]
+
+-  Make contributing simpler and protect main (#21) ([#21](https://github.com/Jozwiaczek/iphone-alarms-sync/issues/21)) [[3a6a02d4b8eacb8b2334d5a87f34f412a6608a47](https://github.com/Jozwiaczek/iphone-alarms-sync/commit/3a6a02d4b8eacb8b2334d5a87f34f412a6608a47)]
+
+-  Load AGENTS.md in Claude Code ([#26](https://github.com/Jozwiaczek/iphone-alarms-sync/issues/26)) [[875e983c27a50b57d80b452a9ee1f4cc9232f8f9](https://github.com/Jozwiaczek/iphone-alarms-sync/commit/875e983c27a50b57d80b452a9ee1f4cc9232f8f9)]
+
+## 💚 CI/CD
+-  Gate releases on passing checks [[8110dd9e7b79cbad609d3627f4baa9864f13b34b](https://github.com/Jozwiaczek/iphone-alarms-sync/commit/8110dd9e7b79cbad609d3627f4baa9864f13b34b)]
+
+## 🔥 Removals
+-  Remove the duplicate strings file and unused release zip [[03be9c9a9f7157aceaed61fdafa38e954eb90fbe](https://github.com/Jozwiaczek/iphone-alarms-sync/commit/03be9c9a9f7157aceaed61fdafa38e954eb90fbe)]
+
+## ✅ Tests
+-  Cover device triggers, snooze time and the no-data repair [[dc50740e929f34608f885b907d2ca2ea78ccd657](https://github.com/Jozwiaczek/iphone-alarms-sync/commit/dc50740e929f34608f885b907d2ca2ea78ccd657)]
+
+## ⬆️ Dependencies Upgraded
+-  Update QR code library to segno 1.6.6 (#28) ([#28](https://github.com/Jozwiaczek/iphone-alarms-sync/issues/28)) [[d64250c5e316a0d569f57af0de56a8f428c7211c](https://github.com/Jozwiaczek/iphone-alarms-sync/commit/d64250c5e316a0d569f57af0de56a8f428c7211c)]
+
+-  Update dependencies (#32) ([#32](https://github.com/Jozwiaczek/iphone-alarms-sync/issues/32)) [[8234caef5e79b028ced66c6c166dc58a10b62026](https://github.com/Jozwiaczek/iphone-alarms-sync/commit/8234caef5e79b028ced66c6c166dc58a10b62026)]
+
+-  Bump picomatch from 2.3.1 to 2.3.2 (#34) ([#34](https://github.com/Jozwiaczek/iphone-alarms-sync/issues/34)) [[9e239f012b772cbdc9a3f364816c60d2abf45156](https://github.com/Jozwiaczek/iphone-alarms-sync/commit/9e239f012b772cbdc9a3f364816c60d2abf45156)]
+
+-  Bump lodash from 4.17.21 to 4.18.1 (#33) ([#33](https://github.com/Jozwiaczek/iphone-alarms-sync/issues/33)) [[6a76cfb621ac71278f296e4fe87a8a0f716dcebe](https://github.com/Jozwiaczek/iphone-alarms-sync/commit/6a76cfb621ac71278f296e4fe87a8a0f716dcebe)]
+
+## 💬 Text & Literals
+-  Name entities in plain English and add icons [[ceb93636fd5281dace20eb803c08ae86fc2ee155](https://github.com/Jozwiaczek/iphone-alarms-sync/commit/ceb93636fd5281dace20eb803c08ae86fc2ee155)]
+
+-  Show bug form checkboxes as plain text (#24) ([#24](https://github.com/Jozwiaczek/iphone-alarms-sync/issues/24)) [[d48ecf232bb83879540a1221ea77119ab000c554](https://github.com/Jozwiaczek/iphone-alarms-sync/commit/d48ecf232bb83879540a1221ea77119ab000c554)]
+
+## 🔨 Development Scripts
+-  Add one check script for hooks, CI and contributors [[f8b4736e606216bd58a83ec056a5ccba03225501](https://github.com/Jozwiaczek/iphone-alarms-sync/commit/f8b4736e606216bd58a83ec056a5ccba03225501)]
+
+-  Manage and publish iOS shortcuts from the command line (#25) ([#25](https://github.com/Jozwiaczek/iphone-alarms-sync/issues/25)) [[ce791019aaf61baf4bf414d0a11a11a1e04a504c](https://github.com/Jozwiaczek/iphone-alarms-sync/commit/ce791019aaf61baf4bf414d0a11a11a1e04a504c)]
+
 # [v1.4.1](https://github.com/Jozwiaczek/iphone-alarms-sync/compare/v1.4.0...v1.4.1) (2026-11-13 20:11)
 
 ## 🐛 Bug Fixes
