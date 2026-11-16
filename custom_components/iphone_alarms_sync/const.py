@@ -33,12 +33,12 @@ DEFAULT_SNOOZE_TIME = 9
 
 PLATFORMS = ["binary_sensor", "event", "number", "sensor"]
 
-SHORTCUT_SYNC_URL = "https://www.icloud.com/shortcuts/3a7ef812167b410f8b429de5bb07587e"
+SHORTCUT_SYNC_URL = "https://www.icloud.com/shortcuts/f8015b2fa07f4c4cbab8126816137ff5"
 SHORTCUT_ALARM_EVENT_URL = (
-    "https://www.icloud.com/shortcuts/0b78900623dd4269a50fc481971ecea5"
+    "https://www.icloud.com/shortcuts/c200af1ee622472aa45fd037c24ad0e7"
 )
 SHORTCUT_DEVICE_EVENT_URL = (
-    "https://www.icloud.com/shortcuts/af592e425fd04cdbb4835f96f35ed793"
+    "https://www.icloud.com/shortcuts/1024bb19477e425e9f0ae8a8a04dfa7c"
 )
 
 DOCS_TROUBLESHOOTING_URL = "https://github.com/Jozwiaczek/iphone-alarms-sync/blob/main/docs/shortcuts.md#troubleshooting"
