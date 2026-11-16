@@ -8,10 +8,11 @@ dependencies = []
 [dependency-groups]
 dev = [
     "mypy",
+    "pytest-cov",
     # Pins the Home Assistant version the tests run against.
-    "pytest-homeassistant-custom-component==0.13.375",
+    "pytest-homeassistant==2026.11.1",
     "ruff",
-    "segno==1.6.1",
+    "segno==1.6.6",
 ]
 
 [tool.ruff]
@@ -30,4 +31,7 @@ ignore_missing_imports = true
 
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
+asyncio_default_fixture_loop_scope = "function"
+# Let Home Assistant install its httpx alias before respx is imported.
+addopts = "-p no:respx"
 testpaths = ["tests"]
