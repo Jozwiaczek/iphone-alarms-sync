@@ -65,21 +65,21 @@ Every change is first published as a beta (`vX.Y.Z-beta.N`) and tested before it
 
 #### iPhone Alarms Sync: Sync (Required)
 
-![QR Code](https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=https://www.icloud.com/shortcuts/3a7ef812167b410f8b429de5bb07587e)
+![QR Code](https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=https://www.icloud.com/shortcuts/f8015b2fa07f4c4cbab8126816137ff5)
 
-**[Open Shortcut](https://www.icloud.com/shortcuts/3a7ef812167b410f8b429de5bb07587e)**
+**[Open Shortcut](https://www.icloud.com/shortcuts/f8015b2fa07f4c4cbab8126816137ff5)**
 
 #### iPhone Alarms Sync: Device Event (Optional)
 
-![QR Code](https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=https://www.icloud.com/shortcuts/af592e425fd04cdbb4835f96f35ed793)
+![QR Code](https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=https://www.icloud.com/shortcuts/1024bb19477e425e9f0ae8a8a04dfa7c)
 
-**[Open Shortcut](https://www.icloud.com/shortcuts/af592e425fd04cdbb4835f96f35ed793)** - For device-level events (Wake-Up, any alarm, sleep events)
+**[Open Shortcut](https://www.icloud.com/shortcuts/1024bb19477e425e9f0ae8a8a04dfa7c)** - For device-level events (Wake-Up, any alarm, sleep events)
 
 #### iPhone Alarms Sync: Alarm Event (Optional)
 
-![QR Code](https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=https://www.icloud.com/shortcuts/0b78900623dd4269a50fc481971ecea5)
+![QR Code](https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=https://www.icloud.com/shortcuts/c200af1ee622472aa45fd037c24ad0e7)
 
-**[Open Shortcut](https://www.icloud.com/shortcuts/0b78900623dd4269a50fc481971ecea5)** - For specific alarm events
+**[Open Shortcut](https://www.icloud.com/shortcuts/c200af1ee622472aa45fd037c24ad0e7)** - For specific alarm events
 
 ### Step 3: Create iOS Automation
 

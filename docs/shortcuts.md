@@ -10,9 +10,9 @@ This guide covers setup for all three shortcuts used by iPhone Alarms Sync integ
 
 Scan QR code or open link **on your iPhone/iPad that is synced/integrated with Home Assistant**:
 
-![QR Code](https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=https://www.icloud.com/shortcuts/3a7ef812167b410f8b429de5bb07587e)
+![QR Code](https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=https://www.icloud.com/shortcuts/f8015b2fa07f4c4cbab8126816137ff5)
 
-**[Open Shortcut](https://www.icloud.com/shortcuts/3a7ef812167b410f8b429de5bb07587e)**
+**[Open Shortcut](https://www.icloud.com/shortcuts/f8015b2fa07f4c4cbab8126816137ff5)**
 
 ### Import Questions
 
@@ -41,9 +41,9 @@ Alarms sync automatically when you close the Clock app.
 
 Scan QR code or open link **on your iPhone/iPad that is synced/integrated with Home Assistant**:
 
-![QR Code](https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=https://www.icloud.com/shortcuts/af592e425fd04cdbb4835f96f35ed793)
+![QR Code](https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=https://www.icloud.com/shortcuts/1024bb19477e425e9f0ae8a8a04dfa7c)
 
-**[Open Shortcut](https://www.icloud.com/shortcuts/af592e425fd04cdbb4835f96f35ed793)**
+**[Open Shortcut](https://www.icloud.com/shortcuts/1024bb19477e425e9f0ae8a8a04dfa7c)**
 
 ### Import Questions
 
@@ -83,9 +83,9 @@ When importing, you'll be asked:
 
 Scan QR code or open link **on your iPhone/iPad that is synced/integrated with Home Assistant**:
 
-![QR Code](https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=https://www.icloud.com/shortcuts/0b78900623dd4269a50fc481971ecea5)
+![QR Code](https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=https://www.icloud.com/shortcuts/c200af1ee622472aa45fd037c24ad0e7)
 
-**[Open Shortcut](https://www.icloud.com/shortcuts/0b78900623dd4269a50fc481971ecea5)**
+**[Open Shortcut](https://www.icloud.com/shortcuts/c200af1ee622472aa45fd037c24ad0e7)**
 
 ### Import Questions
 
@@ -154,6 +154,10 @@ Home Assistant app 2026.9 replaced the old *Call service* shortcut action with *
 4. Run each shortcut manually once and check that the **Last sync** sensor (or the event sensor) updates.
 
 You can instead import the new templates from the links above. They are named *iPhone Alarms Sync: …* and already have the action set. Point your automations to the new shortcuts, then delete the old ones.
+
+### Shortcut stops silently with Home Wi-Fi left empty
+
+Shortcuts imported before the fix for [#20](https://github.com/Jozwiaczek/iphone-alarms-sync/issues/20) stop right after the Wi-Fi check when **Home Wi-Fi** is empty: no error, no share prompt, nothing in Home Assistant. Import the shortcuts again from the links above. Or, if you don't use Home Wi-Fi, open the shortcut and delete the steps from the first **If** to its **End If**.
 
 ### "Timed out after 10 seconds"
 

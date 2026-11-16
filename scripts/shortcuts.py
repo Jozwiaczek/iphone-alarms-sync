@@ -149,6 +149,13 @@ def check(wf: dict, service: str) -> list[str]:
         errors.append("first step must be the asked, empty Home Wi-Fi text")
     if "is.workflow.actions.exit" not in ids[:ha_index]:
         errors.append("Home Wi-Fi check must stop the shortcut before Home Assistant")
+    if any(
+        a.get("WFWorkflowActionParameters", {}).get("WFCondition") in (100, 101)
+        for a in actions[:ha_index]
+    ):
+        errors.append(
+            "Home Wi-Fi check must count characters: (no) value checks pass empty text"
+        )
 
     private = []
     if PRIVATE.exists():
