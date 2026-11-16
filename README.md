@@ -17,26 +17,29 @@
   <a href="https://my.home-assistant.io/redirect/hacs_repository/?owner=Jozwiaczek&repository=iphone-alarms-sync&category=integration"><img src="https://my.home-assistant.io/badges/hacs_repository.svg" alt="Open in the Marketplace"></a>
 </p>
 
-Sync iPhone/iPad alarms to Home Assistant using predefined Apple Shortcuts. This is a **one-way synchronization** from Apple iPhone or iPad to Home Assistant, enabling alarm-based automations like turning on lights, brewing coffee, or opening blinds when your alarm goes off.
+iOS shares its alarms with no app, so Home Assistant can't see when you wake up. iPhone Alarms Sync gets them there with Apple Shortcuts. Each alarm becomes a device, and automations can run before an alarm, or when it goes off, is snoozed or stopped.
 
-## ✨ Features
+## ✨ What you get
 
-### Alarm Synchronization
-- **Sync on closing the Clock app** - an iOS automation sends all alarms to Home Assistant when you close the Clock app
-- **Changes and deletions** - each sync updates times, repeat days and the enabled state; alarms deleted on the phone are removed with their device
-- **One device per alarm** - every alarm gets its own device and entities
-- **Wake-Up alarm** - dedicated tracking of the iOS Wake-Up (Sleep schedule) alarm
+Start with one shortcut. Add the others only if you need them.
 
-### Event Tracking
-- **Alarm events** - goes off, snoozed and stopped, per alarm or for any alarm
-- **Sleep events** - bedtime starts, wind down starts, waking up
-- **Timestamps** - the last time of each event type
-- **Missed event warning** - a sensor turns on when an alarm rang but its event never reached Home Assistant
+| On the phone | Home Assistant gets | Ideas |
+|---|---|---|
+| **Sync** shortcut (required) | A device per alarm with its time, repeat days and enabled state. Next alarm sensors. | Warm the bedroom before the alarm. Brighten the lights slowly. Remind you when no alarm is set. |
+| + **Device Event** shortcut | The moment any alarm or the Wake-Up alarm goes off, is snoozed or stopped. Wind down, bedtime and waking up. | Lights, blinds and coffee when the alarm goes off. Dim the lights at bedtime. |
+| + **Alarm Event** shortcut | The same moments for one alarm. | A full routine for *Work*, a gentle one for *Weekend*. |
 
-### Smart Home Integration
-- **Alarm triggers** for one or more alarms, device triggers and an event for automations
-- **Sensors** - next alarm, next occurrence per alarm, last sync, repeat schedule
-- **Several iPhones/iPads** - add the integration once per device
+- Alarms changed or deleted on the phone update on the next sync.
+- A sensor warns you when an alarm rang but its event never reached Home Assistant.
+- Several iPhones/iPads: add the integration once per device.
+
+Sync is one-way, from the phone to Home Assistant.
+
+### Why Shortcuts?
+
+- The Home Assistant app has a next alarm sensor on Android only. iOS gives apps no access to the alarms in Clock.
+- Another alarm app sees only its own alarms.
+- Shortcuts can read them. This integration turns that into devices, triggers and warnings, so you don't have to build it yourself.
 
 ## 🚀 Installation
 
@@ -54,52 +57,35 @@ On Home Assistant 2026.8–2026.10 the button opens HACS instead.
 
 Every change is first published as a beta (`vX.Y.Z-beta.N`) and tested before it becomes a stable release. You get stable releases by default. To help test, enable the **Pre-release** switch (disabled by default) on the iPhone Alarms Sync device of the Marketplace integration, or of HACS on Home Assistant 2026.8–2026.10, and update as usual. Turn it off to return to stable.
 
-### Step 2: Configure
+### Step 2: Add your phone
 
 1. Settings → Devices & Services → Add Integration → "iPhone Alarms Sync"
-2. Pick your Home Assistant app device or enter a name; the next screen shows your **Phone ID**
-3. Scan QR code or open link on your iPhone/iPad
-4. Import the **"iPhone Alarms Sync: Sync"** shortcut (required)
-5. Enter your **Phone ID** when prompted, then pick your Home Assistant server and the `iphone_alarms_sync.sync_alarms` action
-   - **Home Wi-Fi** (optional): fill in only if Home Assistant works just at home
+2. Pick your Home Assistant app device or enter a name
+3. Follow the screen: it shows your **Phone ID**, the QR code of the Sync shortcut and the iOS automation to create
 
-#### iPhone Alarms Sync: Sync (Required)
+Alarms then sync every time you close the Clock app.
 
-![QR Code](https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=https://www.icloud.com/shortcuts/f8015b2fa07f4c4cbab8126816137ff5)
+For the event shortcuts, open **Configure → Event Shortcuts Setup**. The [Shortcuts Setup Guide](docs/shortcuts.md) has every link and step.
 
-**[Open Shortcut](https://www.icloud.com/shortcuts/f8015b2fa07f4c4cbab8126816137ff5)**
+## 🎯 Examples
 
-#### iPhone Alarms Sync: Device Event (Optional)
+Sync shortcut only: warm the bedroom 30 minutes before the next alarm.
 
-![QR Code](https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=https://www.icloud.com/shortcuts/1024bb19477e425e9f0ae8a8a04dfa7c)
+```yaml
+triggers:
+  - trigger: time
+    at:
+      entity_id: sensor.johns_iphone_next_alarm
+      offset: "-00:30:00"
+actions:
+  - action: climate.set_temperature
+    target:
+      entity_id: climate.bedroom
+    data:
+      temperature: 21
+```
 
-**[Open Shortcut](https://www.icloud.com/shortcuts/1024bb19477e425e9f0ae8a8a04dfa7c)** - For device-level events (Wake-Up, any alarm, sleep events)
-
-#### iPhone Alarms Sync: Alarm Event (Optional)
-
-![QR Code](https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=https://www.icloud.com/shortcuts/c200af1ee622472aa45fd037c24ad0e7)
-
-**[Open Shortcut](https://www.icloud.com/shortcuts/c200af1ee622472aa45fd037c24ad0e7)** - For specific alarm events
-
-### Step 3: Create iOS Automation
-
-1. Shortcuts app → Automation → **+**
-2. App → Clock → **Is Closed**
-3. Run Shortcut → **"iPhone Alarms Sync: Sync"**
-4. Enable **"Run Immediately"** → Done
-
-Alarms sync automatically when you close the Clock app.
-
-> 💡 See [Shortcuts Setup Guide](docs/shortcuts.md) for detailed instructions.
-
-## 🎯 Example Use Cases
-
-- **Morning routine** - Turn on lights, adjust thermostat, open blinds, and start coffee maker when alarm goes off
-- **Smart snooze** - Dim or turn off lights when alarm is snoozed, brighten when stopped
-- **Weekday vs weekend** - Different automations for weekdays (full routine) and weekends (gentle wake-up)
-- **Bedtime preparation** - Dim lights, lower thermostat, close blinds when bedtime starts
-- **Gradual wake-up** - Gradually increase light brightness over several minutes before alarm
-- **Pre-alarm preparation** - Start warming up room 30 minutes before alarm time
+With an event shortcut: turn on the light when an alarm goes off. See [Triggers](#triggers).
 
 ## 📋 Reference
 
