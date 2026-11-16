@@ -18,7 +18,7 @@
     "step": {
       "user": {
         "title": "iPhone Alarms Sync",
-        "description": "Choose how to add your iPhone/iPad:\n\n- **Mobile App device** - links it to your Home Assistant app device\n- **Custom name** - standalone device",
+        "description": "Choose how to add your iPhone, iPad or Mac:\n\n- **Mobile App device** - links it to your Home Assistant app device\n- **Custom name** - standalone device",
         "menu_options": {
           "select_mobile_app": "Select from Mobile App devices",
           "custom_name": "Enter custom device name"
@@ -33,14 +33,14 @@
       },
       "custom_name": {
         "title": "Enter Device Name",
-        "description": "Enter a name for your iPhone/iPad (e.g., \"John's iPhone\").\n\nThis generates a **Phone ID** needed for the shortcut setup.",
+        "description": "Enter a name for your iPhone, iPad or Mac (e.g., \"John's iPhone\").\n\nThis generates a **Phone ID** needed for the shortcut setup.",
         "data": {
           "phone_name": "Device Name"
         }
       },
       "confirm": {
         "title": "Set up the Sync shortcut",
-        "description": "**Phone ID:** `{phone_id}`\n\n## 1. Import the Sync shortcut\n\nScan the QR code or open the link **on the iPhone/iPad you are adding**:\n\n![QR Code]({sync_qr_code})\n\n[Open Shortcut]({sync_shortcut_url})\n\nImport questions:\n- **Phone ID**: `{phone_id}`\n- **Home Wi-Fi** (optional): fill in only if Home Assistant works just at home\n- **Server** and **Action**: your Home Assistant server, then `iphone_alarms_sync.sync_alarms`\n\nIf the **Perform action** step shows **Choose** or the shortcut says *No server provided*, pick the **Server** and then the **Action** again (needs the Home Assistant app 2026.9.3+, [troubleshooting]({troubleshooting_url})).\n\n## 2. Create the automation\n\n1. Shortcuts app → Automation → +\n2. App → Clock → Is Closed\n3. Run Shortcut → \"iPhone Alarms Sync: Sync\"\n4. Enable \"Run Immediately\" → Done\n\nAlarms then sync every time you close the Clock app.\n\n## 3. Event shortcuts (optional)\n\nTo react when an alarm goes off, is snoozed or stopped, set up the event shortcuts afterwards in **Configure → Event Shortcuts Setup**.",
+        "description": "**Phone ID:** `{phone_id}`\n\n## 1. Import the Sync shortcut\n\nScan the QR code or open the link **on the iPhone, iPad or Mac you are adding**:\n\n![QR Code]({sync_qr_code})\n\n[Open Shortcut]({sync_shortcut_url})\n\nImport questions:\n- **Phone ID**: `{phone_id}`\n- **Home Wi-Fi** (optional): fill in only if Home Assistant works just at home\n- **Server** and **Action**: your Home Assistant server, then `iphone_alarms_sync.sync_alarms`\n\nIf the **Perform action** step shows **Choose** or the shortcut says *No server provided*, pick the **Server** and then the **Action** again (needs the Home Assistant app 2026.9.3+, [troubleshooting]({troubleshooting_url})).\n\n## 2. Create the automation\n\n1. Shortcuts app → Automation → +\n2. App → Clock → Is Closed\n3. Run Shortcut → \"iPhone Alarms Sync: Sync\"\n4. Enable \"Run Immediately\" → Done\n\nAlarms then sync every time you close the Clock app.\n\n## 3. Event shortcuts (optional)\n\nTo react when an alarm goes off, is snoozed or stopped, set up the event shortcuts afterwards in **Configure → Event Shortcuts Setup**.",
         "data": {
           "sync_disabled_alarms": "Sync disabled alarms"
         },
@@ -87,7 +87,7 @@
       },
       "sync_shortcut": {
         "title": "Sync Shortcut Setup",
-        "description": "**Phone ID:** `{phone_id}`\n\n## 1. Import the Sync shortcut\n\nScan the QR code or open the link **on the iPhone/iPad you are adding**:\n\n![QR Code]({sync_qr_code})\n\n[Open Shortcut]({sync_shortcut_url})\n\nImport questions:\n- **Phone ID**: `{phone_id}`\n- **Home Wi-Fi** (optional): fill in only if Home Assistant works just at home\n- **Server** and **Action**: your Home Assistant server, then `iphone_alarms_sync.sync_alarms`\n\nIf the **Perform action** step shows **Choose** or the shortcut says *No server provided*, pick the **Server** and then the **Action** again (needs the Home Assistant app 2026.9.3+, [troubleshooting]({troubleshooting_url})).\n\n## 2. Create the automation\n\n1. Shortcuts app → Automation → +\n2. App → Clock → Is Closed\n3. Run Shortcut → \"iPhone Alarms Sync: Sync\"\n4. Enable \"Run Immediately\" → Done\n\nAlarms then sync every time you close the Clock app."
+        "description": "**Phone ID:** `{phone_id}`\n\n## 1. Import the Sync shortcut\n\nScan the QR code or open the link **on the iPhone, iPad or Mac you are adding**:\n\n![QR Code]({sync_qr_code})\n\n[Open Shortcut]({sync_shortcut_url})\n\nImport questions:\n- **Phone ID**: `{phone_id}`\n- **Home Wi-Fi** (optional): fill in only if Home Assistant works just at home\n- **Server** and **Action**: your Home Assistant server, then `iphone_alarms_sync.sync_alarms`\n\nIf the **Perform action** step shows **Choose** or the shortcut says *No server provided*, pick the **Server** and then the **Action** again (needs the Home Assistant app 2026.9.3+, [troubleshooting]({troubleshooting_url})).\n\n## 2. Create the automation\n\n1. Shortcuts app → Automation → +\n2. App → Clock → Is Closed\n3. Run Shortcut → \"iPhone Alarms Sync: Sync\"\n4. Enable \"Run Immediately\" → Done\n\nAlarms then sync every time you close the Clock app."
       },
       "event_shortcuts": {
         "title": "Event Shortcuts Setup",

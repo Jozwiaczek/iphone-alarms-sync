@@ -8,7 +8,7 @@ This guide covers setup for all three shortcuts used by iPhone Alarms Sync integ
 
 ### Import
 
-Scan QR code or open link **on your iPhone/iPad that is synced/integrated with Home Assistant**:
+Scan QR code or open link **on your iPhone, iPad or Mac that is synced/integrated with Home Assistant**:
 
 ![QR Code](https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=https://www.icloud.com/shortcuts/f8015b2fa07f4c4cbab8126816137ff5)
 
@@ -39,7 +39,7 @@ Alarms sync automatically when you close the Clock app.
 
 ### Import
 
-Scan QR code or open link **on your iPhone/iPad that is synced/integrated with Home Assistant**:
+Scan QR code or open link **on your iPhone, iPad or Mac that is synced/integrated with Home Assistant**:
 
 ![QR Code](https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=https://www.icloud.com/shortcuts/1024bb19477e425e9f0ae8a8a04dfa7c)
 
@@ -81,7 +81,7 @@ When importing, you'll be asked:
 
 ### Import
 
-Scan QR code or open link **on your iPhone/iPad that is synced/integrated with Home Assistant**:
+Scan QR code or open link **on your iPhone, iPad or Mac that is synced/integrated with Home Assistant**:
 
 ![QR Code](https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=https://www.icloud.com/shortcuts/c200af1ee622472aa45fd037c24ad0e7)
 
@@ -218,5 +218,5 @@ Every call from a shortcut then logs `<action> called for phone_id=...`. No log 
 
 ### Import doesn't work
 
-- Link must be opened on iOS device
+- Open the link on the iPhone, iPad or Mac itself
 - Try opening in Safari if other browsers fail
