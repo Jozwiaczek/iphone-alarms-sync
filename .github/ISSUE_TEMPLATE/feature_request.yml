@@ -12,7 +12,14 @@ body:
   - type: textarea
     id: idea
     attributes:
-      label: How could the integration help?
+      label: Proposed solution
+      description: Optional. How could it work? New entities, attributes, triggers or shortcut changes. An example in YAML helps.
+  - type: checkboxes
+    id: pull_request
+    attributes:
+      label: Contribution
+      options:
+        - label: I would like to open a pull request for this.
   - type: markdown
     attributes:
       value: |
