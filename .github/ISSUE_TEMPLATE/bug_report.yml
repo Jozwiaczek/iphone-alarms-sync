@@ -1,11 +1,59 @@
 name: Bug report
-description: Something does not sync or no events arrive
+description: Something does not sync, no events arrive or an entity is wrong
 labels: [bug]
 body:
   - type: markdown
     attributes:
       value: |
         Please check the [Troubleshooting guide](https://github.com/Jozwiaczek/iphone-alarms-sync/blob/main/docs/shortcuts.md#troubleshooting) first. Most problems come from the iOS shortcut, for example a Home Assistant app update that reset the **Perform action** step.
+  - type: checkboxes
+    id: basics
+    attributes:
+      label: Before you start
+      options:
+        - label: I use the latest version of the integration (stable or beta).
+          required: true
+        - label: I read the Troubleshooting guide.
+          required: true
+  - type: dropdown
+    id: area
+    attributes:
+      label: Where is the problem?
+      multiple: true
+      options:
+        - Sync shortcut
+        - Device Event shortcut
+        - Alarm Event shortcut
+        - Home Assistant only (entities, triggers, settings)
+    validations:
+      required: true
+  - type: checkboxes
+    id: shortcut_checks
+    attributes:
+      label: Shortcut checks
+      description: Tick what is true. Skip this if the problem is not about a shortcut.
+      options:
+        - label: I ran the shortcut manually in the Shortcuts app.
+        - label: The **Perform action** step shows a Server and an `iphone_alarms_sync` action, not **Choose**.
+        - label: The Phone ID in the shortcut is the same as in Home Assistant.
+        - label: "**Home Wi-Fi** in the shortcut is empty, or I was on that network."
+  - type: textarea
+    id: description
+    attributes:
+      label: What happens?
+      description: What did you expect and what happened instead? Paste the error if the shortcut shows one.
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      placeholder: |
+        1. Change the alarm to 06:30 in the Clock app
+        2. Run the Sync shortcut
+        3. sensor.<phone>_next_alarm still shows 07:00
+    validations:
+      required: true
   - type: input
     id: integration_version
     attributes:
@@ -13,11 +61,20 @@ body:
       placeholder: "1.5.0"
     validations:
       required: true
-  - type: input
-    id: ha_version
+  - type: textarea
+    id: diagnostics
     attributes:
-      label: Home Assistant version
-      placeholder: "2026.11.0"
+      label: Diagnostics
+      description: |
+        **Settings → Devices & services → iPhone Alarms Sync → ⋮ → Download diagnostics**, then drag the file here. It contains your phone name and alarm labels, so look through it first.
+        No such option in the menu (older version, or the integration does not load)? Write your Home Assistant version instead.
+    validations:
+      required: true
+  - type: input
+    id: ios_version
+    attributes:
+      label: iOS version
+      placeholder: "26.1"
     validations:
       required: true
   - type: input
@@ -28,40 +85,19 @@ body:
       placeholder: "2026.10.3"
     validations:
       required: true
-  - type: input
-    id: ios_version
-    attributes:
-      label: iOS version
-      placeholder: "26.1"
-    validations:
-      required: true
-  - type: dropdown
-    id: shortcut
-    attributes:
-      label: Which shortcut?
-      multiple: true
-      options:
-        - Sync
-        - Device Event
-        - Alarm Event
-    validations:
-      required: true
-  - type: textarea
-    id: manual_run
-    attributes:
-      label: What happens when you run the shortcut manually?
-      description: Open the Shortcuts app, run the shortcut and describe the result or paste the error. Also say what the **Action** field of the **Perform action** step shows.
-    validations:
-      required: true
-  - type: textarea
-    id: description
-    attributes:
-      label: What did you expect and what happened?
-    validations:
-      required: true
   - type: textarea
     id: logs
     attributes:
-      label: Logs
-      description: Home Assistant logs with debug logging enabled (see the Troubleshooting guide).
+      label: Debug logs
+      description: Optional. Home Assistant logs with [debug logging](https://github.com/Jozwiaczek/iphone-alarms-sync/blob/main/docs/shortcuts.md#debug-logs) enabled.
       render: text
+  - type: textarea
+    id: screenshots
+    attributes:
+      label: Screenshots
+      description: Optional. For example the **Perform action** step or the error.
+  - type: textarea
+    id: fix
+    attributes:
+      label: Possible cause or fix
+      description: Optional. Know why it happens or how to fix it? Describe it. You can also open a pull request.

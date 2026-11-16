@@ -199,6 +199,7 @@ Settings → Devices & services → iPhone Alarms Sync → **Configure**:
 - **Stopped working after a Home Assistant app update, or *No server provided*:** the shortcut's *Perform action* step may show **Choose** or point to a server from another device. Pick the **Server** and then the `iphone_alarms_sync.*` action again or re-import the shortcuts. See [Troubleshooting](docs/shortcuts.md#troubleshooting).
 - **Repair issue "stopped sending alarm data":** Home Assistant raises it when a phone sends nothing for 7 days. Run the shortcut manually to see the error.
 - **Alarm event missed is on:** the phone couldn't reach Home Assistant when the alarm rang. See [Troubleshooting](docs/shortcuts.md#troubleshooting).
+- **Reporting a bug:** attach the diagnostics file (Settings → Devices & services → iPhone Alarms Sync → ⋮ → Download diagnostics).
 
 ## 📚 Documentation
 

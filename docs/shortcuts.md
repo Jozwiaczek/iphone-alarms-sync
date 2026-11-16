@@ -191,6 +191,10 @@ logger:
 
 Every call from a shortcut then logs `<action> called for phone_id=...`. No log line means the call never reached Home Assistant: check the shortcut.
 
+### Download diagnostics
+
+**Settings → Devices & services → iPhone Alarms Sync → ⋮ → Download diagnostics** saves the phone's alarms, the last sync time and the last 20 events to a file. Attach it to a bug report after you look through it: it contains your phone name and alarm labels.
+
 ### Shortcut doesn't run
 
 - iOS Settings → Shortcuts → Advanced → Enable "Allow Running Automations"
