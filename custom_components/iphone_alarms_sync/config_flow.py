@@ -20,6 +20,7 @@ from .const import (
     CONF_PHONE_ID,
     CONF_PHONE_NAME,
     CONF_SYNC_DISABLED_ALARMS,
+    DOCS_ESTIMATED_URL,
     DOCS_TROUBLESHOOTING_URL,
     DOMAIN,
     EVENT_BEDTIME_STARTS,
@@ -91,6 +92,7 @@ def _shortcut_placeholders() -> dict[str, str]:
         "device_event_qr_code": generate_qr_code_data_url(SHORTCUT_DEVICE_EVENT_URL),
         "device_event_shortcut_url": SHORTCUT_DEVICE_EVENT_URL,
         "troubleshooting_url": DOCS_TROUBLESHOOTING_URL,
+        "estimated_url": DOCS_ESTIMATED_URL,
     }
 
 

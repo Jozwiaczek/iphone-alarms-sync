@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from datetime import datetime
+from datetime import datetime, timedelta
 
 import pytest
 from freezegun.api import FrozenDateTimeFactory
@@ -12,6 +12,7 @@ from homeassistant.helpers import device_registry as dr
 from homeassistant.helpers import issue_registry as ir
 from homeassistant.util import dt as dt_util
 from pytest_homeassistant.common import (
+    MockConfigEntry,
     async_capture_events,
     async_fire_time_changed,
 )
@@ -119,10 +120,7 @@ async def test_alarm_time_updates_last_alarm(
             datetime(2026, 11, 13, 6, 0, tzinfo=dt_util.get_default_time_zone())
         )
     )
-    config_entry = make_entry({ALARM_ID: alarm_payload()})
-    config_entry.add_to_hass(hass)
-    assert await hass.config_entries.async_setup(config_entry.entry_id)
-    await hass.async_block_till_done()
+    config_entry = await _setup_synced(hass, alarm_payload())
     assert hass.states.get("sensor.john_iphone_last_alarm").state == "unknown"
     assert hass.states.get("sensor.john_iphone_next_alarm_label").state == "Wake"
 
@@ -147,6 +145,140 @@ async def test_alarm_time_updates_last_alarm(
     assert dt_util.parse_datetime(
         hass.states.get("sensor.john_iphone_next_alarm").state
     ) == alarm_at.replace(day=14)
+    assert config_entry.runtime_data.coordinator.last_activity_at() == _local(
+        2026, 11, 13, 6, 0
+    )
+
+
+async def _setup_synced(
+    hass: HomeAssistant, alarm: dict, **options: str
+) -> MockConfigEntry:
+    """Set up a phone that synced `alarm` just now."""
+    config_entry = make_entry({ALARM_ID: alarm})
+    config_entry.add_to_hass(hass)
+    hass.config_entries.async_update_entry(
+        config_entry,
+        options={
+            **config_entry.options,
+            "synced_at": dt_util.utcnow().isoformat(),
+            **options,
+        },
+    )
+    assert await hass.config_entries.async_setup(config_entry.entry_id)
+    await hass.async_block_till_done()
+    return config_entry
+
+
+async def _ring(
+    hass: HomeAssistant, freezer: FrozenDateTimeFactory, at: datetime
+) -> None:
+    freezer.move_to(at)
+    async_fire_time_changed(hass, at)
+    await hass.async_block_till_done()
+
+
+async def _report_goes_off(hass: HomeAssistant) -> None:
+    await hass.services.async_call(
+        DOMAIN,
+        "report_alarm_event",
+        {"phone_id": PHONE_ID, "alarm_id": ALARM_ID, "event": "goes_off"},
+        blocking=True,
+    )
+    await hass.async_block_till_done()
+
+
+SWITCH = "switch.john_iphone_07_00_wake_estimated_goes_off"
+
+
+async def test_estimated_goes_off_fires_once_per_ring(
+    hass: HomeAssistant, time_zone: None, freezer: FrozenDateTimeFactory
+) -> None:
+    freezer.move_to(_local(2026, 11, 13, 6, 0))
+    await _setup_synced(hass, alarm_payload())
+    assert hass.states.get(SWITCH).state == "on"
+    events = async_capture_events(hass, EVENT_ALARM_EVENT)
+    triggers = async_capture_events(hass, f"{DOMAIN}_goes_off")
+
+    await _ring(hass, freezer, _local(2026, 11, 13, 7, 0))
+    assert [(e.data["alarm_id"], e.data["estimated"]) for e in events] == [
+        (ALARM_ID, True)
+    ]
+    assert triggers[0].data["subtype"] == "alarm"
+    alarm_event = hass.states.get("event.john_iphone_07_00_wake_alarm")
+    assert alarm_event.attributes["event_type"] == "goes_off"
+    assert alarm_event.attributes["estimated"] is True
+    assert hass.states.get("event.john_iphone_any_alarm").state == "unknown"
+
+    # iOS turned the one-time alarm off; without a new sync it must not ring again.
+    await _ring(hass, freezer, _local(2026, 11, 14, 7, 0))
+    assert len(events) == 1
+
+
+async def test_estimated_goes_off_can_be_turned_off(
+    hass: HomeAssistant, time_zone: None, freezer: FrozenDateTimeFactory
+) -> None:
+    freezer.move_to(_local(2026, 11, 13, 6, 0))
+    await _setup_synced(hass, alarm_payload(repeats=True, repeat_days=["Friday"]))
+    events = async_capture_events(hass, EVENT_ALARM_EVENT)
+    await hass.services.async_call(
+        "switch", "turn_off", {"entity_id": SWITCH}, blocking=True
+    )
+
+    await _ring(hass, freezer, _local(2026, 11, 13, 7, 0))
+    assert events == []
+
+    await hass.services.async_call(
+        "switch", "turn_on", {"entity_id": SWITCH}, blocking=True
+    )
+    await _ring(hass, freezer, _local(2026, 11, 20, 7, 0))
+    assert len(events) == 1
+
+
+@pytest.mark.parametrize("shortcut_first", [True, False])
+async def test_shortcut_takes_over_from_estimate_without_a_duplicate(
+    hass: HomeAssistant,
+    time_zone: None,
+    freezer: FrozenDateTimeFactory,
+    shortcut_first: bool,
+) -> None:
+    alarm_at = _local(2026, 11, 13, 7, 0)
+    freezer.move_to(alarm_at - timedelta(seconds=5))
+    await _setup_synced(hass, alarm_payload(repeats=True, repeat_days=["Friday"]))
+    events = async_capture_events(hass, EVENT_ALARM_EVENT)
+
+    if shortcut_first:
+        await _report_goes_off(hass)
+        await _ring(hass, freezer, alarm_at)
+    else:
+        await _ring(hass, freezer, alarm_at)
+        freezer.tick(timedelta(seconds=5))
+        await _report_goes_off(hass)
+
+    assert [e.data["estimated"] for e in events] == [not shortcut_first]
+    assert hass.states.get(SWITCH).state == "off"
+    assert hass.states.get("sensor.john_iphone_07_00_wake_last_went_off").state != (
+        "unknown"
+    )
+
+    # From now on only the shortcut fires.
+    await _ring(hass, freezer, alarm_at + timedelta(days=7))
+    assert len(events) == 1
+    await _report_goes_off(hass)
+    assert [e.data["estimated"] for e in events] == [not shortcut_first, False]
+
+
+async def test_estimate_is_off_for_a_phone_that_reports_goes_off(
+    hass: HomeAssistant, time_zone: None
+) -> None:
+    """Upgrade from v1.5 and new alarms: shortcut users get no extra events."""
+    await _setup_synced(
+        hass, alarm_payload(), any_last_event_goes_off_at="2026-11-12T06:00:00+00:00"
+    )
+    assert hass.states.get(SWITCH).state == "off"
+
+    await _sync(hass, [alarm_payload(), alarm_payload(alarm_id=OTHER_ID, label="Gym")])
+    gym = "switch.john_iphone_07_00_gym_estimated_goes_off"
+    assert hass.states.get(gym).state == "off"
 
 
 async def test_unknown_phone_id_is_rejected(hass: HomeAssistant, entry) -> None:

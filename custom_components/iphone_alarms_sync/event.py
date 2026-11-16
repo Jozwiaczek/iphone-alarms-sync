@@ -83,7 +83,9 @@ def _listen(
 
     @callback
     def _handle(event: Event[dict[str, Any]]) -> None:
-        entity._trigger_event(event.data["event"])  # noqa: SLF001
+        entity._trigger_event(  # noqa: SLF001
+            event.data["event"], {"estimated": event.data["estimated"]}
+        )
         entity.async_write_ha_state()
 
     entity.async_on_remove(

@@ -57,6 +57,17 @@ def calculate_next_occurrence(
     return min(candidates, default=None)
 
 
+def rings_at(alarm: AlarmData, at: datetime, synced_at: datetime | None) -> bool:
+    """Whether the alarm is expected to ring at `at`."""
+    if calculate_next_occurrence(alarm, at - timedelta(minutes=1)) != at:
+        return False
+    # iOS turns a one-time alarm off after it rings, but HA learns that only on the
+    # next sync, so only its first ring after the last sync counts.
+    return bool(alarm.repeats and alarm.repeat_days) or (
+        synced_at is not None and calculate_next_occurrence(alarm, synced_at) == at
+    )
+
+
 def calculate_next_alarm_datetime(
     phone: PhoneData, now: datetime | None = None
 ) -> tuple[datetime | None, str | None]:

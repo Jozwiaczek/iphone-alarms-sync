@@ -56,6 +56,11 @@
       "snooze_time": {
         "default": "mdi:alarm-snooze"
       }
+    },
+    "switch": {
+      "estimate_goes_off": {
+        "default": "mdi:alarm-check"
+      }
     }
   }
 }

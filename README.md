@@ -25,9 +25,9 @@ Start with one shortcut. Add the others only if you need them.
 
 | On the phone | Home Assistant gets | Ideas |
 |---|---|---|
-| **Sync** shortcut (required) | A device per alarm with its time, repeat days and enabled state. Next alarm sensors. | Warm the bedroom before the alarm. Brighten the lights slowly. Remind you when no alarm is set. |
-| + **Device Event** shortcut, one copy per event | The moment any alarm or the Wake-Up alarm goes off, is snoozed or stopped. Wind down, bedtime and waking up. | Lights, blinds and coffee when the alarm goes off. Dim the lights at bedtime. |
-| + **Alarm Event** shortcut, one copy per alarm and event | Goes off, snoozed and stopped for one alarm. | A full routine for *Work*, a gentle one for *Weekend*. |
+| **Sync** shortcut (required) | A device per alarm with its time, repeat days and enabled state. Next alarm sensors. An [estimated](docs/shortcuts.md#estimated-goes-off) *goes off* for each alarm. | Warm the bedroom before the alarm. Turn on the lights when it goes off. Remind you when no alarm is set. |
+| + **Device Event** shortcut, one copy per event | The exact moment any alarm or the Wake-Up alarm goes off, is snoozed or stopped. Wind down, bedtime and waking up. | Lights, blinds and coffee when the alarm goes off. Dim the lights at bedtime. |
+| + **Alarm Event** shortcut, one copy per alarm and event | The exact goes off, plus snoozed and stopped, for one alarm. | A full routine for *Work*, a gentle one for *Weekend*. |
 
 Sync is one-way, from the phone to Home Assistant. Works on iPhone, iPad and Mac: add the integration once per device.
 
@@ -81,7 +81,7 @@ actions:
       temperature: 21
 ```
 
-With an event shortcut: turn on the light when an alarm goes off. See [Triggers](#triggers).
+Turn on the light when an alarm goes off: see [Triggers](#triggers). It works with the Sync shortcut alone; an event shortcut makes it exact.
 
 ## 📋 Reference
 
@@ -110,6 +110,7 @@ With an event shortcut: turn on the light when an alarm goes off. See [Triggers]
 | Enabled, Allows snooze | Alarm state on the phone |
 | Repeats, Repeats on Monday … Sunday | Repeat schedule (disabled by default) |
 | Snooze time | Snooze length for your automations, 1-30 min. iOS does not share it, so set it yourself (default 9) |
+| Estimated goes off | Fires *Goes off* at the alarm's time, without an event shortcut ([limits](docs/shortcuts.md#estimated-goes-off)). Turns itself off when the alarm's shortcut reports *Goes off* |
 
 Event timestamps stay *unknown* until the matching shortcut reports the first event.
 
@@ -134,7 +135,7 @@ The alarms you can pick are event entities, named like the iOS automations:
 
 | Device | Event entity | Events | Needs |
 |---|---|---|---|
-| Alarm | *Alarm* | Goes off, Is snoozed, Is stopped | Alarm Event shortcut for this alarm |
+| Alarm | *Alarm* | Goes off, Is snoozed, Is stopped | Sync only for an estimated Goes off; Alarm Event shortcut for the rest |
 | Phone | *Any alarm* | Goes off, Is snoozed, Is stopped | Device Event shortcut, events 1-3 |
 | Phone | *Wake-Up alarm* | Goes off, Is snoozed, Is stopped | Device Event shortcut, events 4-6 |
 | Phone | *Sleep* | Wind Down begins, Bedtime begins, Waking up | Device Event shortcut, events 7-9 |
@@ -149,6 +150,7 @@ Each reported event also fires `iphone_alarms_sync_alarm_event`, for templates a
 | `alarm_id` | Alarm UUID, or `wakeup`, `any`, `bedtime`, `waking_up`, `wind_down` |
 | `event` | `goes_off`, `snoozed`, `stopped`, `bedtime_starts`, `waking_up`, `wind_down_starts` |
 | `event_id`, `occurred_at` | Unique ID and UTC time of the event |
+| `estimated` | `true` when fired at the alarm's time, `false` when a shortcut reported it. Also an attribute of the event entities |
 
 ### Actions
 

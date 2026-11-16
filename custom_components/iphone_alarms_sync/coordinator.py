@@ -4,7 +4,7 @@ import logging
 import uuid
 from collections import deque
 from dataclasses import asdict, dataclass, field, fields
-from datetime import datetime, timedelta
+from datetime import datetime
 from typing import Any
 
 from homeassistant.config_entries import ConfigEntry
@@ -23,7 +23,7 @@ from .const import (
     DEFAULT_SNOOZE_TIME,
     DOMAIN,
 )
-from .utils import calculate_next_occurrence, extract_alarm_uuid
+from .utils import extract_alarm_uuid, rings_at
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -46,6 +46,8 @@ class AlarmData:
     last_event_snoozed_at: str | None = None
     last_event_stopped_at: str | None = None
     last_occurrence_datetime: str | None = None
+    # Fire "goes off" at the scheduled time; off once its shortcut reports it.
+    estimate_goes_off: bool = True
 
 
 ALARM_FIELDS = frozenset(f.name for f in fields(AlarmData))
@@ -74,6 +76,8 @@ class AlarmEvent:
     phone_id: str
     event: str
     occurred_at: str
+    # Fired at the scheduled time, not reported by the phone.
+    estimated: bool = False
 
 
 @dataclass
@@ -144,6 +148,8 @@ class IPhoneAlarmsSyncCoordinator(DataUpdateCoordinator[PhoneData]):
         )
         self.entry = entry
         self._events: deque[AlarmEvent] = deque(maxlen=MAX_EVENTS)
+        # When each alarm last fired an estimated "goes off".
+        self.estimated_at: dict[str, datetime] = {}
         options = entry.options
         self.phone = PhoneData(
             phone_id=entry.data.get(CONF_PHONE_ID, ""),
@@ -156,9 +162,22 @@ class IPhoneAlarmsSyncCoordinator(DataUpdateCoordinator[PhoneData]):
             },
             **{name: options.get(name) for name in PHONE_STATE_FIELDS},
         )
+        # Alarms stored before v1.6 have no setting yet.
+        estimate = self._default_estimate()
+        for key, stored in options.get(CONF_ALARMS, {}).items():
+            if "estimate_goes_off" not in stored:
+                self.phone.alarms[extract_alarm_uuid(key)].estimate_goes_off = estimate
 
     async def _async_update_data(self) -> PhoneData:
         return self.phone
+
+    def _default_estimate(self) -> bool:
+        """Estimate "goes off" unless the phone's shortcuts already report it."""
+        phone = self.phone
+        return not (
+            phone.any_last_event_goes_off_at
+            or any(a.last_event_goes_off_at for a in phone.alarms.values())
+        )
 
     def get_alarm(self, alarm_id: str) -> AlarmData | None:
         return self.phone.alarms.get(alarm_id)
@@ -192,7 +211,11 @@ class IPhoneAlarmsSyncCoordinator(DataUpdateCoordinator[PhoneData]):
                 continue
             if "snooze_time" in alarm_dict:
                 values["snooze_time"] = alarm_dict["snooze_time"]
-            phone.alarms[alarm_id] = AlarmData(alarm_id=alarm_id, **values)
+            phone.alarms[alarm_id] = AlarmData(
+                alarm_id=alarm_id,
+                estimate_goes_off=self._default_estimate(),
+                **values,
+            )
 
         # The shortcut sends every alarm, so a missing one was deleted on the device
         # (or disabled, when disabled alarms are not synced). An empty payload is more
@@ -214,35 +237,42 @@ class IPhoneAlarmsSyncCoordinator(DataUpdateCoordinator[PhoneData]):
     def report_device_event(self, scope: str, attr: str, event: str) -> AlarmEvent:
         return self._record(self.phone, attr, scope, event)
 
-    def _record(self, target: Any, attr: str, alarm_id: str, event: str) -> AlarmEvent:
-        event_obj = AlarmEvent(
+    def new_event(
+        self, alarm_id: str, event: str, estimated: bool = False
+    ) -> AlarmEvent:
+        return AlarmEvent(
             event_id=str(uuid.uuid4()),
             alarm_id=alarm_id,
             phone_id=self.phone.phone_id,
             event=event,
             occurred_at=dt_util.utcnow().isoformat(),
+            estimated=estimated,
         )
+
+    def _record(self, target: Any, attr: str, alarm_id: str, event: str) -> AlarmEvent:
+        event_obj = self.new_event(alarm_id, event)
         self._events.append(event_obj)
         setattr(target, attr, event_obj.occurred_at)
         self.save()
         self.async_set_updated_data(self.phone)
         return event_obj
 
-    def record_alarm_time(self, at: datetime) -> None:
-        """Mark the alarms scheduled for `at` as rung (Last Alarm, Last Occurrence)."""
-        before = at - timedelta(minutes=1)
+    def record_alarm_time(self, at: datetime) -> list[AlarmData]:
+        """Mark the alarms that ring at `at` (Last Alarm, Last Occurrence)."""
+        synced_at = dt_util.parse_datetime(self.phone.synced_at or "")
         rang = [
             alarm
             for alarm in self.phone.alarms.values()
-            if calculate_next_occurrence(alarm, before) == at
+            if rings_at(alarm, at, synced_at)
         ]
         if not rang:
-            return
+            return rang
         self.phone.last_alarm_datetime = at.isoformat()
         for alarm in rang:
             alarm.last_occurrence_datetime = at.isoformat()
         self.save()
         self.async_set_updated_data(self.phone)
+        return rang
 
     def save(self) -> None:
         """Persist the runtime state; HA skips the write when nothing changed."""
