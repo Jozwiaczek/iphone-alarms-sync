@@ -2,18 +2,32 @@
 """Check, build and verify the iOS shortcut templates in shortcuts/.
 
 check   validate the sources (runs in CI)
-build   sign the templates into dist/ (macOS only)
+build   sign the templates and the bridge into dist/ (macOS only)
 verify  check what an iCloud link really serves
+
+On a Mac with the bridge shortcut (scripts/bridge.py) installed:
+pull      save an installed shortcut as a plist
+link      create the iCloud link of an installed, clean template and verify it
+delete    delete an installed shortcut, keeping a copy in dist/deleted/
+rename    rename an installed shortcut
+move      move an installed shortcut into a folder
+unfile    take an installed shortcut out of its folder
+mkfolder  create a folder
 """
 
 import argparse
+import base64
 import json
 import plistlib
 import re
 import subprocess
 import sys
+import tempfile
+import time
 import urllib.request
 from pathlib import Path
+
+import bridge
 
 ROOT = Path(__file__).resolve().parent.parent
 SRC = ROOT / "shortcuts"
@@ -170,13 +184,21 @@ def cmd_check(_args) -> int:
             errors.append("source needs the placeholder server and action")
         failed |= bool(errors)
         print(f"{slug}: {'; '.join(errors) or 'ok'}")
-    return int(failed)
+    # A step reading a missing step's output breaks only when run on the Mac.
+    steps = {
+        a["WFWorkflowActionParameters"].get("UUID")
+        for a in bridge.workflow["WFWorkflowActions"]
+    }
+    refs = set(re.findall(r'"OutputUUID": "([^"]+)"', json.dumps(bridge.workflow)))
+    print(f"bridge: {'unknown step outputs' if refs - steps else 'ok'}")
+    return int(failed or bool(refs - steps))
 
 
 def cmd_build(args) -> int:
     if cmd_check(args):
         return 1
     DIST.mkdir(exist_ok=True)
+    built = [("bridge", BRIDGE, bridge.workflow)]
     for slug, (name, _service) in TEMPLATES.items():
         wf = load(slug)
         if args.test_phone_id:
@@ -187,6 +209,8 @@ def cmd_build(args) -> int:
                 if p.get("CustomOutputName") == "Device ID":
                     p["WFTextActionText"] = args.test_phone_id
             wf["WFWorkflowImportQuestions"] = []
+        built.append((slug, name, wf))
+    for slug, name, wf in built:
         unsigned = DIST / f"{slug}.unsigned.shortcut"
         unsigned.write_bytes(plistlib.dumps(wf, fmt=plistlib.FMT_BINARY))
         out = DIST / f"{name}.shortcut"
@@ -204,31 +228,174 @@ def fetch(url: str) -> bytes:
         return response.read()
 
 
+BY_NAME = {name: (slug, service) for slug, (name, service) in TEMPLATES.items()}
+
+
+def source_errors(wf: dict, slug: str) -> list[str]:
+    """Differences between a shared or installed shortcut and its source."""
+    errors = []
+    src = load(slug)
+    ids = [a["WFWorkflowActionIdentifier"] for a in wf["WFWorkflowActions"]]
+    if ids != [a["WFWorkflowActionIdentifier"] for a in src["WFWorkflowActions"]]:
+        errors.append("steps differ from the source")
+    questions = wf.get("WFWorkflowImportQuestions")
+    if questions != src.get("WFWorkflowImportQuestions"):
+        errors.append("import questions differ from the source")
+    return errors
+
+
 def cmd_verify(args) -> int:
-    by_name = {name: (slug, service) for slug, (name, service) in TEMPLATES.items()}
     failed = False
     for url in args.urls:
         record_id = url.rstrip("/").rsplit("/", 1)[-1]
         api = f"https://www.icloud.com/shortcuts/api/records/{record_id}"
         fields = json.loads(fetch(api))["fields"]
         name = fields["name"]["value"]
-        if name not in by_name:
+        if name not in BY_NAME:
             print(f"{url}: unexpected name {name!r}")
             failed = True
             continue
-        slug, service = by_name[name]
+        slug, service = BY_NAME[name]
         wf = plistlib.loads(fetch(fields["shortcut"]["value"]["downloadURL"]))
-        errors = check(wf, service)
-        src = load(slug)
-        ids = [a["WFWorkflowActionIdentifier"] for a in wf["WFWorkflowActions"]]
-        if ids != [a["WFWorkflowActionIdentifier"] for a in src["WFWorkflowActions"]]:
-            errors.append("steps differ from the source")
-        questions = wf.get("WFWorkflowImportQuestions")
-        if questions != src.get("WFWorkflowImportQuestions"):
-            errors.append("import questions differ from the source")
+        errors = check(wf, service) + source_errors(wf, slug)
         failed |= bool(errors)
         print(f"{name}: {'; '.join(errors) or 'ok'}")
     return int(failed)
+
+
+BRIDGE = "iPhone Alarms Sync: Bridge"
+# DER header of a P-256 public key; the bridge's exports carry only the raw key.
+P256_SPKI = "3059301306072a8648ce3d020106082a8648ce3d030107034200"
+
+
+def installed_count(name: str) -> int:
+    listed = subprocess.run(
+        ["shortcuts", "list"], capture_output=True, text=True, check=True
+    ).stdout.splitlines()
+    # The bridge may match names ignoring case, so count them that way.
+    return [n.lower() for n in listed].count(name.lower())
+
+
+def one_installed(name: str) -> None:
+    if (count := installed_count(name)) != 1:
+        raise SystemExit(f"{name!r}: {count} installed, need exactly 1")
+
+
+def run_bridge(op: str, name: str, arg: str = "") -> bytes:
+    """Run one bridge operation on exactly one installed shortcut."""
+    if "|" in name + arg:  # the bridge splits its input on "|"
+        raise SystemExit(f"{name!r} {arg!r}: names with | are not supported")
+    if op != "mkfolder":
+        one_installed(name)
+    with tempfile.TemporaryDirectory() as tmp:
+        inp, out = Path(tmp, "in.txt"), Path(tmp, "out")
+        inp.write_text(f"{op}|{name}|{arg}")
+        # First runs of a new bridge wait for "Always Allow" on the Mac.
+        subprocess.run(
+            ["shortcuts", "run", BRIDGE, "-i", inp, "-o", out], check=True, timeout=300
+        )
+        return out.read_bytes() if out.exists() else b""
+
+
+def unwrap(signed: bytes) -> dict:
+    """Workflow plist inside a .shortcut exported by the bridge."""
+    size = int.from_bytes(signed[8:12], "little")
+    key = plistlib.loads(signed[12 : 12 + size])["SigningPublicKey"]
+    pem = base64.encodebytes(bytes.fromhex(P256_SPKI) + key).decode()
+    with tempfile.TemporaryDirectory() as tmp:
+        t = Path(tmp)
+        (t / "in").write_bytes(signed)
+        (t / "key.pem").write_text(
+            f"-----BEGIN PUBLIC KEY-----\n{pem}-----END PUBLIC KEY-----\n"
+        )
+        subprocess.run(
+            ["aea", "decrypt", "-i", t / "in", "-o", t / "a.aar"]
+            + ["-sign-pub", t / "key.pem"],
+            check=True,
+        )
+        subprocess.run(["aa", "extract", "-i", t / "a.aar", "-d", t], check=True)
+        return plistlib.loads((t / "Shortcut.wflow").read_bytes())
+
+
+def cmd_pull(args) -> int:
+    data = plistlib.dumps(unwrap(run_bridge("export", args.name)))
+    if args.output:
+        Path(args.output).write_bytes(data)
+    else:
+        sys.stdout.write(data.decode())
+    return 0
+
+
+def cmd_link(args) -> int:
+    if args.name not in BY_NAME:
+        raise SystemExit(f"only templates get public links: {sorted(BY_NAME)}")
+    slug, service = BY_NAME[args.name]
+    # Links are public and can't be withdrawn: share only a clean template.
+    wf = unwrap(run_bridge("export", args.name))
+    if errors := check(wf, service) + source_errors(wf, slug):
+        print(f"{args.name}: {'; '.join(errors)}")
+        return 1
+    # An old link left on the clipboard must not pass for the new one.
+    subprocess.run(["pbcopy"], input=b"", check=True)
+    run_bridge("link", args.name)
+    # The bridge leaves the link on the clipboard as a URL.
+    raw = subprocess.run(
+        ["osascript", "-e", "the clipboard as «class url »"],
+        capture_output=True,
+        text=True,
+        check=True,
+    ).stdout
+    url = bytes.fromhex(raw.split()[-1].rstrip("»")).decode()
+    print(url)
+    record = url.rstrip("/").rsplit("/", 1)[-1]
+    api = f"https://www.icloud.com/shortcuts/api/records/{record}"
+    if (name := json.loads(fetch(api))["fields"]["name"]["value"]) != args.name:
+        print(f"{url}: link is for {name!r}")
+        return 1
+    return cmd_verify(argparse.Namespace(urls=[url]))
+
+
+def cmd_delete(args) -> int:
+    if args.name.lower() == BRIDGE.lower():
+        raise SystemExit("the bridge does not delete itself")
+    # Deleting syncs to every device; keep a copy that `open` imports back.
+    data = run_bridge("export", args.name)
+    if not data:
+        raise SystemExit(f"{args.name!r}: export returned nothing, not deleting")
+    stamp = time.strftime("%Y%m%d-%H%M%S")
+    backup = DIST / "deleted" / f"{args.name.replace('/', '_')} {stamp}.shortcut"
+    backup.parent.mkdir(parents=True, exist_ok=True)
+    backup.write_bytes(data)
+    run_bridge("delete", args.name)
+    print(f"deleted, backup: {backup}")
+    return 0
+
+
+def cmd_rename(args) -> int:
+    if BRIDGE.lower() in (args.name.lower(), args.new_name.lower()):
+        raise SystemExit("leave the bridge's name alone")
+    if installed_count(args.new_name):
+        raise SystemExit(f"{args.new_name!r} is taken")
+    run_bridge("rename", args.name, args.new_name)
+    return 0
+
+
+def cmd_move(args) -> int:
+    one_installed(args.name)
+    # The bridge's Move needs a picked folder; AppleScript takes a name.
+    script = (
+        'on run {s, f}\ntell application "Shortcuts Events"\n'
+        "set folder of (first shortcut whose name is s) to "
+        "(first folder whose name is f)\nend tell\nend run"
+    )
+    subprocess.run(["osascript", "-e", script, args.name, args.folder], check=True)
+    return 0
+
+
+def cmd_op(args) -> int:
+    """unfile and mkfolder: one bridge step, nothing to guard."""
+    run_bridge(args.op, args.name)
+    return 0
 
 
 def main() -> int:
@@ -241,6 +408,23 @@ def main() -> int:
     verify = sub.add_parser("verify")
     verify.add_argument("urls", nargs="+")
     verify.set_defaults(func=cmd_verify)
+    pull = sub.add_parser("pull")
+    pull.add_argument("name")
+    pull.add_argument("-o", "--output", help="file to write, default stdout")
+    pull.set_defaults(func=cmd_pull)
+    for name, func, extra in (
+        ("link", cmd_link, None),
+        ("delete", cmd_delete, None),
+        ("rename", cmd_rename, "new_name"),
+        ("move", cmd_move, "folder"),
+        ("unfile", cmd_op, None),
+        ("mkfolder", cmd_op, None),
+    ):
+        p = sub.add_parser(name)
+        p.add_argument("name")
+        if extra:
+            p.add_argument(extra)
+        p.set_defaults(func=func, op=name)
     args = parser.parse_args()
     return args.func(args)
 

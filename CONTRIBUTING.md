@@ -46,9 +46,27 @@ Every push to `main` publishes a beta (`vX.Y.Z-beta.N`). A maintainer publishes 
 
 ## Shortcut templates
 
-For maintainers, on a Mac:
+Anyone can change a template; the maintainer publishes it.
 
-1. Edit the template in `shortcuts/*.plist` and run `python3 scripts/shortcuts.py check` (part of `scripts/check.sh`). To catch your own values, list them one per line in `~/.config/iphone-alarms-sync/private.txt`.
-2. `python3 scripts/shortcuts.py build` signs the templates into `dist/`.
-3. Open each file, add it with the import questions left empty, then **Share → Copy iCloud Link**.
-4. `python3 scripts/shortcuts.py verify <link>…` checks what each link really serves. Only then update the links in `const.py`, the README and the [Shortcuts Setup Guide](docs/shortcuts.md).
+To change one:
+
+1. Edit the template in `shortcuts/*.plist` and run `python3 scripts/shortcuts.py check` (part of `scripts/check.sh` and CI). To catch your own values, list them one per line in `~/.config/iphone-alarms-sync/private.txt`.
+2. On a Mac, try it: `python3 scripts/shortcuts.py build --test-phone-id test` signs copies named "… (test)" into `dist/`. Open one, add it and run it. Home Assistant rejects the made-up ID, so nothing changes.
+3. Open the pull request. New links are published after the merge.
+
+To publish, on a Mac:
+
+1. `python3 scripts/shortcuts.py build` signs the templates into `dist/`.
+2. Open each file, add it with the import questions left empty, then **Share → Copy iCloud Link**.
+3. `python3 scripts/shortcuts.py verify <link>…` checks what each link really serves. Only then update the links in `const.py`, the README and the [Shortcuts Setup Guide](docs/shortcuts.md).
+
+### Optional: from the command line
+
+Publishing and other Shortcuts chores also run from a shell, so a script or an AI agent can do them. You don't need this to contribute. `build` also signs a helper shortcut from `scripts/bridge.py`: open `dist/iPhone Alarms Sync: Bridge.shortcut` once and add it. Its first link asks on the Mac to allow sharing and the clipboard; choose **Always Allow**. Then, with `python3 scripts/shortcuts.py`:
+
+- `link <template>` checks that the installed template matches its source, creates its iCloud link and verifies it.
+- `pull <name> [-o file]` saves an installed shortcut as a plist.
+- `delete <name>` deletes a shortcut on all your devices and keeps a copy in `dist/deleted/` that `open` adds back.
+- `rename <name> <new name>`, `move <name> <folder>`, `unfile <name>` and `mkfolder <name>` organize shortcuts and folders. `shortcuts list --folders` and `shortcuts list -f <folder>` show them. Deleting a folder is only possible in the Shortcuts app.
+
+Each command needs exactly one installed shortcut with that name. To install a file, `open` it and press **Add Shortcut**; adding a shortcut again keeps the old one under a new name ("… 1"), so delete it. With **Always Allow**, the helper shares and deletes any shortcut without asking, so add it only on your own devices.

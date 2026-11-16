@@ -6,3 +6,7 @@ Follow [CONTRIBUTING.md](CONTRIBUTING.md). In short:
 - Commit subjects start with a gitmoji, are at most 72 characters and are written for users (they become changelog lines).
 - User-facing text goes in `custom_components/iphone_alarms_sync/translations/en.json`.
 - Keep changes small: no options or abstractions that nobody asked for.
+- Shortcut templates: see CONTRIBUTING.md → Shortcut templates. On a Mac with the helper shortcut you can do the whole loop: edit, `check`, `build --test-phone-id test`, add the test copy, `shortcuts run "<name> (test)"`, `pull` it to compare, then `delete` it.
+  - To add a file, `open` it and press **Add Shortcut** (and **Replace**) through accessibility, leaving the import questions empty. If you can't press buttons, ask the maintainer to.
+  - macOS consent dialogs may be invisible to you: if `shortcuts run` waits, ask the maintainer to choose **Always Allow**.
+  - Create links, and delete anything except your own test copies, only when the maintainer asks.
