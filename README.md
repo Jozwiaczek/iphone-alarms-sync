@@ -29,7 +29,7 @@ Start with one shortcut. Add the others only if you need them.
 | + **Device Event** shortcut, one copy per event | The moment any alarm or the Wake-Up alarm goes off, is snoozed or stopped. Wind down, bedtime and waking up. | Lights, blinds and coffee when the alarm goes off. Dim the lights at bedtime. |
 | + **Alarm Event** shortcut, one copy per alarm and event | Goes off, snoozed and stopped for one alarm. | A full routine for *Work*, a gentle one for *Weekend*. |
 
-Sync is one-way, from the phone to Home Assistant. Several iPhones/iPads: add the integration once per device.
+Sync is one-way, from the phone to Home Assistant. Works on iPhone, iPad and Mac: add the integration once per device.
 
 ### Why Shortcuts?
 
@@ -39,7 +39,7 @@ Sync is one-way, from the phone to Home Assistant. Several iPhones/iPads: add th
 
 ## 🚀 Installation
 
-**Requirements:** Home Assistant 2026.8 or newer, iOS 17+ and the Home Assistant app 2026.9.3 or newer.
+**Requirements:** Home Assistant 2026.8 or newer, an iPhone or iPad with iOS 17+ or a Mac with Shortcuts automations, and the Home Assistant app 2026.9.3 or newer.
 
 ### Step 1: Install from the Marketplace
 
