@@ -34,9 +34,9 @@ body:
       description: Tick what is true. Skip this if the problem is not about a shortcut.
       options:
         - label: I ran the shortcut manually in the Shortcuts app.
-        - label: The **Perform action** step shows a Server and an `iphone_alarms_sync` action, not **Choose**.
+        - label: The Perform action step shows a Server and an iphone_alarms_sync action, not "Choose".
         - label: The Phone ID in the shortcut is the same as in Home Assistant.
-        - label: "**Home Wi-Fi** in the shortcut is empty, or I was on that network."
+        - label: The Home Wi-Fi value in the shortcut is empty, or I was on that network.
   - type: textarea
     id: description
     attributes:
