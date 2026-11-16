@@ -33,6 +33,8 @@ jobs:
         with:
           fetch-depth: 0
           persist-credentials: true
+          # Deploy key bypasses the "Protect main" ruleset, so the stable release can push CHANGELOG.md to main.
+          ssh-key: ${{ secrets.RELEASE_DEPLOY_KEY }}
 
       - name: Setup Node.js
         uses: actions/setup-node@v7
@@ -40,7 +42,7 @@ jobs:
           node-version: lts/*
 
       - name: Install dependencies
-        run: npm ci
+        run: npm ci --ignore-scripts # no install scripts near the deploy key
 
       - name: Beta release
         if: github.event_name == 'push'
