@@ -10,10 +10,6 @@ install   add a .shortcut file, pressing its buttons with Peekaboo if installed
 pull      save an installed shortcut as a plist
 link      create the iCloud link of an installed, clean template and verify it
 delete    delete an installed shortcut, keeping a copy in dist/deleted/
-rename    rename an installed shortcut
-move      move an installed shortcut into a folder
-unfile    take an installed shortcut out of its folder
-mkfolder  create a folder
 """
 
 import argparse
@@ -283,15 +279,14 @@ def one_installed(name: str) -> None:
         raise SystemExit(f"{name!r}: {count} installed, need exactly 1")
 
 
-def run_bridge(op: str, name: str, arg: str = "") -> bytes:
+def run_bridge(op: str, name: str) -> bytes:
     """Run one bridge operation on exactly one installed shortcut."""
-    if "|" in name + arg:  # the bridge splits its input on "|"
-        raise SystemExit(f"{name!r} {arg!r}: names with | are not supported")
-    if op != "mkfolder":
-        one_installed(name)
+    if "|" in name:  # the bridge splits its input on "|"
+        raise SystemExit(f"{name!r}: names with | are not supported")
+    one_installed(name)
     with tempfile.TemporaryDirectory() as tmp:
         inp, out = Path(tmp, "in.txt"), Path(tmp, "out")
-        inp.write_text(f"{op}|{name}|{arg}")
+        inp.write_text(f"{op}|{name}")
         # First runs of a new bridge wait for "Always Allow" on the Mac.
         subprocess.run(
             ["shortcuts", "run", BRIDGE, "-i", inp, "-o", out], check=True, timeout=300
@@ -349,11 +344,6 @@ def cmd_link(args) -> int:
     ).stdout
     url = bytes.fromhex(raw.split()[-1].rstrip("»")).decode()
     print(url)
-    record = url.rstrip("/").rsplit("/", 1)[-1]
-    api = f"https://www.icloud.com/shortcuts/api/records/{record}"
-    if (name := json.loads(fetch(api))["fields"]["name"]["value"]) != args.name:
-        print(f"{url}: link is for {name!r}")
-        return 1
     return cmd_verify(argparse.Namespace(urls=[url]))
 
 
@@ -370,27 +360,6 @@ def cmd_delete(args) -> int:
     backup.write_bytes(data)
     run_bridge("delete", args.name)
     print(f"deleted, backup: {backup}")
-    return 0
-
-
-def cmd_rename(args) -> int:
-    if BRIDGE.lower() in (args.name.lower(), args.new_name.lower()):
-        raise SystemExit("leave the bridge's name alone")
-    if installed_count(args.new_name):
-        raise SystemExit(f"{args.new_name!r} is taken")
-    run_bridge("rename", args.name, args.new_name)
-    return 0
-
-
-def cmd_move(args) -> int:
-    one_installed(args.name)
-    # The bridge's Move needs a picked folder; AppleScript takes a name.
-    script = (
-        'on run {s, f}\ntell application "Shortcuts Events"\n'
-        "set folder of (first shortcut whose name is s) to "
-        "(first folder whose name is f)\nend tell\nend run"
-    )
-    subprocess.run(["osascript", "-e", script, args.name, args.folder], check=True)
     return 0
 
 
@@ -437,12 +406,6 @@ def cmd_install(args) -> int:
     return 1
 
 
-def cmd_op(args) -> int:
-    """unfile and mkfolder: one bridge step, nothing to guard."""
-    run_bridge(args.op, args.name)
-    return 0
-
-
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     sub = parser.add_subparsers(required=True)
@@ -460,19 +423,10 @@ def main() -> int:
     pull.add_argument("name")
     pull.add_argument("-o", "--output", help="file to write, default stdout")
     pull.set_defaults(func=cmd_pull)
-    for name, func, extra in (
-        ("link", cmd_link, None),
-        ("delete", cmd_delete, None),
-        ("rename", cmd_rename, "new_name"),
-        ("move", cmd_move, "folder"),
-        ("unfile", cmd_op, None),
-        ("mkfolder", cmd_op, None),
-    ):
+    for name, func in (("link", cmd_link), ("delete", cmd_delete)):
         p = sub.add_parser(name)
         p.add_argument("name")
-        if extra:
-            p.add_argument(extra)
-        p.set_defaults(func=func, op=name)
+        p.set_defaults(func=func)
     args = parser.parse_args()
     return args.func(args)
 

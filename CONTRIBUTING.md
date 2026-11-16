@@ -62,12 +62,11 @@ To publish, on a Mac:
 
 ### Optional: from the command line
 
-Publishing and other Shortcuts chores also run from a shell, so a script or an AI agent can do them. You don't need this to contribute. `build` also signs a helper shortcut from `scripts/bridge.py`: open `dist/iPhone Alarms Sync: Bridge.shortcut` once and add it. Its first link asks on the Mac to allow sharing and the clipboard; choose **Always Allow**. Then, with `python3 scripts/shortcuts.py`:
+Publishing and testing templates also run from a shell, so a script or an AI agent can do them. You don't need this to contribute. `build` also signs a helper shortcut from `scripts/bridge.py`: open `dist/iPhone Alarms Sync: Bridge.shortcut` once and add it. Its first link asks on the Mac to allow sharing and the clipboard; choose **Always Allow**. Then, with `python3 scripts/shortcuts.py`:
 
 - `install <file>` adds a `.shortcut` file. With [Peekaboo](https://github.com/openclaw/Peekaboo) installed and allowed Accessibility and Screen Recording, it presses **Add Shortcut** (or **Replace**) itself; otherwise press it yourself.
 - `link <template>` checks that the installed template matches its source, creates its iCloud link and verifies it.
 - `pull <name> [-o file]` saves an installed shortcut as a plist.
 - `delete <name>` deletes a shortcut on all your devices and keeps a copy in `dist/deleted/` that `open` adds back.
-- `rename <name> <new name>`, `move <name> <folder>`, `unfile <name>` and `mkfolder <name>` organize shortcuts and folders. `shortcuts list --folders` and `shortcuts list -f <folder>` show them. Deleting a folder is only possible in the Shortcuts app.
 
 Each command needs exactly one installed shortcut with that name. Adding a shortcut again keeps the old one under a new name ("… 1"), so delete it. With **Always Allow**, the helper shares and deletes any shortcut without asking, so add it only on your own devices.

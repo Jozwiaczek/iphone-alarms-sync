@@ -1,8 +1,7 @@
 """The "iPhone Alarms Sync: Bridge" helper shortcut; `shortcuts.py build` signs it.
 
-Input "op|name|arg". After finding the shortcuts named name, one op runs:
-export (output the file), link (iCloud link to the clipboard), delete,
-rename (to arg), unfile (out of its folder), mkfolder (create folder name).
+Input "op|name". After finding the shortcuts named name, one op runs:
+export (output the file), link (iCloud link to the clipboard) or delete.
 """
 
 import uuid
@@ -86,7 +85,6 @@ def when(op: str, body: list[dict]) -> list[dict]:
     return [start, *body, end]
 
 
-ARG = att(output("Arg", "arg"))
 lookup = [
     step(
         "is.workflow.actions.text.split",
@@ -96,8 +94,7 @@ lookup = [
         WFTextCustomSeparator="|",
     ),
     item("op", "Op", WFItemSpecifier="First Item"),
-    item("name", "Name", WFItemSpecifier="Item At Index", WFItemIndex=2),
-    item("arg", "Arg", WFItemSpecifier="Last Item"),
+    item("name", "Name", WFItemSpecifier="Last Item"),
     step("is.workflow.actions.getmyworkflows", UUID=uid("all")),
     step(
         "is.workflow.actions.repeat.each",
@@ -145,16 +142,6 @@ ops = {
         ),
     ],
     "delete": [intent("DeleteWorkflowAction", "delete", entities=MATCH)],
-    "rename": [
-        intent(
-            "RenameShortcutAction", "rename", shortcut=MATCH, name=token(ARG["Value"])
-        )
-    ],
-    # Without a folder, Move takes the shortcut out of its folder.
-    "unfile": [intent("MoveShortcutToFolderAction", "unfile", shortcuts=MATCH)],
-    "mkfolder": [
-        intent("CreateFolderAction", "mkfolder", name=token(output("Name", "name")))
-    ],
 }
 
 workflow = {
