@@ -10,7 +10,7 @@ dev = [
     "mypy",
     "pytest-cov",
     # Pins the Home Assistant version the tests run against.
-    "pytest-homeassistant==2026.11.1",
+    "pytest-homeassistant==2026.11.2",
     "ruff",
     "segno==1.6.6",
 ]
