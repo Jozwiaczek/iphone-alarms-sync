@@ -6,6 +6,7 @@ build   sign the templates and the bridge into dist/ (macOS only)
 verify  check what an iCloud link really serves
 
 On a Mac with the bridge shortcut (scripts/bridge.py) installed:
+install   add a .shortcut file, pressing its buttons with Peekaboo if installed
 pull      save an installed shortcut as a plist
 link      create the iCloud link of an installed, clean template and verify it
 delete    delete an installed shortcut, keeping a copy in dist/deleted/
@@ -20,6 +21,7 @@ import base64
 import json
 import plistlib
 import re
+import shutil
 import subprocess
 import sys
 import tempfile
@@ -392,6 +394,49 @@ def cmd_move(args) -> int:
     return 0
 
 
+def ids() -> set[str]:
+    return set(
+        subprocess.run(
+            ["shortcuts", "list", "--show-identifiers"],
+            capture_output=True,
+            text=True,
+            check=True,
+        ).stdout.splitlines()
+    )
+
+
+def cmd_install(args) -> int:
+    name = Path(args.file).stem  # Shortcuts names the import after the file
+    before = ids()
+    subprocess.run(["open", args.file], check=True)
+    if not shutil.which("peekaboo"):
+        print("Press Add Shortcut in the Shortcuts window.")
+        return 0
+    # Add Shortcut, then Add Shortcut again after import questions, or Replace.
+    for _ in range(5):
+        time.sleep(1)
+        pids = subprocess.run(["pgrep", "-x", "Shortcuts"], capture_output=True)
+        if not pids.stdout:
+            continue  # the app is still starting
+        # A bare "Shortcuts" also matches the shortcuts CLI; the Peekaboo
+        # bridge has no Accessibility, so use the caller's own permissions.
+        target = ["--app", f"PID:{pids.stdout.split()[0].decode()}", "--no-remote"]
+        subprocess.run(["peekaboo", "see", *target, "--json"], capture_output=True)
+        for button in ("Replace", "Add Shortcut"):
+            click = ["peekaboo", "click", button, *target, "--wait-for", "0"]
+            if subprocess.run(click, capture_output=True).returncode == 0:
+                break
+        time.sleep(1)
+        # Each import gets a new identifier, even when it replaces one.
+        if added := [line for line in ids() - before if name in line]:
+            print(f"added {added[0]}")
+            if installed_count(name) > 1:
+                print("the older copy gets a new name (… 1): delete it")
+            return 0
+    print(f"{name!r} not added: check the Shortcuts window and Peekaboo's permissions")
+    return 1
+
+
 def cmd_op(args) -> int:
     """unfile and mkfolder: one bridge step, nothing to guard."""
     run_bridge(args.op, args.name)
@@ -408,6 +453,9 @@ def main() -> int:
     verify = sub.add_parser("verify")
     verify.add_argument("urls", nargs="+")
     verify.set_defaults(func=cmd_verify)
+    install = sub.add_parser("install")
+    install.add_argument("file")
+    install.set_defaults(func=cmd_install)
     pull = sub.add_parser("pull")
     pull.add_argument("name")
     pull.add_argument("-o", "--output", help="file to write, default stdout")
