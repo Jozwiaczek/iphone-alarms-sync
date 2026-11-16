@@ -45,3 +45,6 @@ node_modules/
 # Signed shortcut templates (scripts/shortcuts.py build)
 dist/
 .next-version
+
+# Created by pytest-homeassistant during tests
+tests/testing_config/
