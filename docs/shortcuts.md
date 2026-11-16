@@ -105,13 +105,12 @@ When importing, you'll be asked:
 1. Open **Shortcuts** app → **Automation** tab
 2. Tap **+** → **Personal Automation**
 3. Choose trigger:
-   - **Alarm** → **When Alarm Goes Off** (specific alarm)
-   - Or use **When Alarm Goes Off** with alarm selection
+   - **Alarm** → **Goes Off**, **Is Snoozed** or **Is Stopped**, then pick the alarm
 4. Add action: **Run Shortcut** → **"iPhone Alarms Sync: Alarm Event"**
 5. Enable **"Run Immediately"**
 6. Tap **Done**
 
-**Note:** The shortcut will use the alarm that triggered the automation. Make sure the Alarm ID in import questions matches the alarm you want to track.
+**Note:** The shortcut reports the alarm whose ID you entered, not the one that rang. Pick the same alarm in the automation. One copy sends one event of one alarm.
 
 ## Event Type Mapping
 

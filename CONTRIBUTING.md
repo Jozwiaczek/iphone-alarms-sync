@@ -58,7 +58,7 @@ To publish, on a Mac:
 
 1. `python3 scripts/shortcuts.py build` signs the templates into `dist/`.
 2. Open each file, add it with the import questions left empty, then **Share → Copy iCloud Link**.
-3. `python3 scripts/shortcuts.py verify <link>…` checks what each link really serves. Only then update the links in `const.py`, the README and the [Shortcuts Setup Guide](docs/shortcuts.md).
+3. `python3 scripts/shortcuts.py verify <link>…` checks what each link really serves. Only then update the links in `const.py` and the [Shortcuts Setup Guide](docs/shortcuts.md).
 
 ### Optional: from the command line
 
