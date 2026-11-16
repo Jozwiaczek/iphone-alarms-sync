@@ -26,14 +26,10 @@ Start with one shortcut. Add the others only if you need them.
 | On the phone | Home Assistant gets | Ideas |
 |---|---|---|
 | **Sync** shortcut (required) | A device per alarm with its time, repeat days and enabled state. Next alarm sensors. | Warm the bedroom before the alarm. Brighten the lights slowly. Remind you when no alarm is set. |
-| + **Device Event** shortcut | The moment any alarm or the Wake-Up alarm goes off, is snoozed or stopped. Wind down, bedtime and waking up. | Lights, blinds and coffee when the alarm goes off. Dim the lights at bedtime. |
-| + **Alarm Event** shortcut | The same moments for one alarm. | A full routine for *Work*, a gentle one for *Weekend*. |
+| + **Device Event** shortcut, one copy per event | The moment any alarm or the Wake-Up alarm goes off, is snoozed or stopped. Wind down, bedtime and waking up. | Lights, blinds and coffee when the alarm goes off. Dim the lights at bedtime. |
+| + **Alarm Event** shortcut, one copy per alarm and event | Goes off, snoozed and stopped for one alarm. | A full routine for *Work*, a gentle one for *Weekend*. |
 
-- Alarms changed or deleted on the phone update on the next sync.
-- A sensor warns you when an alarm rang but its event never reached Home Assistant.
-- Several iPhones/iPads: add the integration once per device.
-
-Sync is one-way, from the phone to Home Assistant.
+Sync is one-way, from the phone to Home Assistant. Several iPhones/iPads: add the integration once per device.
 
 ### Why Shortcuts?
 
