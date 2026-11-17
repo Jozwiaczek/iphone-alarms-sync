@@ -92,6 +92,8 @@ Most problems come from the shortcut: see the [Troubleshooting guide](docs/short
 
 Reporting a bug? Attach the diagnostics: Settings → Devices & services → iPhone Alarms Sync → ⋮ → Download diagnostics.
 
+Still stuck? Ask in [Q&A](https://github.com/Jozwiaczek/iphone-alarms-sync/discussions/categories/q-a).
+
 ## 📚 More
 
 - [Shortcuts Setup Guide](docs/shortcuts.md): every shortcut, step by step
@@ -101,7 +103,7 @@ Reporting a bug? Attach the diagnostics: Settings → Devices & services → iPh
 
 ## 🤝 Contributing
 
-Bug reports, ideas and pull requests are welcome. [CONTRIBUTING.md](CONTRIBUTING.md) shows how to set up, check a change and write the commit message.
+Bug reports, ideas and pull requests are welcome. [CONTRIBUTING.md](CONTRIBUTING.md) shows where to ask a question, report a bug or suggest an idea, and how to send a pull request.
 
 ## ☕ Support
 
