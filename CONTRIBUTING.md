@@ -38,11 +38,40 @@ CI runs the same checks. The maintainer reviews the pull request and squash-merg
 
 ## Pull request title
 
-The pull request is squash-merged, so its title becomes the commit and a line in the changelog. Write it for users, start it with a [gitmoji](https://gitmoji.dev) and keep it at most 72 characters, for example `🐛 Fix next alarm after midnight`. The emoji decides the changelog section and the version bump: ✨ is a minor release, everything else a patch. The maintainer fixes the title on merge if needed.
+The pull request is squash-merged, so its title becomes the commit, the version bump and a line in the release notes that users read in Home Assistant. Write it for users, start it with a [gitmoji](https://gitmoji.dev) and keep it at most 72 characters, for example `🐛 Fix next alarm after midnight`. CI checks the title.
+
+Pick the most specific emoji: it is shown in front of the line. The [gitmoji spec](https://gitmoji.dev/specification) decides the bump.
+
+| Changes something users get | Emoji |
+| --- | --- |
+| Breaking change (users must redo setup, automations break): major release | 💥 |
+| New feature: minor release | ✨ |
+| Bug fix, urgent fix, small fix | 🐛 🚑️ 🩹 |
+| Look of setup screens and entities | 💄 |
+| Texts and wording, a new language | 💬 🌐 |
+| Clearer errors and messages | 🥅 |
+| Faster, safer | ⚡️ 🔒️ |
+| Migration of saved data | 🗃️ |
+| Follow a change in Home Assistant or iOS Shortcuts | 👽️ |
+| Icons and brand images | 🍱 |
+| Deprecate a feature | 🗑️ |
+| The integration's own requirement (`manifest.json`) | ⬆️ |
+
+| Changes nothing users get: no release, folded under "Under the hood" | Emoji |
+| --- | --- |
+| Documentation, README | 📝 |
+| Tests | ✅ |
+| CI, release tooling, development dependencies | 👷 |
+| Development scripts, developer experience | 🔨 🧑‍💻 |
+| Refactoring, removing code or files | ♻️ 🔥 |
+
+Use 🔧 only for configuration users get (`hacs.json`, `manifest.json`). Removing a feature is 💥 or 🗑️, not 🔥. To see the notes the next release gets: `node release/gitmoji.js` (after `npm install`).
+
+The maintainer fixes the title on merge if needed.
 
 ## Releases
 
-Every push to `main` publishes a beta (`vX.Y.Z-beta.N`). A maintainer publishes the stable release by running the **Release** workflow manually; it collects all changes since the last stable release into `CHANGELOG.md`. Nothing is published unless the checks pass.
+Every push to `main` with a change users get publishes a beta (`vX.Y.Z-beta.N`). A maintainer publishes the stable release by running the **Release** workflow manually; it collects all changes since the last stable release into the release notes and `CHANGELOG.md`. Betas get the same notes. Nothing is published unless the checks pass.
 
 ## Shortcut templates
 

@@ -1,4 +1,4 @@
-<!-- The PR title becomes the changelog line: start it with a gitmoji, e.g. "🐛 Fix next alarm after midnight". -->
+<!-- The PR title becomes the changelog line: start it with a gitmoji, e.g. "🐛 Fix next alarm after midnight". 📝 ✅ 👷 ship no release; see CONTRIBUTING.md → Pull request title. -->
 
 ## What and why
 
