@@ -184,6 +184,7 @@ Settings → Devices & services → iPhone Alarms Sync → **Configure**:
 - **Repair issue "stopped sending alarm data":** Home Assistant raises it when a phone sends nothing for 7 days. Run the shortcut manually to see the error.
 - **Alarm event missed is on:** the phone couldn't reach Home Assistant when the alarm rang. See [Troubleshooting](docs/shortcuts.md#troubleshooting).
 - **Reporting a bug:** attach the diagnostics file (Settings → Devices & services → iPhone Alarms Sync → ⋮ → Download diagnostics).
+- **Still stuck?** Ask in [Q&A](https://github.com/Jozwiaczek/iphone-alarms-sync/discussions/categories/q-a).
 
 ## 📚 Documentation
 
@@ -192,7 +193,7 @@ Settings → Devices & services → iPhone Alarms Sync → **Configure**:
 
 ## 🤝 Contributing
 
-Bug reports, ideas and pull requests are welcome. [CONTRIBUTING.md](CONTRIBUTING.md) shows how to set up, check a change and write the commit message.
+Bug reports, ideas and pull requests are welcome. [CONTRIBUTING.md](CONTRIBUTING.md) shows where to ask a question, report a bug or suggest an idea, and how to send a pull request.
 
 ## ☕ Support
 
