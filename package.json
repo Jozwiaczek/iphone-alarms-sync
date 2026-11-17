@@ -11,6 +11,6 @@
     "commitlint-config-gitmoji": "^2.3.0",
     "gitmojis": "^3.15.0",
     "husky": "^9.0.0",
-    "semantic-release": "^25.0.9"
+    "semantic-release": "^26.0.1"
   }
 }
