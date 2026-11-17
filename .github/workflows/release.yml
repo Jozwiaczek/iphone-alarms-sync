@@ -53,6 +53,8 @@ jobs:
         run: |
           npx semantic-release --dry-run
           [ -f .next-version ] || exit 0 # no releasable commits
+          # Same notes as the next stable release: everything since the last stable tag.
+          node release/gitmoji.js > notes.md
           VERSION="$(cat .next-version)-beta.${{ github.run_number }}"
           jq --arg v "$VERSION" '.version = $v' "$MANIFEST" > tmp.json && mv tmp.json "$MANIFEST"
           git config user.name "github-actions[bot]"
@@ -61,7 +63,7 @@ jobs:
           git commit -m ":bookmark: v$VERSION" -- "$MANIFEST"
           git tag "v$VERSION"
           git push origin "v$VERSION"
-          gh release create "v$VERSION" --prerelease --generate-notes --title "v$VERSION"
+          gh release create "v$VERSION" --prerelease --notes-file notes.md --title "v$VERSION"
 
       - name: Stable release
         if: github.event_name == 'workflow_dispatch'

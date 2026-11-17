@@ -1,4 +1,6 @@
 version: 2
+# 👷: these bumps only touch CI, release tooling and test dependencies, so they ship no release.
+# The integration's own requirements live in manifest.json and are bumped by hand with ⬆️.
 updates:
   - package-ecosystem: github-actions
     directory: /
@@ -8,7 +10,7 @@ updates:
       actions:
         patterns: ["*"]
     commit-message:
-      prefix: "⬆️"
+      prefix: "👷"
 
   - package-ecosystem: uv
     directory: /
@@ -18,7 +20,7 @@ updates:
       python:
         patterns: ["*"]
     commit-message:
-      prefix: "⬆️"
+      prefix: "👷"
 
   - package-ecosystem: npm
     directory: /
@@ -27,9 +29,5 @@ updates:
     groups:
       npm:
         patterns: ["*"]
-    ignore:
-      # semantic-release-gitmoji supports only semantic-release < 26.
-      - dependency-name: semantic-release
-        versions: [">=26"]
     commit-message:
-      prefix: "⬆️"
+      prefix: "👷"
