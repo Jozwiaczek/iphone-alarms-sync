@@ -40,6 +40,8 @@ CI runs the same checks. The maintainer reviews the pull request and squash-merg
 
 The pull request is squash-merged, so its title becomes the commit, the version bump and a line in the release notes that users read in Home Assistant. Write it for users, start it with a [gitmoji](https://gitmoji.dev) and keep it at most 72 characters, for example `🐛 Fix next alarm after midnight`. CI checks the title.
 
+One pull request, one change users get: a fix and a feature are two pull requests, so each gets its own line and the right version bump. Tests, docs and refactoring that belong to the change stay in it.
+
 Pick the most specific emoji: it is shown in front of the line. The [gitmoji spec](https://gitmoji.dev/specification) decides the bump.
 
 | Changes something users get | Emoji |
