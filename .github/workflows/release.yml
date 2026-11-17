@@ -11,6 +11,10 @@ on:
 
 concurrency: release
 
+# Validate reads only; the release job asks for its own write access below.
+permissions:
+  contents: read
+
 jobs:
   validate:
     if: github.ref == 'refs/heads/main'
