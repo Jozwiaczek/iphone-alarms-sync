@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import pytest
 from freezegun.api import FrozenDateTimeFactory
 from homeassistant import config_entries
 from homeassistant.core import HomeAssistant
@@ -15,14 +16,17 @@ from custom_components.iphone_alarms_sync.const import DOMAIN
 from .conftest import ALARM_ID, PHONE_ID
 
 
-async def test_custom_name_creates_entry(hass: HomeAssistant) -> None:
+async def _start_flow(hass: HomeAssistant, step: str) -> dict:
     result = await hass.config_entries.flow.async_init(
         DOMAIN, context={"source": config_entries.SOURCE_USER}
     )
-    assert result["type"] is FlowResultType.MENU
-    result = await hass.config_entries.flow.async_configure(
-        result["flow_id"], {"next_step_id": "custom_name"}
+    return await hass.config_entries.flow.async_configure(
+        result["flow_id"], {"next_step_id": step}
     )
+
+
+async def test_custom_name_creates_entry(hass: HomeAssistant) -> None:
+    result = await _start_flow(hass, "custom_name")
     result = await hass.config_entries.flow.async_configure(
         result["flow_id"], {"phone_name": "  !!  "}
     )
@@ -42,12 +46,7 @@ async def test_custom_name_creates_entry(hass: HomeAssistant) -> None:
 async def test_duplicate_name_aborts(
     hass: HomeAssistant, entry: MockConfigEntry
 ) -> None:
-    result = await hass.config_entries.flow.async_init(
-        DOMAIN, context={"source": config_entries.SOURCE_USER}
-    )
-    result = await hass.config_entries.flow.async_configure(
-        result["flow_id"], {"next_step_id": "custom_name"}
-    )
+    result = await _start_flow(hass, "custom_name")
     result = await hass.config_entries.flow.async_configure(
         result["flow_id"], {"phone_name": "John iPhone"}
     )
@@ -186,3 +185,86 @@ async def test_event_shortcuts_lists_alarm_time_label_and_id(
     assert result["description_placeholders"]["alarms_list"] == (
         f"- 07:00 Wake: `{ALARM_ID}`"
     )
+
+
+async def test_mobile_app_device_creates_entry(hass: HomeAssistant) -> None:
+    mobile_app = MockConfigEntry(domain="mobile_app")
+    mobile_app.add_to_hass(hass)
+    device = dr.async_get(hass).async_get_or_create(
+        config_entry_id=mobile_app.entry_id,
+        identifiers={("mobile_app", "jane")},
+        name="Jane's iPhone",
+    )
+
+    result = await _start_flow(hass, "select_mobile_app")
+    assert result["step_id"] == "select_mobile_app"
+    result = await hass.config_entries.flow.async_configure(
+        result["flow_id"], {"mobile_app_device_id": device.id}
+    )
+    assert result["step_id"] == "confirm"
+    result = await hass.config_entries.flow.async_configure(
+        result["flow_id"], {"sync_disabled_alarms": True}
+    )
+    assert result["type"] is FlowResultType.CREATE_ENTRY
+    assert result["title"] == "Jane's iPhone Alarms"
+    assert result["result"].unique_id == "janes_iphone_alarms"
+    assert result["data"]["mobile_app_device_id"] == device.id
+
+
+async def test_mobile_app_step_aborts_without_devices(hass: HomeAssistant) -> None:
+    result = await _start_flow(hass, "select_mobile_app")
+    assert result["type"] is FlowResultType.ABORT
+    assert result["reason"] == "no_mobile_app_devices"
+
+
+async def test_options_abort_when_not_loaded(hass: HomeAssistant) -> None:
+    entry = MockConfigEntry(domain=DOMAIN, unique_id=PHONE_ID, data={})
+    entry.add_to_hass(hass)
+    result = await hass.config_entries.options.async_init(entry.entry_id)
+    assert result["type"] is FlowResultType.ABORT
+    assert result["reason"] == "integration_not_ready"
+
+
+async def test_edit_device_rejects_empty_name(
+    hass: HomeAssistant, entry: MockConfigEntry
+) -> None:
+    result = await hass.config_entries.options.async_init(entry.entry_id)
+    result = await hass.config_entries.options.async_configure(
+        result["flow_id"], {"next_step_id": "edit_device"}
+    )
+    result = await hass.config_entries.options.async_configure(
+        result["flow_id"],
+        {
+            "phone_name": "  !!  ",
+            "mobile_app_device_id": "none",
+            "sync_disabled_alarms": True,
+        },
+    )
+    assert result["errors"] == {"base": "required"}
+    assert entry.unique_id == PHONE_ID
+
+
+async def test_edit_device_leaves_other_entities(
+    hass: HomeAssistant, entry: MockConfigEntry
+) -> None:
+    other = er.async_get(hass).async_get_or_create(
+        "sensor", DOMAIN, "not_this_phone", config_entry=entry
+    )
+    await _edit_device(hass, entry, phone_name="Jane Phone")
+
+    assert entry.unique_id == "jane_phone"
+    assert er.async_get(hass).async_get(other.entity_id).unique_id == "not_this_phone"
+
+
+@pytest.mark.parametrize("step", ["events", "sync_shortcut", "event_shortcuts"])
+async def test_info_steps_return_to_menu(
+    hass: HomeAssistant, entry: MockConfigEntry, step: str
+) -> None:
+    result = await hass.config_entries.options.async_init(entry.entry_id)
+    result = await hass.config_entries.options.async_configure(
+        result["flow_id"], {"next_step_id": step}
+    )
+    assert result["step_id"] == step
+    result = await hass.config_entries.options.async_configure(result["flow_id"], {})
+    assert result["type"] is FlowResultType.MENU
+    assert result["step_id"] == "init"
