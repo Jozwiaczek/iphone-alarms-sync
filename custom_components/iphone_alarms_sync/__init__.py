@@ -28,6 +28,7 @@ from .const import (
     DOMAIN,
     EVENT_ALARM_EVENT,
     EVENT_BEDTIME_STARTS,
+    EVENT_GOES_OFF,
     EVENT_WAKING_UP,
     EVENT_WIND_DOWN_STARTS,
     MISSED_EVENT_GRACE,
@@ -45,11 +46,7 @@ from .coordinator import (
     IPhoneAlarmsSyncData,
     PhoneData,
 )
-from .utils import (
-    calculate_next_alarm_datetime,
-    calculate_next_occurrence,
-    extract_alarm_uuid,
-)
+from .utils import calculate_next_alarm_datetime, extract_alarm_uuid, rings_at
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -216,6 +213,7 @@ def _fire_events(
             "event": event.event,
             "event_id": event.event_id,
             "occurred_at": event.occurred_at,
+            "estimated": event.estimated,
         },
     )
     device = dr.async_get(hass).async_get_device_by_identifier(
@@ -226,6 +224,19 @@ def _fire_events(
         hass.bus.async_fire(
             f"{DOMAIN}_{event.event}", {"device_id": device.id, "subtype": subtype}
         )
+
+
+def _fire_alarm_events(
+    hass: HomeAssistant, entry: IPhoneAlarmsSyncConfigEntry, event: AlarmEvent
+) -> None:
+    """Fire the events of one alarm (not of the phone)."""
+    _fire_events(
+        hass,
+        entry,
+        event,
+        (DOMAIN, event.phone_id, event.alarm_id),
+        TRIGGER_SUBTYPE_ALARM,
+    )
 
 
 @callback
@@ -244,12 +255,7 @@ def _async_check_missed_event(
     # Only expect an event when this phone reports "any alarm" or this very alarm.
     if not (phone.any_last_event_goes_off_at or alarm.last_event_goes_off_at):
         return
-    # iOS turns a one-time alarm off after it rings, but HA learns that only on the
-    # next sync, so check only its first ring after the last sync.
-    synced_at = dt_util.parse_datetime(phone.synced_at or "")
-    if not (alarm.repeats and alarm.repeat_days) and (
-        synced_at is None or calculate_next_occurrence(alarm, synced_at) != alarm_at
-    ):
+    if not rings_at(alarm, alarm_at, dt_util.parse_datetime(phone.synced_at or "")):
         return
     # Anything from the phone since the alarm (an event, or a sync that may also have
     # created this alarm) proves the connection; _resolve_call clears the flag too.
@@ -315,19 +321,25 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
             )
         alarm_id = extract_alarm_uuid(call.data[CONF_ALARM_ID])
         entry, coordinator = _resolve_call(hass, call)
-        if coordinator.get_alarm(alarm_id) is None:
+        alarm = coordinator.get_alarm(alarm_id)
+        if alarm is None:
             raise ServiceValidationError(
                 f"Unknown Alarm ID '{alarm_id}'. Run the Sync shortcut, then copy "
                 f"the Alarm ID from {_OPTIONS} → Event Shortcuts Setup."
             )
+        already_fired = False
+        if event == EVENT_GOES_OFF and alarm.estimate_goes_off:
+            # The shortcut works for this alarm, so stop estimating. An estimate
+            # fired for this very ring already ran the automations.
+            alarm.estimate_goes_off = False
+            estimated_at = coordinator.estimated_at.get(alarm_id)
+            already_fired = (
+                estimated_at is not None
+                and dt_util.utcnow() - estimated_at < MISSED_EVENT_GRACE
+            )
         event_obj = coordinator.report_alarm_event(alarm_id, event)
-        _fire_events(
-            hass,
-            entry,
-            event_obj,
-            (DOMAIN, coordinator.phone.phone_id, alarm_id),
-            TRIGGER_SUBTYPE_ALARM,
-        )
+        if not already_fired:
+            _fire_alarm_events(hass, entry, event_obj)
 
     async def handle_report_device_event(call: ServiceCall) -> None:
         _log_call(call)
@@ -355,7 +367,7 @@ def _async_track_alarm_times(
     entry: IPhoneAlarmsSyncConfigEntry,
     coordinator: IPhoneAlarmsSyncCoordinator,
 ) -> None:
-    """At each alarm's time, record it so Last Alarm and Last Occurrence update."""
+    """At each alarm's time, record it and fire the estimated "goes off"."""
     tick_at: datetime | None = None
     cancel_tick: CALLBACK_TYPE | None = None
 
@@ -376,7 +388,16 @@ def _async_track_alarm_times(
         def _tick(_now: datetime) -> None:
             nonlocal tick_at, cancel_tick
             tick_at = cancel_tick = None
-            coordinator.record_alarm_time(next_at)
+            for alarm in coordinator.record_alarm_time(next_at):
+                if alarm.estimate_goes_off:
+                    coordinator.estimated_at[alarm.alarm_id] = next_at
+                    _fire_alarm_events(
+                        hass,
+                        entry,
+                        coordinator.new_event(
+                            alarm.alarm_id, EVENT_GOES_OFF, estimated=True
+                        ),
+                    )
             _schedule()
 
         cancel_tick = async_track_point_in_time(hass, _tick, next_at)

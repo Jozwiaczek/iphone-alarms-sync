@@ -31,7 +31,7 @@ TRIGGER_SUBTYPE_WAKEUP = "wakeup"
 
 DEFAULT_SNOOZE_TIME = 9
 
-PLATFORMS = ["binary_sensor", "event", "number", "sensor"]
+PLATFORMS = ["binary_sensor", "event", "number", "sensor", "switch"]
 
 SHORTCUT_SYNC_URL = "https://www.icloud.com/shortcuts/f8015b2fa07f4c4cbab8126816137ff5"
 SHORTCUT_ALARM_EVENT_URL = (
@@ -41,6 +41,7 @@ SHORTCUT_DEVICE_EVENT_URL = (
     "https://www.icloud.com/shortcuts/1024bb19477e425e9f0ae8a8a04dfa7c"
 )
 
+DOCS_ESTIMATED_URL = "https://github.com/Jozwiaczek/iphone-alarms-sync/blob/main/docs/shortcuts.md#estimated-goes-off"
 DOCS_TROUBLESHOOTING_URL = "https://github.com/Jozwiaczek/iphone-alarms-sync/blob/main/docs/shortcuts.md#troubleshooting"
 
 # A phone that sent nothing for this long likely has a broken shortcut.

@@ -33,6 +33,22 @@ When importing, you'll be asked:
 
 Alarms sync automatically when you close the Clock app.
 
+Siri, Control Center and the Watch change alarms without opening Clock. To catch those too, add a second automation: **Time of Day** → daily → **Run Shortcut** → **"iPhone Alarms Sync: Sync"** → **Run Immediately**. It also stops the *no data* repair on a phone whose alarms never change.
+
+### Estimated goes off
+
+With the Sync shortcut alone, each alarm fires **Goes off** in Home Assistant at its scheduled time. No event shortcut is needed. The event is marked `estimated: true`.
+
+Know its limits:
+
+1. Only *goes off*. Snoozed and stopped need the event shortcuts.
+2. It uses the last sync. A change made by Siri, Control Center or the Watch is unknown until the next sync.
+3. It fires even when the device is off, asleep (a Mac), away from home or in another time zone. Add a condition such as "I am home" to your automation if that matters.
+4. It does not fire when Home Assistant is not running at that minute.
+5. The ring after a snooze is not estimated. Neither is an alarm without a device in Home Assistant, such as the Sleep Wake-Up alarm or an alarm set on the Watch.
+
+Each alarm has an **Estimated goes off** switch. It is on by default, unless the phone already reported *goes off* through a shortcut before. When the Alarm Event shortcut of an alarm reports *Goes off*, the switch turns off by itself and the real event takes over.
+
 ## Shortcut 2: Device Event
 
 **Optional** - Reports events from device-level alarms (Wake-Up, any alarm, or sleep events).
