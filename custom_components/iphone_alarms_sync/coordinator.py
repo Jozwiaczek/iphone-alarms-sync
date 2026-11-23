@@ -23,7 +23,7 @@ from .const import (
     DEFAULT_SNOOZE_TIME,
     DOMAIN,
 )
-from .utils import extract_alarm_uuid, rings_at
+from .utils import extract_alarm_uuid, normalize_weekday, rings_at
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -132,6 +132,10 @@ type IPhoneAlarmsSyncConfigEntry = ConfigEntry[IPhoneAlarmsSyncData]
 def _alarm_from_options(key: str, stored: dict[str, Any]) -> AlarmData:
     values = {k: v for k, v in stored.items() if k in ALARM_FIELDS}
     values[CONF_ALARM_ID] = extract_alarm_uuid(stored.get(CONF_ALARM_ID, key))
+    # Alarms saved before the #43 fix keep the days in the iPhone's language.
+    values["repeat_days"] = [
+        normalize_weekday(d) for d in values.get("repeat_days", [])
+    ]
     return AlarmData(**values)
 
 

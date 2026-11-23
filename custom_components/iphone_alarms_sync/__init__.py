@@ -46,7 +46,12 @@ from .coordinator import (
     IPhoneAlarmsSyncData,
     PhoneData,
 )
-from .utils import calculate_next_alarm_datetime, extract_alarm_uuid, rings_at
+from .utils import (
+    calculate_next_alarm_datetime,
+    extract_alarm_uuid,
+    normalize_weekday,
+    rings_at,
+)
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -83,7 +88,9 @@ ALARM_SCHEMA = vol.Schema(
         vol.Optional("hour"): vol.All(vol.Coerce(int), vol.Range(0, 23)),
         vol.Optional("minute"): vol.All(vol.Coerce(int), vol.Range(0, 59)),
         vol.Optional("repeats"): cv.boolean,
-        vol.Optional("repeat_days"): vol.All(cv.ensure_list, [cv.string]),
+        vol.Optional("repeat_days"): vol.All(
+            cv.ensure_list, [vol.All(cv.string, normalize_weekday)]
+        ),
         vol.Optional("allows_snooze"): cv.boolean,
         vol.Optional("snooze_time"): vol.All(vol.Coerce(int), vol.Range(1, 30)),
     },

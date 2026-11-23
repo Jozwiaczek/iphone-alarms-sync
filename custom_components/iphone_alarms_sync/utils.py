@@ -1,10 +1,14 @@
 from __future__ import annotations
 
+import logging
 import re
+import unicodedata
 from datetime import datetime, time, timedelta
 from typing import TYPE_CHECKING
 
 from homeassistant.util import dt as dt_util
+
+from .weekdays import WEEKDAY_NAMES
 
 if TYPE_CHECKING:
     from .coordinator import AlarmData, PhoneData
@@ -18,11 +22,27 @@ WEEKDAY_MAP = {
     "Saturday": 5,
     "Sunday": 6,
 }
+_ENGLISH_DAYS = {day: name for name, day in WEEKDAY_MAP.items()}
+_LOGGER = logging.getLogger(__name__)
+# Unknown day names already logged, so each sync does not repeat the warning.
+_unknown_days: set[str] = set()
 
 UUID_PATTERN = re.compile(
     r"([0-9A-F]{8}-[0-9A-F]{4}-[0-9A-F]{4}-[0-9A-F]{4}-[0-9A-F]{12})",
     re.IGNORECASE,
 )
+
+
+def normalize_weekday(name: str) -> str:
+    """The English name of a repeat day the shortcut sent in the iPhone's language."""
+    day = WEEKDAY_NAMES.get(unicodedata.normalize("NFC", name).strip().casefold())
+    if day is not None:
+        return _ENGLISH_DAYS[day]
+    # Kept as sent: dropping it would lose a day we may learn to read later.
+    if name not in _unknown_days:
+        _unknown_days.add(name)
+        _LOGGER.warning("Unknown repeat day %r; please report it as an issue", name)
+    return name
 
 
 def calculate_next_occurrence(
