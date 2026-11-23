@@ -17,6 +17,7 @@ from pytest_homeassistant.common import (
     async_fire_time_changed,
 )
 
+from custom_components.iphone_alarms_sync.binary_sensor import ALARM_BINARY_SENSORS
 from custom_components.iphone_alarms_sync.const import (
     DOMAIN,
     EVENT_ALARM_EVENT,
@@ -427,3 +428,120 @@ async def test_silent_phone_raises_repair_until_it_sends_data(
 
     await _sync(hass, [alarm_payload()])
     assert issues.async_get_issue(DOMAIN, issue_id) is None
+
+
+# Issue #43: an iPhone set to German, Monday to Friday at 06:15.
+GERMAN_WEEKDAYS = ["Dienstag", "Donnerstag", "Freitag", "Montag", "Mittwoch"]
+
+
+def _repeats_on(alarm) -> list[str]:
+    return [
+        d.key.removeprefix("repeats_")
+        for d in ALARM_BINARY_SENSORS
+        if d.key.startswith("repeats_") and d.is_on_fn(alarm)
+    ]
+
+
+async def test_sync_reads_repeat_days_in_the_iphone_language(
+    hass: HomeAssistant, time_zone: None, freezer: FrozenDateTimeFactory
+) -> None:
+    freezer.move_to(_local(2026, 11, 14, 10, 0))  # Saturday
+    config_entry = make_entry()
+    config_entry.add_to_hass(hass)
+    assert await hass.config_entries.async_setup(config_entry.entry_id)
+    await _sync(
+        hass,
+        [
+            alarm_payload(
+                label="Wecker",
+                hour=6,
+                minute=15,
+                repeats=True,
+                repeat_days=GERMAN_WEEKDAYS,
+            )
+        ],
+    )
+
+    alarm = config_entry.runtime_data.coordinator.phone.alarms[ALARM_ID]
+    assert alarm.repeat_days == [
+        "Tuesday",
+        "Thursday",
+        "Friday",
+        "Monday",
+        "Wednesday",
+    ]
+    assert config_entry.options["alarms"][ALARM_ID]["repeat_days"] == (
+        alarm.repeat_days
+    )
+    assert _repeats_on(alarm) == [
+        "monday",
+        "tuesday",
+        "wednesday",
+        "thursday",
+        "friday",
+    ]
+    monday = _local(2026, 11, 16, 6, 15)
+    assert (
+        dt_util.parse_datetime(
+            hass.states.get("sensor.john_iphone_06_15_wecker_next_occurrence").state
+        )
+        == monday
+    )
+    assert (
+        dt_util.parse_datetime(hass.states.get("sensor.john_iphone_next_alarm").state)
+        == monday
+    )
+    assert hass.states.get("sensor.john_iphone_next_alarm_label").state == "Wecker"
+
+
+async def test_sync_keeps_unknown_repeat_days(
+    hass: HomeAssistant, entry, freezer: FrozenDateTimeFactory
+) -> None:
+    freezer.move_to(_local(2026, 11, 14, 10, 0))  # Saturday
+    await _sync(
+        hass,
+        [
+            alarm_payload(repeats=True, repeat_days=["Montag", "Friday", "Funday"]),
+            alarm_payload(
+                alarm_id=OTHER_ID,
+                label="Gym",
+                repeats=True,
+                repeat_days=["Funday", "Montag", "Monday"],
+            ),
+        ],
+    )
+    alarms = entry.runtime_data.coordinator.phone.alarms
+    assert alarms[ALARM_ID].repeat_days == ["Monday", "Friday", "Funday"]
+    assert _repeats_on(alarms[ALARM_ID]) == ["monday", "friday"]
+    # Duplicates after translation are harmless.
+    assert _repeats_on(alarms[OTHER_ID]) == ["monday"]
+    assert dt_util.parse_datetime(
+        hass.states.get("sensor.john_iphone_07_00_gym_next_occurrence").state
+    ) == _local(2026, 11, 16, 7, 0)
+
+
+async def test_repeating_alarm_with_only_unknown_days_has_no_next_occurrence(
+    hass: HomeAssistant, entry
+) -> None:
+    await _sync(hass, [alarm_payload(repeats=True, repeat_days=["Funday"])])
+    state = hass.states.get("sensor.john_iphone_07_00_wake_next_occurrence")
+    assert state.state == "unknown"
+
+
+async def test_alarm_saved_with_localized_days_works_without_a_sync(
+    hass: HomeAssistant, time_zone: None, freezer: FrozenDateTimeFactory
+) -> None:
+    """Alarms saved by v1.5 kept the days in the iPhone's language."""
+    freezer.move_to(_local(2026, 11, 14, 10, 0))  # Saturday
+    config_entry = make_entry(
+        {ALARM_ID: alarm_payload(repeats=True, repeat_days=GERMAN_WEEKDAYS)}
+    )
+    config_entry.add_to_hass(hass)
+    assert await hass.config_entries.async_setup(config_entry.entry_id)
+    await hass.async_block_till_done()
+
+    alarm = config_entry.runtime_data.coordinator.phone.alarms[ALARM_ID]
+    assert "Montag" not in alarm.repeat_days
+    assert dt_util.parse_datetime(
+        hass.states.get("sensor.john_iphone_next_alarm").state
+    ) == _local(2026, 11, 16, 7, 0)

@@ -501,3 +501,16 @@ async def test_stale_one_time_alarm_is_not_reported_missed(
         assert hass.states.get(
             "binary_sensor.john_iphone_alarm_event_missed"
         ).state == ("off")
+
+
+async def test_localized_repeating_alarm_goes_off_every_week(
+    hass: HomeAssistant, time_zone: None, freezer: FrozenDateTimeFactory
+) -> None:
+    """An iPhone set to German sends "Freitag"; the alarm still rings each Friday."""
+    freezer.move_to(_local(*SIX))
+    await _setup_synced(hass, alarm_payload(repeats=True, repeat_days=["Freitag"]))
+    events = async_capture_events(hass, EVENT_ALARM_EVENT)
+
+    await _ring(hass, freezer, _local(*SEVEN))
+    await _ring(hass, freezer, _local(*SEVEN) + timedelta(days=7))
+    assert _estimated(events) == [ALARM_ID, ALARM_ID]
