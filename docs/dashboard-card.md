@@ -36,6 +36,7 @@ All of them can be set in the card editor.
 | `title` | none | A title above the list, such as `Alarms`. Leave it out for a more compact card. |
 | `devices` | all | Phones or single alarms to show. A phone shows all its alarms and its Sleep section. An alarm shows only that alarm. |
 | `show_sleep` | `true` | Show the Sleep \| Wake Up section. |
+| `show_other` | `true` | Show the Other section of a picked phone: its alarms besides Sleep \| Wake Up. Alarms picked one by one always show. |
 | `show_disabled` | `true` | Show alarms that are off. |
 | `show_automations` | `true` | Tapping an alarm shows the automations and scripts that use it. |
 | `show_last_events` | `true` | Tapping an alarm shows when it last went off, was snoozed and was stopped. |
@@ -50,6 +51,15 @@ title: Alarms
 devices:
   - 1a2b3c4d5e6f # the phone's device ID; pick it in the editor
 show_disabled: false
+```
+
+Only the Sleep | Wake Up section of a phone:
+
+```yaml
+type: custom:iphone-alarms-card
+devices:
+  - 1a2b3c4d5e6f # the phone
+show_other: false
 ```
 
 Two alarms only, without Sleep:

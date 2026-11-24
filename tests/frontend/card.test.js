@@ -14,6 +14,7 @@ test("validateConfig fills defaults and rejects wrong types", () => {
     type: "x",
     devices: [],
     show_sleep: true,
+    show_other: true,
     show_disabled: true,
     show_automations: true,
     show_last_events: true,

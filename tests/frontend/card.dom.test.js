@@ -250,6 +250,15 @@ test("options: title, no Sleep, no disabled alarms, two phones", () => {
   ok(!row(el, GYM));
 });
 
+test("show_other: false keeps only Sleep | Wake Up", () => {
+  const el = mount({ show_other: false }, makeHass());
+  assert.deepEqual($$(el, ".section-header").map(text), ["Sleep | Wake Up"]);
+  const none = mount({ show_other: false, show_sleep: false }, makeHass());
+  assert.equal(text($(none, ".empty")), "No alarms match this card's filters.");
+  const picked = mount({ show_other: false, devices: [TEST] }, makeHass());
+  assert.deepEqual($$(picked, ".time").map(text), ["16:43"]);
+});
+
 test("picked alarms show without the phone's Sleep section", () => {
   const el = mount({ devices: [TEST] }, makeHass());
   assert.deepEqual($$(el, ".time").map(text), ["16:43"]);
@@ -293,12 +302,12 @@ test("the editor form and the card picker", () => {
   const form = Card.getConfigForm();
   assert.deepEqual(
     form.schema.map((s) => s.name),
-    ["title", "devices", ""],
+    ["title", "devices", "show_sleep", "show_other", "show_disabled", "show_last_events", "show_automations"],
   );
   assert.equal(form.schema[1].selector.device.filter.integration, "iphone_alarms_sync");
-  for (const field of [...form.schema.slice(0, 2), ...form.schema[2].schema]) ok(form.computeLabel(field), field.name);
+  for (const field of form.schema) ok(form.computeLabel(field) && form.computeHelper(field), field.name);
   ok(window.customCards.some((c) => c.type === "iphone-alarms-card"));
   const el = mount({}, makeHass());
-  assert.deepEqual(el.getGridOptions(), { columns: 6, min_columns: 4 });
+  assert.deepEqual(el.getGridOptions(), { columns: 12, min_columns: 6 });
   ok(el.getCardSize() > 1);
 });

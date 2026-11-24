@@ -7,7 +7,8 @@ const CARD = "iphone-alarms-card";
 const PREVIEW_LIMIT = 5;
 const DAY_MS = 86400000;
 const WEEK = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
-const BOOLEANS = ["show_sleep", "show_disabled", "show_automations", "show_last_events"];
+// In the order the card shows them.
+const BOOLEANS = ["show_sleep", "show_other", "show_disabled", "show_last_events", "show_automations"];
 const ALARM_EVENTS = [
   ["last_event_goes_off_at", "Went off"],
   ["last_event_snoozed_at", "Snoozed"],
@@ -32,6 +33,7 @@ const LABELS = {
   title: "Title",
   devices: "Phones or alarms",
   show_sleep: "Show Sleep | Wake Up",
+  show_other: "Show other alarms",
   show_disabled: "Show alarms that are off",
   show_automations: "Show automations of an alarm",
   show_last_events: "Show last events of an alarm",
@@ -40,6 +42,8 @@ const HELPERS = {
   title: "Leave empty for a more compact card.",
   devices: "Pick phones (all their alarms) or single alarms. Leave empty to show every alarm.",
   show_sleep: "Last bedtime, wake-up and how long you slept. Needs the Device Event shortcut.",
+  show_other: "Every alarm of a phone besides the Wake-Up alarm. Alarms picked one by one always show.",
+  show_disabled: "Shown grayed out, with a crossed-out clock.",
   show_automations: "Tap an alarm to see the automations and scripts that use it.",
   show_last_events: "Tap an alarm to see when it last went off, was snoozed or stopped.",
 };
@@ -311,9 +315,9 @@ button:focus-visible { outline: 2px solid var(--primary-color); outline-offset: 
 .details { margin: 0 0 14px; padding: 12px 14px 4px; border-radius: 12px; font-size: 0.875rem; line-height: 1.35; color: var(--secondary-text-color); background: var(--iphone-alarms-panel-color, rgba(127, 127, 127, 0.1)); }
 .details p { margin: 4px 0 10px; }
 .details .note { margin-top: 12px; font-size: 0.8125rem; }
-.info { display: grid; grid-template-columns: max-content 1fr; gap: 8px 16px; margin: 0 0 10px; }
+.info { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 8px 16px; margin: 0 0 10px; }
 .info dt { color: var(--secondary-text-color); }
-.info dd { margin: 0; color: var(--primary-text-color); }
+.info dd { margin: 0; overflow-wrap: anywhere; color: var(--primary-text-color); }
 .label { margin: 16px 0 2px; font-size: 0.75rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.03em; }
 .automation, .more, .link { display: flex; align-items: center; gap: 8px; width: 100%; margin: 0; padding: 11px 0; border: 0; border-bottom: 1px solid var(--divider-color); background: none; color: var(--primary-text-color); font: inherit; font-size: 0.9375rem; text-align: start; cursor: pointer; }
 .automation .name, .link .name { flex: 1; min-width: 0; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
@@ -328,7 +332,8 @@ button:focus-visible { outline: 2px solid var(--primary-color); outline-offset: 
 .warning { margin: 12px 16px 0; padding: 8px 12px; border-radius: 8px; font-size: 0.8125rem; color: var(--primary-text-color); background: rgba(var(--rgb-warning-color, 255, 166, 0), 0.15); }
 @container (max-width: 300px) {
   .time { font-size: var(--iphone-alarms-time-size, 2rem); }
-  .subtitle { font-size: 0.8125rem; }
+  .subtitle { font-size: 0.8125rem; flex-wrap: wrap; white-space: normal; }
+  .subtitle span { overflow: visible; }
 }
 @media (prefers-reduced-motion: reduce) { .status .badge path { transition: none; } }
 `;
@@ -339,19 +344,11 @@ class IPhoneAlarmsCard extends HTMLElement {
       schema: [
         { name: "title", selector: { text: {} } },
         { name: "devices", selector: { device: { multiple: true, filter: { integration: DOMAIN } } } },
-        {
-          type: "grid",
-          name: "",
-          schema: BOOLEANS.map((name) => ({ name, default: true, selector: { boolean: {} } })),
-        },
+        ...BOOLEANS.map((name) => ({ name, default: true, selector: { boolean: {} } })),
       ],
       computeLabel: (schema) => LABELS[schema.name],
       computeHelper: (schema) => HELPERS[schema.name],
     };
-  }
-
-  static getStubConfig() {
-    return Object.fromEntries(BOOLEANS.map((key) => [key, true]));
   }
 
   constructor() {
@@ -393,7 +390,7 @@ class IPhoneAlarmsCard extends HTMLElement {
   }
 
   getGridOptions() {
-    return { columns: 6, min_columns: 4 };
+    return { columns: 12, min_columns: 6 };
   }
 
   _update() {
@@ -489,7 +486,8 @@ class IPhoneAlarmsCard extends HTMLElement {
     let body = "";
     for (const group of groups) {
       let html = config.show_sleep && group.whole ? this._sleepSection(group.phone, ctx, keys) : "";
-      if (group.alarms.length) {
+      // Alarms picked one by one stay even with show_other off.
+      if ((config.show_other || !group.whole) && group.alarms.length) {
         html += `<section class="section"><h2 class="section-header">Other</h2>`;
         for (const alarm of group.alarms) {
           keys.add(alarm.key);
@@ -515,7 +513,7 @@ class IPhoneAlarmsCard extends HTMLElement {
     if (!this._index.phones.size) {
       body = `<div class="empty">No phones yet. Add one in Settings → Devices &amp; services → iPhone Alarms Sync.</div>`;
     } else if (!keys.size) {
-      body = config.devices.length
+      body = config.devices.length || groups.some((group) => group.alarms.length)
         ? `<div class="empty">No alarms match this card's filters.</div>`
         : `<div class="empty">No alarms yet. Run the Sync shortcut on your phone.</div>`;
     }
