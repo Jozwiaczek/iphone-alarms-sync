@@ -4,6 +4,8 @@
 
 <h1 align="center">iPhone Alarms Sync</h1>
 
+<p align="center"><strong>Your iPhone alarm. Now a Home Assistant trigger.</strong></p>
+
 <p align="center">
   <a href="https://github.com/Jozwiaczek/iphone-alarms-sync/releases/latest"><img src="https://img.shields.io/github/v/release/Jozwiaczek/iphone-alarms-sync?label=stable" alt="Stable version"></a>
 </p>
@@ -12,19 +14,36 @@
   <a href="https://my.home-assistant.io/redirect/hacs_repository/?owner=Jozwiaczek&repository=iphone-alarms-sync&category=integration"><img src="https://my.home-assistant.io/badges/hacs_repository.svg" alt="Open in the Marketplace"></a>
 </p>
 
-Let Home Assistant react to your iPhone alarms. Warm the bedroom before you wake up. Turn on the lights when the alarm goes off.
+Wake up to a warm bedroom. Lights on when the alarm rings.
 
-iOS shares alarms with no app, only with Shortcuts. One shortcut sends them to Home Assistant each time you close the Clock app. Works on iPhone, iPad and Mac.
+iOS shares alarms with no app. Only with Shortcuts. One shortcut sends them to Home Assistant. It runs each time you close the Clock app.
+
+Works on iPhone, iPad and Mac.
 
 ## ✨ What you get
 
-- A device per alarm: time, repeat days, on or off
-- Next alarm sensors
-- An **Alarm goes off** trigger at each alarm's time ([estimated](docs/shortcuts.md#estimated-goes-off))
+**With one shortcut**
 
-Want the exact moment, snooze, stop or sleep events? Add the event shortcuts later: [Shortcuts Setup Guide](docs/shortcuts.md).
+- **Native and exact.** Built on Apple's own Shortcuts automations. No polling. No workarounds.
+- **Every alarm is a device.** Time, label, repeat days.
+- **Its settings too.** On or off. Snooze allowed or not. Snooze length for your automations.
+- **Next and last.** Next alarm, next ring, last ring. Act before you wake up.
+- **Alarm goes off trigger.** Fires at the alarm's time ([estimated](docs/shortcuts.md#estimated-goes-off)). Pick one alarm or many.
+- **Every phone at home.** Add each one. Each gets its own alarms.
+- **Any iPhone language.** Repeat days are read in every one.
 
-### Limitations
+**With the event shortcuts** (optional)
+
+- **Goes off. Snoozed. Stopped.** The exact moment. Per alarm or for any alarm.
+- **Apple's Sleep schedule.** Wind Down begins. Bedtime begins. Waking up. The Wake-Up alarm.
+- **Event history.** When each alarm last went off, was snoozed or stopped.
+- **Missed-event alert.** A sensor turns on when an alarm rang but its *Goes off* event never came.
+
+**Private.** The shortcut templates hold no personal data. [Read their source](shortcuts/).
+
+Add the event shortcuts any time: [Shortcuts Setup Guide](docs/shortcuts.md).
+
+### Good to know
 
 - Sync is one-way: Home Assistant can't change alarms on the phone.
 - iOS lets no app read alarms in the background. Home Assistant learns about changes only when a shortcut runs, so an alarm changed with Siri or on an Apple Watch updates after you next close the Clock app.
