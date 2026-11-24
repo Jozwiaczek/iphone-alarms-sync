@@ -32,12 +32,16 @@ Works on iPhone, iPad and Mac.
 - **Every phone at home.** Add each one. Each gets its own alarms.
 - **Any iPhone language.** Repeat days are read in every one.
 
+**Private.** The shortcut templates hold no personal data. [Read their source](shortcuts/).
+
 **With the event shortcuts** (optional)
 
 - **Goes off. Snoozed. Stopped.** The exact moment. Per alarm or for any alarm.
 - **Apple's Sleep schedule.** Wind Down begins. Bedtime begins. Waking up. The Wake-Up alarm.
 - **Event history.** When each alarm last went off, was snoozed or stopped.
 - **Missed-event alert.** A sensor turns on when an alarm rang but its *Goes off* event never came.
+
+Add the event shortcuts any time: [Shortcuts Setup Guide](docs/shortcuts.md).
 
 **On your dashboard**
 
@@ -48,15 +52,11 @@ Works on iPhone, iPad and Mac.
 <p align="center">
   <picture>
     <source media="(prefers-color-scheme: dark)" srcset="assets/card-dark.png">
-    <img src="assets/card-light.png" width="390" alt="The iPhone Alarms card: Sleep | Wake Up at 08:30 after 8 hr 30 min of sleep, then the other alarms with their repeat days">
+    <img src="assets/card-light.png" width="390" alt="The iPhone Alarms card: Sleep | Wake Up at 08:30 after 8 hr 30 min of sleep, then the other alarms. One is open: its snooze, next ring, last events and the automations that use it">
   </picture>
 </p>
 
 Setup and options: [Dashboard card](docs/dashboard-card.md).
-
-**Private.** The shortcut templates hold no personal data. [Read their source](shortcuts/).
-
-Add the event shortcuts any time: [Shortcuts Setup Guide](docs/shortcuts.md).
 
 ### Good to know
 
