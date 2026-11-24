@@ -1,5 +1,30 @@
 # Changelog
 
+## [v1.6.0](https://github.com/Jozwiaczek/iphone-alarms-sync/compare/v1.5.0...v1.6.0) (2026-11-24)
+
+### ✨ New features
+
+- ✨ Fire an estimated goes off for each alarm without event shortcuts ([#37](https://github.com/Jozwiaczek/iphone-alarms-sync/pull/37))
+
+### 🐛 Fixes and improvements
+
+- 🔒️ Limit the release workflow token to read access by default ([#40](https://github.com/Jozwiaczek/iphone-alarms-sync/pull/40))
+- 🌐 Recognize repeat days from iPhones set to any language ([#44](https://github.com/Jozwiaczek/iphone-alarms-sync/pull/44))
+- 🩹 Name alarm devices by label so new entity IDs keep no stale time ([#46](https://github.com/Jozwiaczek/iphone-alarms-sync/pull/46))
+
+<details>
+<summary>🧰 Under the hood (7)</summary>
+
+- 📝 Explain in the README what each shortcut gives you ([#35](https://github.com/Jozwiaczek/iphone-alarms-sync/pull/35))
+- 📝 Say that Mac works too, in the README and setup screens ([#36](https://github.com/Jozwiaczek/iphone-alarms-sync/pull/36))
+- 📝 Point README readers to Q&A and the contributing guide ([#38](https://github.com/Jozwiaczek/iphone-alarms-sync/pull/38))
+- 📝 Shorten the README and move the reference to its own page ([#39](https://github.com/Jozwiaczek/iphone-alarms-sync/pull/39))
+- ✅ Test every setup and options step ([#42](https://github.com/Jozwiaczek/iphone-alarms-sync/pull/42))
+- 👷 Write release notes for Home Assistant and bump by the gitmoji spec ([#41](https://github.com/Jozwiaczek/iphone-alarms-sync/pull/41))
+- 📝 Explain XPC errors and VPN helper shortcuts in troubleshooting ([#45](https://github.com/Jozwiaczek/iphone-alarms-sync/pull/45))
+
+</details>
+
 ## [v1.5.0](https://github.com/Jozwiaczek/iphone-alarms-sync/compare/v1.4.1...v1.5.0) (2026-11-16 22:02)
 
 ### ✨ New Features
