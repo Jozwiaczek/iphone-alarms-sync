@@ -47,13 +47,12 @@ Add the event shortcuts any time: [Shortcuts Setup Guide](docs/shortcuts.md).
 **On your dashboard**
 
 - **A ready card.** Your alarms, the way the Clock app shows them. Nothing extra to install.
-- **Sleep at a glance.** Last bedtime, wake-up and how long you slept.
 - **What each alarm runs.** Tap an alarm to see when it last rang and which automations use it.
 
 <p align="center">
   <picture>
     <source media="(prefers-color-scheme: dark)" srcset="assets/card-dark.png">
-    <img src="assets/card-light.png" width="390" alt="The iPhone Alarms card: Sleep | Wake Up at 08:30 after 8 hr 30 min of sleep, then the other alarms. One is open: its snooze, next ring, last events and the automations that use it">
+    <img src="assets/card-light.png" width="390" alt="The iPhone Alarms card: the alarms with their times, labels and repeat days. One is open: its snooze, next ring, last events and the automations that use it">
   </picture>
 </p>
 

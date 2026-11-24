@@ -61,7 +61,6 @@
         default: {},
         readme: { config: { title: "Alarms" }, expand: "1a2b3c4d5e6f7a8b" },
         expanded: { expand: "1a2b3c4d5e6f7a8b" },
-        sleep: { expand: "sleep:0f3e9a1b2c4d5e6f" },
         many: { expand: "2b3c4d5e6f7a8b9c" },
         "many-all": { expand: "2b3c4d5e6f7a8b9c", all: true },
         "no-automations": { expand: "3c4d5e6f7a8b9c0d" },
@@ -69,11 +68,10 @@
         error: { expand: "1a2b3c4d5e6f7a8b", hass: { callWS: async () => Promise.reject(new Error("x")) } },
         "two-phones": { config: { title: "Alarms" }, hass: { phones: [PHONE, SECOND_PHONE] } },
         "picked-alarms": { config: { devices: ["1a2b3c4d5e6f7a8b", "3c4d5e6f7a8b9c0d", "deleted_alarm"] } },
-        "no-sleep": { config: { show_sleep: false, show_disabled: false } },
+        "no-disabled": { config: { show_disabled: false } },
         "no-alarms": { hass: { phones: [{ ...SECOND_PHONE, alarms: [] }] } },
         "no-phones": { hass: { phones: [] } },
         "filter-empty": { config: { devices: ["deleted_alarm"] } },
-        evening: { hass: { phones: [{ ...PHONE, sleep: { ...PHONE.sleep, bedtime_last_event_at: "2026-11-24T08:50:00Z" } }] } },
         "12h": { hass: { locale: { time_format: "12" } } },
       };
 

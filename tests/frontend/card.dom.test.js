@@ -6,7 +6,6 @@ import { flush, mount } from "./dom.js";
 import { makeHass, NOW, PHONE, SECOND_PHONE, withState } from "./fixtures.js";
 
 const [FIRST, SECOND, TEST, GYM] = PHONE.alarms.map((a) => a.id);
-const SLEEP = `sleep:${PHONE.id}`;
 const $ = (el, selector) => el.shadowRoot.querySelector(selector);
 const $$ = (el, selector) => [...el.shadowRoot.querySelectorAll(selector)];
 const text = (node) => node?.textContent.replace(/\s+/g, " ").trim();
@@ -23,18 +22,18 @@ afterEach(() => {
   document.body.innerHTML = "";
 });
 
-test("lists Sleep and the other alarms like the Clock app", () => {
+test("lists the alarms like the Clock app", () => {
   const el = mount({}, makeHass());
-  assert.deepEqual($$(el, ".section-header").map(text), ["Sleep | Wake Up", "Other"]);
-  assert.deepEqual($$(el, ".time").map(text), ["08:30", "06:00", "07:35", "07:40", "16:43"]);
+  // Only what the Sync shortcut sent: iOS shares no Sleep schedule.
+  ok(!$(el, "h2"));
+  assert.deepEqual($$(el, ".time").map(text), ["06:00", "07:35", "07:40", "16:43"]);
   assert.deepEqual($$(el, ".subtitle").map(text), [
-    "Bedtime 00:00·8 hr 30 min·Today",
     "Gym · Weekends",
     "1️⃣ Pierwszy · Every day",
     "⚠️ Drugi · Weekdays",
     "Test 2 · Tue and Wed",
   ]);
-  assert.deepEqual($$(el, ".status").map((s) => s.getAttribute("aria-label")), [null, "Off", "On", "On", "On"]);
+  assert.deepEqual($$(el, ".status").map((s) => s.getAttribute("aria-label")), ["Off", "On", "On", "On"]);
   ok(row(el, GYM).parentElement.classList.contains("off"));
   ok(!$(el, ".title") && !$(el, ".phone"));
 });
@@ -51,7 +50,7 @@ test("renders again only when what it shows changes", () => {
   const sensor = "sensor.johns_iphone_test_2_alarm_id";
   el.hass = withState(hass, sensor, "x", { ...hass.states[sensor].attributes, hour: 5 });
   ok($(el, ".section") !== first, "rendered");
-  assert.equal(text($$(el, ".time")[1]), "05:43");
+  assert.equal(text($$(el, ".time")[0]), "05:43");
 });
 
 test("ha-card stays across renders, so card-mod styles survive", () => {
@@ -64,10 +63,12 @@ test("ha-card stays across renders, so card-mod styles survive", () => {
 
 test("a new day relabels 'Today' without any state change", () => {
   const hass = makeHass();
-  const el = mount({}, hass);
+  const el = mount({ show_automations: false }, hass);
+  row(el, TEST).click();
+  assert.equal(info(el)["Next ring"], "Today 16:43");
   mock.timers.setTime(NOW.getTime() + 86400000);
   el.hass = { ...hass };
-  assert.equal(text($$(el, ".subtitle")[0]), "Bedtime 00:00·8 hr 30 min·Yesterday");
+  assert.equal(info(el)["Next ring"], "Yesterday 16:43");
 });
 
 test("a tap shows everything else about an alarm", async () => {
@@ -105,6 +106,14 @@ test("an alarm that is off has no next ring", () => {
   assert.equal(info(el)["Next ring"], undefined);
 });
 
+test("scripts that use an alarm are listed and tagged", async () => {
+  const el = mount({}, makeHass());
+  row(el, GYM).click();
+  await flush();
+  assert.deepEqual(names(el), ["Good morning"]);
+  assert.deepEqual($$(el, ".automation .tag").map(text), ["Script"]);
+});
+
 test("'Show all entities' goes to the device page, for admins only", () => {
   const hass = makeHass();
   const el = mount({ show_automations: false }, hass);
@@ -138,35 +147,6 @@ test("many automations: five, then all", async () => {
   // The keyboard goes on with the first automation that "Show all" revealed.
   assert.equal(el.shadowRoot.activeElement, $$(el, ".automation")[5]);
   assert.deepEqual(names(el), [...names(el)].sort((a, b) => a.localeCompare(b)));
-});
-
-test("Sleep looks up the wake-up and sleep events, scripts included", async () => {
-  const hass = makeHass();
-  const calls = [];
-  const callWS = hass.callWS;
-  hass.callWS = (msg) => (calls.push(msg), callWS(msg));
-  const el = mount({}, hass);
-  row(el, SLEEP).click();
-  await flush();
-  assert.deepEqual(
-    calls.map((c) => [c.item_type, c.item_id]),
-    [
-      ["entity", "event.johns_iphone_wakeup_alarm"],
-      ["entity", "event.johns_iphone_sleep"],
-    ],
-  );
-  assert.deepEqual(names(el), ["Good morning", "Night mode off"]);
-  assert.deepEqual($$(el, ".automation .tag").map(text), ["Script"]);
-  assert.deepEqual(info(el), { "Wind down": "Yesterday 23:30", "Went off": "08:30", Stopped: "08:32" });
-  ok(!$(el, ".link"));
-  // The search can't see the phone's device triggers, and the card says so.
-  assert.match(text($(el, ".note")), /Device triggers on the phone/);
-});
-
-test("tonight's bedtime is not paired with this morning's wake-up", () => {
-  const hass = makeHass();
-  const el = mount({}, withState(hass, "sensor.johns_iphone_bedtime_last_event_at", "2026-11-24T08:50:00Z"));
-  assert.equal(text($$(el, ".subtitle")[0]), "Today");
 });
 
 test("a failed lookup says so and the next tap tries again", async () => {
@@ -242,24 +222,19 @@ test("with automations and events off, a tap still shows the alarm's details and
   ok(!$(el, ".label"));
 });
 
-test("options: title, no Sleep, no disabled alarms, two phones", () => {
-  const el = mount({ title: "Alarms", show_sleep: false, show_disabled: false }, makeHass({ phones: [PHONE, SECOND_PHONE] }));
+test("options: title, no disabled alarms, two phones", () => {
+  const el = mount({ title: "Alarms", show_disabled: false }, makeHass({ phones: [PHONE, SECOND_PHONE] }));
   assert.equal(text($(el, ".title")), "Alarms");
   assert.deepEqual($$(el, ".phone").map(text), ["Anna's iPhone", "John's iPhone"]);
-  ok(!$$(el, ".section-header").some((h) => h.textContent.includes("Sleep")));
   ok(!row(el, GYM));
 });
 
-test("show_other: false keeps only Sleep | Wake Up", () => {
-  const el = mount({ show_other: false }, makeHass());
-  assert.deepEqual($$(el, ".section-header").map(text), ["Sleep | Wake Up"]);
-  const none = mount({ show_other: false, show_sleep: false }, makeHass());
-  assert.equal(text($(none, ".empty")), "No alarms match this card's filters.");
-  const picked = mount({ show_other: false, devices: [TEST] }, makeHass());
-  assert.deepEqual($$(picked, ".time").map(text), ["16:43"]);
+test("options of older versions are ignored", () => {
+  const el = mount({ show_sleep: true, show_other: false }, makeHass());
+  assert.equal($$(el, ".time").length, 4);
 });
 
-test("picked alarms show without the phone's Sleep section", () => {
+test("picked alarms show alone", () => {
   const el = mount({ devices: [TEST] }, makeHass());
   assert.deepEqual($$(el, ".time").map(text), ["16:43"]);
 });
@@ -267,7 +242,7 @@ test("picked alarms show without the phone's Sleep section", () => {
 test("empty states and a deleted device", () => {
   const none = mount({}, makeHass({ phones: [] }));
   assert.match(text($(none, ".empty")), /No phones yet/);
-  const noAlarms = mount({ show_sleep: false }, makeHass({ phones: [{ ...SECOND_PHONE, alarms: [] }] }));
+  const noAlarms = mount({}, makeHass({ phones: [{ ...SECOND_PHONE, alarms: [] }] }));
   assert.match(text($(noAlarms, ".empty")), /No alarms yet/);
   const filtered = mount({ devices: ["gone"] }, makeHass());
   assert.equal(text($(filtered, ".empty")), "No alarms match this card's filters.");
@@ -281,18 +256,18 @@ test("a bad config is refused", () => {
 
 test("12-hour clocks", () => {
   const el = mount({}, makeHass({ locale: { time_format: "12" } }));
-  assert.deepEqual($$(el, ".time").map((t) => t.textContent), ["8:30AM", "6:00AM", "7:35AM", "7:40AM", "4:43PM"]);
+  assert.deepEqual($$(el, ".time").map((t) => t.textContent), ["6:00AM", "7:35AM", "7:40AM", "4:43PM"]);
 });
 
 test("the documented styling hooks exist", async () => {
   const el = mount({}, makeHass());
   const style = $(el, "style").textContent;
-  for (const name of ["accent", "time-size", "time-weight", "row-padding", "disabled-opacity", "on-color", "panel-color"]) {
+  for (const name of ["time-size", "time-weight", "row-padding", "disabled-opacity", "on-color", "panel-color"]) {
     ok(style.includes(`--iphone-alarms-${name}`), name);
   }
   row(el, FIRST).click();
   await flush();
-  for (const cls of ["section", "section-header", "row", "time", "subtitle", "status", "details", "automation"]) {
+  for (const cls of ["section", "row", "time", "subtitle", "status", "details", "automation"]) {
     ok($(el, `.${cls}`), cls);
   }
 });
@@ -302,7 +277,7 @@ test("the editor form and the card picker", () => {
   const form = Card.getConfigForm();
   assert.deepEqual(
     form.schema.map((s) => s.name),
-    ["title", "devices", "show_sleep", "show_other", "show_disabled", "show_last_events", "show_automations"],
+    ["title", "devices", "show_disabled", "show_last_events", "show_automations"],
   );
   assert.equal(form.schema[1].selector.device.filter.integration, "iphone_alarms_sync");
   for (const field of form.schema) ok(form.computeLabel(field) && form.computeHelper(field), field.name);
@@ -314,7 +289,7 @@ test("the editor form and the card picker", () => {
 
 // What a user reads and hears, line by line.
 const screen = (el) =>
-  $$(el, ".section-header, .time, .subtitle, .status, dt, dd, .label, .details p, .link, .automation, .more")
+  $$(el, ".time, .subtitle, .status, dt, dd, .label, .details p, .link, .automation, .more")
     .map((node) => node.getAttribute("aria-label") ?? text(node))
     .filter(Boolean);
 // The editor's labels and helpers; Home Assistant puts the user's language on <html lang>.
@@ -336,7 +311,6 @@ async function openFirst(language) {
 
 test("Polish: the card and its editor", async (t) => {
   const el = await openFirst("pl");
-  assert.deepEqual($$(el, ".section-header").map(text), ["Sen | Pobudka", "Inne"]);
   t.assert.snapshot(screen(el));
   t.assert.snapshot(editor("pl"));
   const gone = (n) => text($(inLanguage("pl", { devices: Array.from({ length: n }, (_, i) => `gone${i}`) }), ".warning"));
@@ -349,7 +323,6 @@ test("Polish: the card and its editor", async (t) => {
 
 test("a language the card doesn't know falls back to English", async (t) => {
   const el = await openFirst("tlh");
-  assert.deepEqual($$(el, ".section-header").map(text), ["Sleep | Wake Up", "Other"]);
   assert.deepEqual(screen(el), screen(await openFirst("en")));
   t.assert.snapshot(screen(el));
   t.assert.snapshot(editor("tlh"));
