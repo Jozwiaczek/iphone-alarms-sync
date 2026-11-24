@@ -9,7 +9,7 @@ The **iPhone Alarms** card lists your alarms the way the Clock app does. It is r
   </picture>
 </p>
 
-- **Alarms**: every alarm with its time, label and repeat days. The clock on the right is green when the alarm is on, and crossed out, with grayed-out text, when it is off. The arrow in its corner shows whether the alarm is open.
+- **Alarms**: every alarm with its time, label and repeat days, and below them when it last went off. The clock on the right is green when the alarm is on, and crossed out, with grayed-out text, when it is off. The arrow in its corner shows whether the alarm is open.
 - **Tap an alarm** for the rest: whether snooze is allowed, when it rings next, when it last went off, was snoozed and was stopped, and the automations and scripts that use it. Tap an automation to open it. Admins also get **Show all entities**, the alarm's device page in Settings with its entities and history.
 
 ## Add the card
@@ -63,6 +63,7 @@ devices:
 
 - **Alarms** come from the Sync shortcut, so the card shows the state of the last sync.
 - The **last events** come from the [event shortcuts](shortcuts.md). Without them, an open alarm shows *Last events: None yet*.
+- **Went off** under an alarm is the alarm's own *Goes Off* event from the phone. Without that shortcut, or when its last event is older than the alarm's last scheduled ring, the card shows that ring time marked *estimated*: Home Assistant only knows the alarm was set to ring then.
 - The card shows no Sleep | Wake Up schedule: iOS doesn't share it with Shortcuts. The phone's sleep events still arrive as entities and device triggers, for automations and the Logbook card below.
 - Times follow your Home Assistant profile: 12 or 24 hours, and the server's or the browser's time zone.
 

@@ -15,7 +15,9 @@ const ALARM_EVENTS = [
   ["last_event_snoozed_at", "snoozed"],
   ["last_event_stopped_at", "stopped"],
 ];
-const ALARM_KEYS = ["alarm_id", "next_occurrence_datetime", ...ALARM_EVENTS.map(([key]) => key)];
+const ALARM_KEYS = ["alarm_id", "next_occurrence_datetime", "last_occurrence_datetime", ...ALARM_EVENTS.map(([key]) => key)];
+// A "goes off" from the phone this close after the scheduled time confirms that ring.
+const CONFIRM_WINDOW_MS = 5 * 60000;
 // Every text the card shows, by language. A language or key missing here falls back to English.
 const STRINGS = {
   en: {
@@ -51,6 +53,7 @@ const STRINGS = {
     next_ring: "Next ring",
     last_events: "Last events",
     none_yet: "None yet",
+    estimated: "estimated",
     show_all_entities: "Show all entities",
     automations: "Automations",
     loading: "Loading…",
@@ -97,6 +100,7 @@ const STRINGS = {
     next_ring: "Następny dzwonek",
     last_events: "Ostatnie zdarzenia",
     none_yet: "Jeszcze brak",
+    estimated: "szacowane",
     show_all_entities: "Pokaż wszystkie encje",
     automations: "Automatyzacje",
     loading: "Wczytywanie…",
@@ -210,6 +214,17 @@ function parseTime(value) {
   return Number.isNaN(date.getTime()) ? null : date;
 }
 
+/**
+ * When an alarm last rang: the phone's "goes off" event, or else the time it was
+ * set to ring, which Home Assistant only estimates. Null before either.
+ */
+export function lastRing(goesOffValue, scheduledValue) {
+  const confirmed = parseTime(goesOffValue);
+  const scheduled = parseTime(scheduledValue);
+  if (scheduled && !(confirmed && confirmed >= scheduled - CONFIRM_WINDOW_MS)) return { at: scheduled, estimated: true };
+  return confirmed ? { at: confirmed, estimated: false } : null;
+}
+
 /** A moment near now, short: "07:35", "Yesterday 07:35", "Tomorrow 07:35", "Mon 07:35" or "Nov 12". */
 export function formatEventTime(value, ctx, withToday = false) {
   const date = parseTime(value);
@@ -262,6 +277,7 @@ function readAlarm(alarm, states, t) {
     enabled: attrs.enabled !== false,
     allowsSnooze: attrs.allows_snooze !== false,
     repeat: attrs.repeats ? describeRepeat(attrs.repeat_days, t) : "",
+    lastRing: lastRing(states[alarm.entities.last_event_goes_off_at]?.state, states[alarm.entities.last_occurrence_datetime]?.state),
   };
 }
 
@@ -339,8 +355,9 @@ button:focus-visible { outline: 2px solid var(--primary-color); outline-offset: 
 .main { flex: 1; min-width: 0; }
 .time { display: block; font-size: var(--iphone-alarms-time-size, 2.5rem); font-weight: var(--iphone-alarms-time-weight, 300); line-height: 1.1; font-variant-numeric: tabular-nums; letter-spacing: -0.01em; color: var(--primary-text-color); }
 .period { margin-inline-start: 3px; font-size: 0.45em; font-weight: 400; }
-.subtitle { display: flex; align-items: center; gap: 6px; margin-top: 4px; overflow: hidden; font-size: 0.9375rem; line-height: 1.35; white-space: nowrap; color: var(--primary-text-color); }
+.subtitle { display: flex; align-items: center; gap: 6px; margin-top: 4px; overflow: hidden; font-size: 0.9375rem; line-height: 1.35; white-space: nowrap; flex-wrap: wrap; color: var(--primary-text-color); }
 .subtitle span { overflow: hidden; text-overflow: ellipsis; }
+.subtitle .last { flex-basis: 100%; font-size: 0.8125rem; color: var(--secondary-text-color); }
 .off .main { opacity: var(--iphone-alarms-disabled-opacity, 0.45); }
 .status { flex: none; width: 36px; height: 36px; overflow: visible; fill: none; stroke: var(--secondary-text-color); stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
 .status.on { --clock: var(--iphone-alarms-on-color, #34c759); }
@@ -371,7 +388,7 @@ button:focus-visible { outline: 2px solid var(--primary-color); outline-offset: 
 .warning { margin: 12px 16px 0; padding: 8px 12px; border-radius: 8px; font-size: 0.8125rem; color: var(--primary-text-color); background: rgba(var(--rgb-warning-color, 255, 166, 0), 0.15); }
 @container (max-width: 300px) {
   .time { font-size: var(--iphone-alarms-time-size, 2rem); }
-  .subtitle { font-size: 0.8125rem; flex-wrap: wrap; white-space: normal; }
+  .subtitle { font-size: 0.8125rem; white-space: normal; }
   .subtitle span { overflow: visible; }
   /* Too narrow for two columns: each label above its value. */
   .info { grid-template-columns: minmax(0, 1fr); gap: 0; }
@@ -524,12 +541,16 @@ class IPhoneAlarmsCard extends HTMLElement {
         for (const alarm of group.alarms) {
           keys.add(alarm.key);
           const subtitle = [alarm.label, alarm.repeat].filter(Boolean).join(" · ");
+          const ring = alarm.lastRing;
+          const last = ring
+            ? [t.went_off, formatEventTime(ring.at, ctx, true), ring.estimated && `· ${t.estimated}`].filter(Boolean).join(" ")
+            : "";
           const status = alarm.enabled ? clockIcon("on", t.alarm_on) : clockIcon("off", t.alarm_off);
           html += this._item(
             alarm.key,
             alarm.enabled ? "" : "off",
             clockHtml(formatClock(alarm.hour, alarm.minute, ctx)),
-            `<span>${escape(subtitle)}</span>`,
+            `<span>${escape(subtitle)}</span>${last ? ` <span class="last">${escape(last)}</span>` : ""}`,
             status,
             () => this._alarmDetails(alarm, ctx),
           );
