@@ -29,7 +29,7 @@ const STRINGS = {
     show_disabled: "Show alarms that are off",
     show_disabled_helper: "Shown grayed out, with a crossed-out clock.",
     show_automations: "Show automations of an alarm",
-    show_automations_helper: "Tap an alarm to see the automations and scripts that use it.",
+    show_automations_helper: "Tap an alarm to see the automations and scripts that use it or its phone.",
     show_last_events: "Show last events of an alarm",
     show_last_events_helper: "Tap an alarm to see when it last went off, was snoozed or stopped.",
     every_day: "Every day",
@@ -60,6 +60,8 @@ const STRINGS = {
     load_error: "Couldn't load automations.",
     no_alarm_automations: "No automations use this alarm.",
     script: "Script",
+    // Tags what uses the whole phone (any alarm, Wake-Up, sleep) rather than this alarm.
+    phone: "Phone",
     automation_off: "Off",
     show_all: (n) => `Show all (${n})`,
     no_phones: "No phones yet. Add one in Settings → Devices & services → iPhone Alarms Sync.",
@@ -76,7 +78,7 @@ const STRINGS = {
     show_disabled: "Pokaż wyłączone budziki",
     show_disabled_helper: "Wyszarzone, z przekreślonym zegarem.",
     show_automations: "Pokaż automatyzacje budzika",
-    show_automations_helper: "Dotknij budzika, aby zobaczyć automatyzacje i skrypty, które go używają.",
+    show_automations_helper: "Dotknij budzika, aby zobaczyć automatyzacje i skrypty, które używają jego albo jego telefonu.",
     show_last_events: "Pokaż ostatnie zdarzenia budzika",
     show_last_events_helper: "Dotknij budzika, aby zobaczyć, kiedy ostatnio zadzwonił, przeszedł w drzemkę albo został zatrzymany.",
     every_day: "Codziennie",
@@ -107,6 +109,7 @@ const STRINGS = {
     load_error: "Nie udało się wczytać automatyzacji.",
     no_alarm_automations: "Żadna automatyzacja nie używa tego budzika.",
     script: "Skrypt",
+    phone: "Telefon",
     automation_off: "Wyłączona",
     show_all: (n) => `Pokaż wszystkie (${n})`,
     no_phones: "Brak telefonów. Dodaj telefon w Ustawienia → Urządzenia oraz usługi → iPhone Alarms Sync.",
@@ -312,8 +315,8 @@ export function selectAlarms(index, config, states, t = strings()) {
   return { groups, missing };
 }
 
-/** Automations and scripts on the related list, sorted by name; gone ones dropped. */
-export function relatedItems(ids, states) {
+/** Automations and scripts on the related list, sorted by name; gone ones dropped. `phoneIds` get the phone tag. */
+export function relatedItems(ids, states, phoneIds = []) {
   return ids
     .filter((id) => states[id])
     .map((id) => ({
@@ -322,6 +325,7 @@ export function relatedItems(ids, states) {
       // A script is "off" whenever it is not running; only automations get turned off.
       off: id.startsWith("automation.") && states[id].state === "off",
       script: id.startsWith("script."),
+      phone: phoneIds.includes(id),
     }))
     .sort((a, b) => a.name.localeCompare(b.name));
 }
@@ -476,7 +480,7 @@ class IPhoneAlarmsCard extends HTMLElement {
     for (const phone of this._index.phones.values()) {
       for (const alarm of phone.alarms) for (const key of ALARM_KEYS) if (alarm.entities[key]) ids.push(alarm.entities[key]);
     }
-    if (this._related?.items) ids.push(...this._related.items);
+    if (this._related?.items) ids.push(...this._related.items, ...this._related.phoneItems);
     return ids;
   }
 
@@ -515,8 +519,14 @@ class IPhoneAlarmsCard extends HTMLElement {
     this._related = { key, status: "loading" };
     let related;
     try {
-      const result = await this._hass.callWS({ type: "search/related", item_type: "device", item_id: key });
-      related = { key, status: "done", items: [...(result.automation ?? []), ...(result.script ?? [])] };
+      // Phone triggers (any alarm, Wake-Up, sleep) sit on the phone's device, not the alarm's.
+      const ids = [key, this._index.alarms.get(key)?.phoneId].filter(Boolean);
+      const [own, phone = {}] = await Promise.all(
+        ids.map((id) => this._hass.callWS({ type: "search/related", item_type: "device", item_id: id })),
+      );
+      const items = [...(own.automation ?? []), ...(own.script ?? [])];
+      const phoneItems = [...(phone.automation ?? []), ...(phone.script ?? [])].filter((id) => !items.includes(id));
+      related = { key, status: "done", items, phoneItems };
     } catch (err) {
       related = { key, status: "error" };
     }
@@ -618,7 +628,7 @@ class IPhoneAlarmsCard extends HTMLElement {
       if (related.status === "loading") html += `<p>${escape(t.loading)}</p>`;
       else if (related.status === "error") html += `<p>${escape(t.load_error)}</p>`;
       else {
-        const items = relatedItems(related.items, states);
+        const items = relatedItems([...related.items, ...related.phoneItems], states, related.phoneItems);
         if (!items.length) html += `<p>${escape(t.no_alarm_automations)}</p>`;
         const shown = this._showAll ? items : items.slice(0, PREVIEW_LIMIT);
         for (const item of shown) {
@@ -626,6 +636,7 @@ class IPhoneAlarmsCard extends HTMLElement {
             `<button class="automation${item.off ? " disabled" : ""}" data-action="open" data-key="${escape(item.id)}">` +
             `<span class="name">${escape(item.name)}</span>` +
             (item.script ? `<span class="tag">${escape(t.script)}</span>` : "") +
+            (item.phone ? `<span class="tag">${escape(t.phone)}</span>` : "") +
             (item.off ? `<span class="tag">${escape(t.automation_off)}</span>` : "") +
             `</button>`;
         }

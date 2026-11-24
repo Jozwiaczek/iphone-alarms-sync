@@ -114,6 +114,19 @@ test("scripts that use an alarm are listed and tagged", async () => {
   assert.deepEqual($$(el, ".automation .tag").map(text), ["Script"]);
 });
 
+test("automations of the phone are listed with the alarm's, tagged, once", async () => {
+  // "Coffee machine" uses both the alarm and the phone; "Wake the kids" only the phone.
+  const phone = { ...PHONE, automations: ["automation.coffee_machine", "automation.wake_the_kids"] };
+  const el = mount({}, makeHass({ phones: [phone] }));
+  row(el, FIRST).click();
+  await flush();
+  assert.deepEqual(names(el), ["Bedroom lights on", "Coffee machine", "Open the blinds", "Wake the kids"]);
+  assert.deepEqual($$(el, ".automation .tag").map(text), ["Off", "Phone"]);
+  row(el, TEST).click();
+  await flush();
+  assert.deepEqual(names(el), ["Coffee machine", "Wake the kids"]);
+});
+
 test("'Show all entities' goes to the device page, for admins only", () => {
   const hass = makeHass();
   const el = mount({ show_automations: false }, hass);
@@ -168,8 +181,13 @@ test("a failed lookup says so and the next tap tries again", async () => {
 
 test("a late reply for a closed row is dropped, a detached card keeps it", async () => {
   const hass = makeHass();
-  let reply;
-  hass.callWS = () => new Promise((resolve) => (reply = resolve));
+  let replies = [];
+  // One lookup for the alarm, one for its phone.
+  hass.callWS = () => new Promise((resolve) => replies.push(resolve));
+  const reply = (result) => {
+    replies.forEach((resolve, i) => resolve(i === 0 ? result : {}));
+    replies = [];
+  };
   const el = mount({}, hass);
   row(el, FIRST).click();
   row(el, FIRST).click();

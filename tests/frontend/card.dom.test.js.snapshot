@@ -50,7 +50,7 @@ exports[`Polish: the card and its editor 2`] = `
   ],
   [
     "Pokaż automatyzacje budzika",
-    "Dotknij budzika, aby zobaczyć automatyzacje i skrypty, które go używają."
+    "Dotknij budzika, aby zobaczyć automatyzacje i skrypty, które używają jego albo jego telefonu."
   ]
 ]
 `;
@@ -107,7 +107,7 @@ exports[`a language the card doesn't know falls back to English 2`] = `
   ],
   [
     "Show automations of an alarm",
-    "Tap an alarm to see the automations and scripts that use it."
+    "Tap an alarm to see the automations and scripts that use it or its phone."
   ]
 ]
 `;

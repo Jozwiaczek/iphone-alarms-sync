@@ -112,6 +112,7 @@ export function makeHass({ phones = [PHONE], locale = {}, callWS } = {}) {
     hass.devices[phone.id] = { id: phone.id, name: phone.name, model: null, via_device_id: "mobile_app" };
     // The card finds a phone through its entities.
     add(`sensor.${phone.slug}_last_sync`, phone.id, "last_sync", "2026-11-24T08:00:00Z");
+    addRelated(phone.id, phone.automations);
     for (const alarm of phone.alarms) {
       const base = `${phone.slug}_${slug(alarm.label)}`;
       hass.devices[alarm.id] = { id: alarm.id, name: `${phone.name} ${alarm.label}`, model: "Alarm", via_device_id: phone.id };
