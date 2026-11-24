@@ -178,6 +178,10 @@ Shortcuts imported before the fix for [#20](https://github.com/Jozwiaczek/iphone
 
 The Home Assistant app (2026.10.1+) waits 10 s for Home Assistant. The phone must reach it then, also when locked. Using a VPN? Make sure it reconnects after your home IP changes.
 
+The same lost connection can also show *XPC error received on message reply handler*.
+
+Shortcuts can't catch this error, so don't run **Perform action** without a connection. If your shortcut runs a helper shortcut first (for example to reconnect a VPN), **Stop This Shortcut** in the helper stops only the helper. Return a result with **Stop and Output** and stop the calling shortcut when it reports a failure.
+
 ### Alarm event missed
 
 The **Alarm event missed** sensor turns on when an alarm rings and no *Goes Off* event arrives within 5 minutes. It turns off when the phone sends data. It works after the first *Goes Off* event.
