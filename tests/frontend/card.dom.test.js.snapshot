@@ -1,9 +1,5 @@
 exports[`Polish: the card and its editor 1`] = `
 [
-  "Sen | Pobudka",
-  "08:30",
-  "Pora snu 00:00·8 godz. 30 min·Dziś",
-  "Inne",
   "06:00",
   "Gym · Weekendy",
   "Wyłączony",
@@ -45,14 +41,6 @@ exports[`Polish: the card and its editor 2`] = `
     "Wybierz telefony (wszystkie ich budziki) albo pojedyncze budziki. Zostaw puste, aby pokazać wszystkie budziki."
   ],
   [
-    "Pokaż Sen | Pobudka",
-    "Ostatnia pora snu, pobudka i długość snu. Wymaga skrótu Device Event."
-  ],
-  [
-    "Pokaż inne budziki",
-    "Wszystkie budziki telefonu oprócz budzika pobudki. Budziki wybrane pojedynczo są zawsze widoczne."
-  ],
-  [
     "Pokaż wyłączone budziki",
     "Wyszarzone, z przekreślonym zegarem."
   ],
@@ -69,10 +57,6 @@ exports[`Polish: the card and its editor 2`] = `
 
 exports[`a language the card doesn't know falls back to English 1`] = `
 [
-  "Sleep | Wake Up",
-  "08:30",
-  "Bedtime 00:00·8 hr 30 min·Today",
-  "Other",
   "06:00",
   "Gym · Weekends",
   "Off",
@@ -112,14 +96,6 @@ exports[`a language the card doesn't know falls back to English 2`] = `
   [
     "Phones or alarms",
     "Pick phones (all their alarms) or single alarms. Leave empty to show every alarm."
-  ],
-  [
-    "Show Sleep | Wake Up",
-    "Last bedtime, wake-up and how long you slept. Needs the Device Event shortcut."
-  ],
-  [
-    "Show other alarms",
-    "Every alarm of a phone besides the Wake-Up alarm. Alarms picked one by one always show."
   ],
   [
     "Show alarms that are off",

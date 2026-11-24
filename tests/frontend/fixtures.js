@@ -35,13 +35,6 @@ export const PHONE = {
   id: "0f3e9a1b2c4d5e6f",
   slug: "johns_iphone",
   name: "John's iPhone",
-  sleep: {
-    wind_down_last_event_at: "2026-11-23T22:30:00Z",
-    bedtime_last_event_at: "2026-11-23T23:00:00Z",
-    wakeup_last_event_goes_off_at: "2026-11-24T07:30:00Z",
-    wakeup_last_event_stopped_at: "2026-11-24T07:32:00Z",
-  },
-  sleepAutomations: ["automation.night_mode", "script.good_morning"],
   alarms: [
     {
       id: "1a2b3c4d5e6f7a8b",
@@ -68,7 +61,7 @@ export const PHONE = {
       automations: MORNING.map((name) => `automation.${slug(name)}`),
     },
     { id: "3c4d5e6f7a8b9c0d", label: "Test 2", hour: 16, minute: 43, repeat_days: ["Tuesday", "Wednesday"], next: "2026-11-24T15:43:00Z", allows_snooze: false },
-    { id: "4d5e6f7a8b9c0d1e", label: "Gym", hour: 6, minute: 0, enabled: false, repeat_days: ["Saturday", "Sunday"] },
+    { id: "4d5e6f7a8b9c0d1e", label: "Gym", hour: 6, minute: 0, enabled: false, repeat_days: ["Saturday", "Sunday"], automations: ["script.good_morning"] },
   ],
 };
 
@@ -76,7 +69,6 @@ export const SECOND_PHONE = {
   id: "5e6f7a8b9c0d1e2f",
   slug: "annas_iphone",
   name: "Anna's iPhone",
-  sleep: {},
   alarms: [{ id: "6f7a8b9c0d1e2f3a", label: "Work", hour: 6, minute: 45, repeat_days: WEEKDAYS }],
 };
 
@@ -108,25 +100,15 @@ export function makeHass({ phones = [PHONE], locale = {}, callWS } = {}) {
   const addRelated = (target, ids = []) => {
     hass.related[target] = ids;
     for (const id of ids) {
-      const name = id === "script.good_morning" ? "Good morning" : id === "automation.night_mode" ? "Night mode off" : null;
+      const name = id === "script.good_morning" ? "Good morning" : null;
       const label = name ?? MORNING.find((n) => `automation.${slug(n)}` === id) ?? id;
       hass.states[id] = state(id, OFF.has(id) ? "off" : "on", { friendly_name: label });
     }
   };
   for (const phone of phones) {
     hass.devices[phone.id] = { id: phone.id, name: phone.name, model: null, via_device_id: "mobile_app" };
-    for (const key of [
-      "bedtime_last_event_at",
-      "wakeup_last_event_goes_off_at",
-      "wakeup_last_event_snoozed_at",
-      "wakeup_last_event_stopped_at",
-      "waking_up_last_event_at",
-      "wind_down_last_event_at",
-    ]) {
-      add(`sensor.${phone.slug}_${key}`, phone.id, key, phone.sleep[key]);
-    }
-    for (const key of ["wakeup_alarm", "sleep"]) add(`event.${phone.slug}_${key}`, phone.id, key, "unknown");
-    addRelated(`event.${phone.slug}_wakeup_alarm`, phone.sleepAutomations);
+    // The card finds a phone through its entities.
+    add(`sensor.${phone.slug}_last_sync`, phone.id, "last_sync", "2026-11-24T08:00:00Z");
     for (const alarm of phone.alarms) {
       const base = `${phone.slug}_${slug(alarm.label)}`;
       hass.devices[alarm.id] = { id: alarm.id, name: `${phone.name} ${alarm.label}`, model: "Alarm", via_device_id: phone.id };
