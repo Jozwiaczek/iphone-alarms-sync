@@ -212,11 +212,6 @@
         "name": "Repeats on Sunday"
       }
     },
-    "number": {
-      "snooze_time": {
-        "name": "Snooze time"
-      }
-    },
     "switch": {
       "estimate_goes_off": {
         "name": "Estimated goes off"

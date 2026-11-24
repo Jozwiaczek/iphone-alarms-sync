@@ -168,5 +168,4 @@ class AlarmSensor(AlarmEntity, SensorEntity):
             "repeats": alarm.repeats,
             "repeat_days": list(alarm.repeat_days),
             "allows_snooze": alarm.allows_snooze,
-            "snooze_time": alarm.snooze_time if alarm.allows_snooze else None,
         }

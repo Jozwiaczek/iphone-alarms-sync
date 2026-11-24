@@ -9,6 +9,7 @@ from freezegun.api import FrozenDateTimeFactory
 from homeassistant.core import HomeAssistant
 from homeassistant.exceptions import ServiceValidationError
 from homeassistant.helpers import device_registry as dr
+from homeassistant.helpers import entity_registry as er
 from homeassistant.helpers import issue_registry as ir
 from homeassistant.util import dt as dt_util
 from pytest_homeassistant.common import (
@@ -376,11 +377,10 @@ async def test_loads_and_keeps_v1_4_options(
 
     alarm = config_entry.options["alarms"][ALARM_ID]
     assert alarm["label"] == "Wake up"
-    assert alarm["snooze_time"] == 5
+    assert "snooze_time" not in alarm
     assert alarm["last_event_goes_off_at"] == "2026-11-12T06:00:00+00:00"
     assert "icon" not in alarm
     assert "last_alarm_id" not in config_entry.options
-    assert hass.states.get("number.john_iphone_wake_snooze_time").state == "5"
 
 
 async def test_malformed_alarm_is_rejected_and_nothing_stored(
@@ -424,17 +424,16 @@ async def test_empty_sync_removes_nothing(hass: HomeAssistant, entry) -> None:
     assert hass.states.get("sensor.john_iphone_last_sync").state != "unknown"
 
 
-async def test_snooze_time_is_kept_and_needs_snooze(hass: HomeAssistant, entry) -> None:
-    number = "number.john_iphone_wake_snooze_time"
-    set_value = {"entity_id": number, "value": 5}
-    await hass.services.async_call("number", "set_value", set_value, blocking=True)
-    assert hass.states.get(number).state == "5"
-    assert entry.options["alarms"][ALARM_ID]["snooze_time"] == 5
-
-    await _sync(hass, [alarm_payload(allows_snooze=False)])
-    assert hass.states.get(number).state == "unknown"
-    with pytest.raises(ServiceValidationError, match="does not allow snooze"):
-        await hass.services.async_call("number", "set_value", set_value, blocking=True)
+async def test_removed_snooze_time_number_leaves_the_registry(
+    hass: HomeAssistant, entry
+) -> None:
+    """The number entity of v1.6.0 and older is cleaned up on setup."""
+    registry = er.async_get(hass)
+    old = registry.async_get_or_create(
+        "number", DOMAIN, f"{PHONE_ID}_{ALARM_ID}_snooze_time", config_entry=entry
+    )
+    await hass.config_entries.async_reload(entry.entry_id)
+    assert registry.async_get(old.entity_id) is None
 
 
 async def test_silent_phone_raises_repair_until_it_sends_data(

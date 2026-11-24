@@ -10,6 +10,7 @@ from homeassistant.core import CALLBACK_TYPE, HomeAssistant, ServiceCall, callba
 from homeassistant.exceptions import HomeAssistantError, ServiceValidationError
 from homeassistant.helpers import config_validation as cv
 from homeassistant.helpers import device_registry as dr
+from homeassistant.helpers import entity_registry as er
 from homeassistant.helpers import issue_registry as ir
 from homeassistant.helpers.event import (
     async_track_point_in_time,
@@ -92,7 +93,6 @@ ALARM_SCHEMA = vol.Schema(
             cv.ensure_list, [vol.All(cv.string, normalize_weekday)]
         ),
         vol.Optional("allows_snooze"): cv.boolean,
-        vol.Optional("snooze_time"): vol.All(vol.Coerce(int), vol.Range(1, 30)),
     },
     extra=vol.REMOVE_EXTRA,
 )
@@ -487,6 +487,11 @@ async def async_setup_entry(
     _async_update_devices(hass, entry, coordinator.phone)
 
     await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
+    # The Snooze time number was removed after v1.6.0: iOS never shared the length.
+    registry = er.async_get(hass)
+    for entity in er.async_entries_for_config_entry(registry, entry.entry_id):
+        if entity.domain == "number":
+            registry.async_remove(entity.entity_id)
     # v1.3.0 raised a repair instead of the Alarm Event Missed sensor.
     ir.async_delete_issue(hass, DOMAIN, f"missed_event_{entry.entry_id}")
 

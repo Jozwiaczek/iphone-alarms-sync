@@ -26,7 +26,6 @@ Everything iPhone Alarms Sync adds to Home Assistant. For setup, see the [README
 | Last went off / snoozed / stopped | Last events of this alarm (Alarm Event shortcut) |
 | Enabled, Allows snooze | Alarm state on the phone |
 | Repeats, Repeats on Monday … Sunday | Repeat schedule (disabled by default) |
-| Snooze time | Snooze length for your automations, 1-30 min. iOS does not share it, so set it yourself (default 9) |
 | Estimated goes off | Fires *Goes off* at the alarm's time, without an event shortcut ([limits](shortcuts.md#estimated-goes-off)). Turns itself off when the alarm's shortcut reports *Goes off* |
 
 Event timestamps stay *unknown* until the matching shortcut reports the first event.
