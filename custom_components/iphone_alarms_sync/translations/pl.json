@@ -1,0 +1,285 @@
+{
+  "device_automation": {
+    "trigger_type": {
+      "goes_off": "{subtype} dzwoni",
+      "snoozed": "{subtype} przechodzi w drzemkę",
+      "stopped": "{subtype} zostaje zatrzymany",
+      "wind_down_starts": "Zaczyna się wyciszenie",
+      "bedtime_starts": "Zaczyna się pora snu",
+      "waking_up": "Budzenie"
+    },
+    "trigger_subtype": {
+      "alarm": "Budzik",
+      "any": "Dowolny budzik",
+      "wakeup": "Budzik pobudki"
+    }
+  },
+  "config": {
+    "step": {
+      "user": {
+        "title": "iPhone Alarms Sync",
+        "description": "Wybierz, jak dodać iPhone'a, iPada albo Maca:\n\n- **Urządzenie Mobile App** - łączy go z urządzeniem aplikacji Home Assistant\n- **Własna nazwa** - osobne urządzenie",
+        "menu_options": {
+          "select_mobile_app": "Wybierz z urządzeń Mobile App",
+          "custom_name": "Wpisz własną nazwę urządzenia"
+        }
+      },
+      "select_mobile_app": {
+        "title": "Wybierz urządzenie Mobile App",
+        "description": "Wybierz swoje urządzenie z integracji Mobile App.",
+        "data": {
+          "mobile_app_device_id": "Urządzenie Mobile App"
+        }
+      },
+      "custom_name": {
+        "title": "Wpisz nazwę urządzenia",
+        "description": "Wpisz nazwę iPhone'a, iPada albo Maca (np. \"iPhone Jana\").\n\nZ niej powstaje **Phone ID** potrzebny do skonfigurowania skrótu.",
+        "data": {
+          "phone_name": "Nazwa urządzenia"
+        }
+      },
+      "confirm": {
+        "title": "Skonfiguruj skrót Sync",
+        "description": "**Phone ID:** `{phone_id}`\n\n## 1. Zaimportuj skrót Sync\n\nZeskanuj kod QR albo otwórz link **na iPhonie, iPadzie lub Macu, który dodajesz**:\n\n![Kod QR]({sync_qr_code})\n\n[Otwórz skrót]({sync_shortcut_url})\n\nPytania przy imporcie:\n- **Phone ID**: `{phone_id}`\n- **Home Wi-Fi** (opcjonalnie): wypełnij tylko wtedy, gdy Home Assistant działa wyłącznie w domu\n- **Server** i **Action**: twój serwer Home Assistant, potem `iphone_alarms_sync.sync_alarms`\n\nJeśli krok **Perform action** pokazuje **Choose** albo skrót mówi *No server provided*, wybierz ponownie **Server**, a potem **Action** (wymaga aplikacji Home Assistant 2026.9.3+, [rozwiązywanie problemów]({troubleshooting_url})).\n\n## 2. Utwórz automatyzację\n\n1. Aplikacja Skróty → Automatyzacja → +\n2. Aplikacja → Zegar → Jest zamknięta\n3. Uruchom skrót → \"iPhone Alarms Sync: Sync\"\n4. Włącz \"Uruchom natychmiast\" → Gotowe\n\nBudziki synchronizują się wtedy przy każdym zamknięciu aplikacji Zegar.\n\n## 3. Skróty zdarzeń (opcjonalnie)\n\nKażdy budzik już teraz wysyła o swojej godzinie szacowane zdarzenie *dzwoni*. Aby znać dokładny moment, a także drzemkę i zatrzymanie, skonfiguruj później skróty zdarzeń w **Konfiguruj → Konfiguracja skrótów zdarzeń**.",
+        "data": {
+          "sync_disabled_alarms": "Synchronizuj wyłączone budziki"
+        },
+        "data_description": {
+          "sync_disabled_alarms": "Wyłącz, aby nie dodawać wyłączonych budzików do Home Assistant."
+        }
+      }
+    },
+    "error": {
+      "required": "Wpisz nazwę z co najmniej jedną literą lub cyfrą."
+    },
+    "abort": {
+      "no_mobile_app_devices": "Nie znaleziono urządzeń Mobile App. Użyj opcji własnej nazwy.",
+      "already_configured": "Telefon z Phone ID `{phone_id}` jest już skonfigurowany. Wybierz inną nazwę albo zmień ten telefon w jego opcjach."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "iPhone Alarms Sync",
+        "menu_options": {
+          "edit_device": "Edytuj urządzenie",
+          "events": "Historia zdarzeń",
+          "sync_shortcut": "Konfiguracja skrótu Sync",
+          "event_shortcuts": "Konfiguracja skrótów zdarzeń"
+        }
+      },
+      "edit_device": {
+        "title": "Edytuj urządzenie",
+        "description": "Obecny Phone ID: `{phone_id}`\n\n⚠️ Nowa nazwa może dać nowy Phone ID. Urządzenia, encje, historia i automatyzacje przejdą na niego, ale skróty na telefonie zachowają stary: wpisz nowy Phone ID w każdym z nich (Sync, Device Event, Alarm Event).",
+        "data": {
+          "phone_name": "Nazwa urządzenia",
+          "mobile_app_device_id": "Urządzenie Mobile App",
+          "sync_disabled_alarms": "Synchronizuj wyłączone budziki"
+        },
+        "data_description": {
+          "mobile_app_device_id": "Łączy ten telefon z jego urządzeniem aplikacji Home Assistant. Wybierz brak, aby zostawić go jako osobne urządzenie.",
+          "sync_disabled_alarms": "Wyłącz, aby usunąć wyłączone budziki i ich urządzenia z Home Assistant."
+        }
+      },
+      "events": {
+        "title": "Historia zdarzeń",
+        "description": "{event_list}"
+      },
+      "sync_shortcut": {
+        "title": "Konfiguracja skrótu Sync",
+        "description": "**Phone ID:** `{phone_id}`\n\n## 1. Zaimportuj skrót Sync\n\nZeskanuj kod QR albo otwórz link **na iPhonie, iPadzie lub Macu, który dodajesz**:\n\n![Kod QR]({sync_qr_code})\n\n[Otwórz skrót]({sync_shortcut_url})\n\nPytania przy imporcie:\n- **Phone ID**: `{phone_id}`\n- **Home Wi-Fi** (opcjonalnie): wypełnij tylko wtedy, gdy Home Assistant działa wyłącznie w domu\n- **Server** i **Action**: twój serwer Home Assistant, potem `iphone_alarms_sync.sync_alarms`\n\nJeśli krok **Perform action** pokazuje **Choose** albo skrót mówi *No server provided*, wybierz ponownie **Server**, a potem **Action** (wymaga aplikacji Home Assistant 2026.9.3+, [rozwiązywanie problemów]({troubleshooting_url})).\n\n## 2. Utwórz automatyzację\n\n1. Aplikacja Skróty → Automatyzacja → +\n2. Aplikacja → Zegar → Jest zamknięta\n3. Uruchom skrót → \"iPhone Alarms Sync: Sync\"\n4. Włącz \"Uruchom natychmiast\" → Gotowe\n\nBudziki synchronizują się wtedy przy każdym zamknięciu aplikacji Zegar."
+      },
+      "event_shortcuts": {
+        "title": "Konfiguracja skrótów zdarzeń",
+        "description": "**Phone ID:** `{phone_id}`\n\nBez tych skrótów każdy budzik wysyła o swojej godzinie szacowane zdarzenie *dzwoni* ([ograniczenia]({estimated_url})). Skróty zgłaszają dokładny moment, a także drzemkę i zatrzymanie.\n\n## Alarm ID\n\n{alarms_list}\n\nSkrót Alarm Event pyta o jeden z tych identyfikatorów.\n\n## Skrót Device Event\n\nZgłasza zdarzenia **dowolnego budzika**, **budzika pobudki** i **snu** (pora snu, wyciszenie, budzenie).\n\n![Kod QR]({device_event_qr_code})\n\n[Otwórz skrót]({device_event_shortcut_url})\n\nPytania przy imporcie:\n- **Phone ID**: `{phone_id}`\n- **Home Wi-Fi** (opcjonalnie): wypełnij tylko wtedy, gdy Home Assistant działa wyłącznie w domu\n- **Event Type Number**:\n  - 1-3: dowolny budzik (dzwoni, drzemka, zatrzymany)\n  - 4-6: budzik pobudki (dzwoni, drzemka, zatrzymany)\n  - 7: budzenie\n  - 8: zaczyna się wyciszenie\n  - 9: zaczyna się pora snu\n- **Server** i **Action**: twój serwer Home Assistant, potem `iphone_alarms_sync.report_device_event`\n\n## Skrót Alarm Event\n\nZgłasza zdarzenia **jednego budzika**.\n\n![Kod QR]({alarm_event_qr_code})\n\n[Otwórz skrót]({alarm_event_shortcut_url})\n\nPytania przy imporcie:\n- **Phone ID**: `{phone_id}`\n- **Home Wi-Fi** (opcjonalnie): wypełnij tylko wtedy, gdy Home Assistant działa wyłącznie w domu\n- **Alarm ID**: z listy powyżej\n- **Event Type Number**: 1 (dzwoni), 2 (drzemka) albo 3 (zatrzymany)\n- **Server** i **Action**: twój serwer Home Assistant, potem `iphone_alarms_sync.report_alarm_event`\n\n## Automatyzacja\n\nJedna kopia skrótu wysyła jedno zdarzenie, więc zaimportuj go raz na każde zdarzenie. Dla każdej kopii:\n\n1. Aplikacja Skróty → Automatyzacja → +\n2. Wybierz wyzwalacz, na przykład \"Kiedy budzik dzwoni\"\n3. Uruchom skrót → zaimportowana kopia\n4. Włącz \"Uruchom natychmiast\" → Gotowe\n\nJeśli krok **Perform action** pokazuje **Choose** albo skrót mówi *No server provided*, wybierz ponownie **Server**, a potem **Action** (wymaga aplikacji Home Assistant 2026.9.3+, [rozwiązywanie problemów]({troubleshooting_url}))."
+      }
+    },
+    "error": {
+      "required": "Wpisz nazwę z co najmniej jedną literą lub cyfrą.",
+      "phone_id_exists": "Inny telefon używa już Phone ID, który daje ta nazwa. Wybierz inną nazwę."
+    },
+    "abort": {
+      "integration_not_ready": "iPhone Alarms Sync nie jest wczytana. Wczytaj ją ponownie i spróbuj jeszcze raz."
+    }
+  },
+  "issues": {
+    "no_data": {
+      "title": "{phone_name} przestał wysyłać dane budzików",
+      "description": "{phone_name} nie wysłał nic do iPhone Alarms Sync od {days} dni.\n\nZwykle oznacza to, że skróty iOS przestały działać, na przykład gdy aktualizacja aplikacji Home Assistant wyczyściła pole **Action** w kroku **Perform action**.\n\n1. Otwórz aplikację Skróty i uruchom ręcznie skrót Sync.\n2. Jeśli pokaże błąd, *No server provided* albo **Choose** w kroku Perform action, wybierz **Server**, a potem `iphone_alarms_sync.sync_alarms` jako **Action** (albo zaimportuj skróty ponownie z opcji integracji).\n3. Sprawdź to samo w skrótach zdarzeń.\n\nTen problem znika sam, gdy telefon znów wyśle dane. Jeśli rzadko otwierasz aplikację Zegar, możesz go zignorować."
+    }
+  },
+  "entity": {
+    "sensor": {
+      "next_alarm_datetime": {
+        "name": "Następny budzik"
+      },
+      "next_alarm_label": {
+        "name": "Etykieta następnego budzika"
+      },
+      "last_alarm_datetime": {
+        "name": "Ostatni budzik"
+      },
+      "last_sync": {
+        "name": "Ostatnia synchronizacja"
+      },
+      "enabled_alarms": {
+        "name": "Włączone budziki"
+      },
+      "total_alarms": {
+        "name": "Wszystkie budziki"
+      },
+      "disabled_alarms": {
+        "name": "Wyłączone budziki"
+      },
+      "wakeup_last_event_goes_off_at": {
+        "name": "Budzik pobudki ostatnio zadzwonił"
+      },
+      "wakeup_last_event_snoozed_at": {
+        "name": "Budzik pobudki ostatnio w drzemce"
+      },
+      "wakeup_last_event_stopped_at": {
+        "name": "Budzik pobudki ostatnio zatrzymany"
+      },
+      "any_last_event_goes_off_at": {
+        "name": "Dowolny budzik ostatnio zadzwonił"
+      },
+      "any_last_event_snoozed_at": {
+        "name": "Dowolny budzik ostatnio w drzemce"
+      },
+      "any_last_event_stopped_at": {
+        "name": "Dowolny budzik ostatnio zatrzymany"
+      },
+      "bedtime_last_event_at": {
+        "name": "Ostatni początek pory snu"
+      },
+      "waking_up_last_event_at": {
+        "name": "Ostatnie budzenie"
+      },
+      "wind_down_last_event_at": {
+        "name": "Ostatni początek wyciszenia"
+      },
+      "alarm_id": {
+        "name": "Alarm ID"
+      },
+      "next_occurrence_datetime": {
+        "name": "Następne wystąpienie"
+      },
+      "last_occurrence_datetime": {
+        "name": "Ostatnie wystąpienie"
+      },
+      "last_event_goes_off_at": {
+        "name": "Ostatnio zadzwonił"
+      },
+      "last_event_snoozed_at": {
+        "name": "Ostatnio w drzemce"
+      },
+      "last_event_stopped_at": {
+        "name": "Ostatnio zatrzymany"
+      }
+    },
+    "binary_sensor": {
+      "enabled": {
+        "name": "Włączony"
+      },
+      "repeats": {
+        "name": "Powtarza się"
+      },
+      "allows_snooze": {
+        "name": "Pozwala na drzemkę"
+      },
+      "alarm_event_missed": {
+        "name": "Pominięte zdarzenie budzika"
+      },
+      "repeats_monday": {
+        "name": "Powtarza się w poniedziałek"
+      },
+      "repeats_tuesday": {
+        "name": "Powtarza się we wtorek"
+      },
+      "repeats_wednesday": {
+        "name": "Powtarza się w środę"
+      },
+      "repeats_thursday": {
+        "name": "Powtarza się w czwartek"
+      },
+      "repeats_friday": {
+        "name": "Powtarza się w piątek"
+      },
+      "repeats_saturday": {
+        "name": "Powtarza się w sobotę"
+      },
+      "repeats_sunday": {
+        "name": "Powtarza się w niedzielę"
+      }
+    },
+    "switch": {
+      "estimate_goes_off": {
+        "name": "Szacowane dzwonienie"
+      }
+    },
+    "event": {
+      "alarm": {
+        "name": "Budzik",
+        "state_attributes": {
+          "event_type": {
+            "state": {
+              "goes_off": "Dzwoni",
+              "snoozed": "Drzemka",
+              "stopped": "Zatrzymany"
+            }
+          }
+        }
+      },
+      "any_alarm": {
+        "name": "Dowolny budzik",
+        "state_attributes": {
+          "event_type": {
+            "state": {
+              "goes_off": "Dzwoni",
+              "snoozed": "Drzemka",
+              "stopped": "Zatrzymany"
+            }
+          }
+        }
+      },
+      "wakeup_alarm": {
+        "name": "Budzik pobudki",
+        "state_attributes": {
+          "event_type": {
+            "state": {
+              "goes_off": "Dzwoni",
+              "snoozed": "Drzemka",
+              "stopped": "Zatrzymany"
+            }
+          }
+        }
+      },
+      "sleep": {
+        "name": "Sen",
+        "state_attributes": {
+          "event_type": {
+            "state": {
+              "wind_down_starts": "Zaczyna się wyciszenie",
+              "bedtime_starts": "Zaczyna się pora snu",
+              "waking_up": "Budzenie"
+            }
+          }
+        }
+      }
+    }
+  },
+  "triggers": {
+    "goes_off": {
+      "name": "Budzik dzwoni",
+      "description": "Uruchamia się, gdy zadzwoni co najmniej jeden z wybranych budzików. Wybierz urządzenia budzików, Dowolny budzik albo Budzik pobudki."
+    },
+    "snoozed": {
+      "name": "Budzik przechodzi w drzemkę",
+      "description": "Uruchamia się, gdy co najmniej jeden z wybranych budzików przejdzie w drzemkę. Wybierz urządzenia budzików, Dowolny budzik albo Budzik pobudki."
+    },
+    "stopped": {
+      "name": "Budzik zostaje zatrzymany",
+      "description": "Uruchamia się, gdy co najmniej jeden z wybranych budzików zostanie zatrzymany. Wybierz urządzenia budzików, Dowolny budzik albo Budzik pobudki."
+    }
+  }
+}

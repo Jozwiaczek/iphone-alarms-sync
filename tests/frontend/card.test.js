@@ -5,8 +5,8 @@ import { test } from "node:test";
 import { card } from "./dom.js";
 import { makeHass, NOW, PHONE, SECOND_PHONE, TIME_ZONE } from "./fixtures.js";
 
-const { validateConfig, describeRepeat, formatClock, formatEventTime, sleepSummary, buildIndex, selectAlarms, relatedItems, timeContext } = card;
-const ctx = (overrides = {}) => ({ h12: false, timeZone: TIME_ZONE, now: NOW, ...overrides });
+const { validateConfig, describeRepeat, formatClock, formatEventTime, sleepSummary, buildIndex, selectAlarms, relatedItems, timeContext, strings } = card;
+const ctx = (overrides = {}) => ({ h12: false, timeZone: TIME_ZONE, now: NOW, t: strings(), ...overrides });
 const config = (overrides = {}) => validateConfig(overrides);
 
 test("validateConfig fills defaults and rejects wrong types", () => {
@@ -127,4 +127,21 @@ test("relatedItems sorts by name and drops what is gone", () => {
     { id: "automation.a", name: "automation.a", off: true, script: false },
     { id: "automation.b", name: "Beta", off: false, script: false },
   ]);
+});
+
+test("strings picks the user's language and falls back to English", () => {
+  assert.equal(strings("pl").today, "Dziś");
+  assert.equal(strings("pl-PL").locale, "pl-PL");
+  assert.equal(strings("en-GB").locale, "en-GB");
+  assert.equal(strings("tlh").today, "Today");
+  assert.equal(strings("tlh").locale, "en-US");
+  // Polish leaves out what reads the same in English.
+  assert.equal(strings("pl").minutes(45), "45 min");
+  const pl = strings("pl");
+  assert.equal(describeRepeat(["Wednesday", "Tuesday"], pl), "wt. i śr.");
+  assert.equal(describeRepeat(["Wednesday"], pl), "Co środę");
+  assert.equal(describeRepeat(["Saturday", "Sunday"], pl), "Weekendy");
+  assert.equal(formatEventTime("2026-11-20T06:40:00Z", ctx({ t: pl })), "pt. 07:40");
+  assert.equal(formatEventTime("2026-11-10T06:40:00Z", ctx({ t: pl })), "10 lis");
+  assert.equal(sleepSummary("2026-11-23T23:00:00Z", "2026-11-24T07:30:00Z", ctx({ t: pl })).duration, "8 godz. 30 min");
 });

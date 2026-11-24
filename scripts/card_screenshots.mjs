@@ -1,6 +1,7 @@
 // Screenshots of the dashboard card, from tests/frontend/preview.html and its fake data.
 //   node scripts/card_screenshots.mjs [out-dir]   every scenario, light and dark (default out: card-screenshots/)
 //   node scripts/card_screenshots.mjs --readme    rewrites assets/card-light.png and assets/card-dark.png
+//   add --lang=pl for the card in another language (the README pictures stay in English)
 // Uses the Google Chrome installed on this machine (playwright-core downloads no browser).
 import { createReadStream } from "node:fs";
 import { mkdir } from "node:fs/promises";
@@ -14,8 +15,10 @@ import { NOW } from "../tests/frontend/fixtures.js";
 
 const ROOT = fileURLToPath(new URL("..", import.meta.url));
 const TYPES = { ".html": "text/html", ".js": "text/javascript", ".json": "application/json" };
-const readme = process.argv.includes("--readme");
-const outDir = readme ? join(ROOT, "assets") : (process.argv[2] ?? join(ROOT, "card-screenshots"));
+const args = process.argv.slice(2);
+const readme = args.includes("--readme");
+const lang = readme ? "en" : (args.find((arg) => arg.startsWith("--lang="))?.slice(7) ?? "en");
+const outDir = readme ? join(ROOT, "assets") : (args.find((arg) => !arg.startsWith("--")) ?? join(ROOT, "card-screenshots"));
 
 const server = createServer((req, res) => {
   const path = normalize(join(ROOT, decodeURIComponent(new URL(req.url, "http://x").pathname)));
@@ -50,7 +53,7 @@ try {
     page.on("console", (msg) => msg.type() === "error" && errors.push(`${shot.file}: ${msg.text()}`));
     page.on("pageerror", (err) => errors.push(`${shot.file}: ${err.message}`));
     await page.clock.setFixedTime(NOW);
-    await page.goto(`${base}?scenario=${shot.scenario}&theme=${shot.theme}&width=${shot.width}${readme ? "&transparent" : ""}`);
+    await page.goto(`${base}?scenario=${shot.scenario}&theme=${shot.theme}&width=${shot.width}&lang=${lang}${readme ? "&transparent" : ""}`);
     await page.waitForSelector("body[data-ready]");
     await page.locator("#stage").screenshot({ path: join(outDir, shot.file), omitBackground: readme });
     await page.close();

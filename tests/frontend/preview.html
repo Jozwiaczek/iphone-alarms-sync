@@ -85,7 +85,8 @@
 
       const card = document.createElement("iphone-alarms-card");
       card.setConfig({ type: "custom:iphone-alarms-card", ...scenario.config });
-      card.hass = makeHass(scenario.hass);
+      const language = params.get("lang") ?? "en";
+      card.hass = makeHass({ ...scenario.hass, locale: { ...scenario.hass?.locale, language } });
       document.getElementById("stage").appendChild(card);
       const click = (selector) => card.shadowRoot.querySelector(selector)?.click();
       if (scenario.expand) click(`button.row[data-key="${scenario.expand}"]`);

@@ -311,3 +311,46 @@ test("the editor form and the card picker", () => {
   assert.deepEqual(el.getGridOptions(), { columns: 12, min_columns: 6 });
   ok(el.getCardSize() > 1);
 });
+
+// What a user reads and hears, line by line.
+const screen = (el) =>
+  $$(el, ".section-header, .time, .subtitle, .status, dt, dd, .label, .details p, .link, .automation, .more")
+    .map((node) => node.getAttribute("aria-label") ?? text(node))
+    .filter(Boolean);
+// The editor's labels and helpers; Home Assistant puts the user's language on <html lang>.
+const editor = (lang) => {
+  document.documentElement.lang = lang;
+  const form = customElements.get("iphone-alarms-card").getConfigForm();
+  const fields = form.schema.map((field) => [form.computeLabel(field), form.computeHelper(field)]);
+  document.documentElement.lang = "";
+  return fields;
+};
+const inLanguage = (language, config = {}) => mount(config, makeHass({ locale: { language } }));
+
+async function openFirst(language) {
+  const el = inLanguage(language);
+  row(el, FIRST).click();
+  await flush();
+  return el;
+}
+
+test("Polish: the card and its editor", async (t) => {
+  const el = await openFirst("pl");
+  assert.deepEqual($$(el, ".section-header").map(text), ["Sen | Pobudka", "Inne"]);
+  t.assert.snapshot(screen(el));
+  t.assert.snapshot(editor("pl"));
+  const gone = (n) => text($(inLanguage("pl", { devices: Array.from({ length: n }, (_, i) => `gone${i}`) }), ".warning"));
+  assert.deepEqual([1, 2, 5].map(gone), [
+    "1 wybrane urządzenie już nie istnieje.",
+    "2 wybrane urządzenia już nie istnieją.",
+    "5 wybranych urządzeń już nie istnieje.",
+  ]);
+});
+
+test("a language the card doesn't know falls back to English", async (t) => {
+  const el = await openFirst("tlh");
+  assert.deepEqual($$(el, ".section-header").map(text), ["Sleep | Wake Up", "Other"]);
+  assert.deepEqual(screen(el), screen(await openFirst("en")));
+  t.assert.snapshot(screen(el));
+  t.assert.snapshot(editor("tlh"));
+});
