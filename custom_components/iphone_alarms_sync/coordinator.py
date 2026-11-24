@@ -20,7 +20,6 @@ from .const import (
     CONF_PHONE_ID,
     CONF_PHONE_NAME,
     CONF_SYNC_DISABLED_ALARMS,
-    DEFAULT_SNOOZE_TIME,
     DOMAIN,
 )
 from .utils import extract_alarm_uuid, normalize_weekday, rings_at
@@ -41,7 +40,6 @@ class AlarmData:
     repeats: bool = False
     repeat_days: list[str] = field(default_factory=list)
     allows_snooze: bool = False
-    snooze_time: int = DEFAULT_SNOOZE_TIME
     last_event_goes_off_at: str | None = None
     last_event_snoozed_at: str | None = None
     last_event_stopped_at: str | None = None
@@ -56,8 +54,7 @@ ALARM_EVENT_FIELDS = (
     "last_event_snoozed_at",
     "last_event_stopped_at",
 )
-# Fields the Sync shortcut sends; snooze_time is only taken for a new alarm,
-# afterwards it belongs to the Snooze Time number entity.
+# Fields the Sync shortcut sends.
 SYNCED_FIELDS = (
     "label",
     "enabled",
@@ -213,8 +210,6 @@ class IPhoneAlarmsSyncCoordinator(DataUpdateCoordinator[PhoneData]):
                 for name, value in values.items():
                     setattr(alarm, name, value)
                 continue
-            if "snooze_time" in alarm_dict:
-                values["snooze_time"] = alarm_dict["snooze_time"]
             phone.alarms[alarm_id] = AlarmData(
                 alarm_id=alarm_id,
                 estimate_goes_off=self._default_estimate(),

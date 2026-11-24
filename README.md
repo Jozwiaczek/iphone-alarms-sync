@@ -26,7 +26,7 @@ Works on iPhone, iPad and Mac.
 
 - **Native and exact.** Built on Apple's own Shortcuts automations. No polling. No workarounds.
 - **Every alarm is a device.** Time, label, repeat days.
-- **Its settings too.** On or off. Snooze allowed or not. Snooze length for your automations.
+- **Its settings too.** On or off. Snooze allowed or not.
 - **Next and last.** Next alarm, next ring, last ring. Act before you wake up.
 - **Alarm goes off trigger.** Fires at the alarm's time ([estimated](docs/shortcuts.md#estimated-goes-off)). Pick one alarm or many.
 - **Every phone at home.** Add each one. Each gets its own alarms.

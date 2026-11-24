@@ -29,9 +29,8 @@ TRIGGER_SUBTYPE_ALARM = "alarm"
 TRIGGER_SUBTYPE_ANY = "any"
 TRIGGER_SUBTYPE_WAKEUP = "wakeup"
 
-DEFAULT_SNOOZE_TIME = 9
 
-PLATFORMS = ["binary_sensor", "event", "number", "sensor", "switch"]
+PLATFORMS = ["binary_sensor", "event", "sensor", "switch"]
 
 SHORTCUT_SYNC_URL = "https://www.icloud.com/shortcuts/f8015b2fa07f4c4cbab8126816137ff5"
 SHORTCUT_ALARM_EVENT_URL = (
