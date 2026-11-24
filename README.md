@@ -77,7 +77,7 @@ Turn on the light when an alarm goes off. In the automation editor, pick the tri
 triggers:
   - trigger: iphone_alarms_sync.goes_off
     target:
-      entity_id: event.johns_iphone_07_00_wake_alarm
+      entity_id: event.johns_iphone_wake_alarm
 actions:
   - action: light.turn_on
     target:

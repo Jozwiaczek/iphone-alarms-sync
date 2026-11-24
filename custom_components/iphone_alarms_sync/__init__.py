@@ -126,14 +126,18 @@ def _async_update_devices(
         manufacturer="Apple",
         via_device_id=_mobile_app_device_id(registry, phone),
     )
+    labels = [alarm.label for alarm in phone.alarms.values()]
     for alarm_id, alarm in phone.alarms.items():
-        # As the Clock app lists it; the time also tells apart alarms that keep
-        # the default label "Alarm".
-        alarm_time = f"{alarm.hour:02d}:{alarm.minute:02d}"
+        # HA builds entity ids from the device name once, so a time in it goes
+        # stale when the alarm moves; add it only to tell apart an empty or
+        # shared label (such as the default "Alarm").
+        label = alarm.label
+        if not label or labels.count(label) > 1:
+            label = f"{alarm.hour:02d}:{alarm.minute:02d} {label}"
         registry.async_get_or_create(
             config_entry_id=entry.entry_id,
             identifiers={(DOMAIN, phone.phone_id, alarm_id)},  # type: ignore[arg-type]
-            name=f"{phone.phone_name} {alarm_time} {alarm.label}".strip(),
+            name=f"{phone.phone_name} {label}".strip(),
             manufacturer="Apple",
             model="Alarm",
             via_device_id=phone_device.id,

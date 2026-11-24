@@ -42,7 +42,7 @@ async def _sync(hass: HomeAssistant, alarms: list[dict]) -> None:
 
 
 async def test_sync_adds_and_removes_alarm_entities(hass: HomeAssistant, entry) -> None:
-    other = "binary_sensor.john_iphone_07_00_gym_enabled"
+    other = "binary_sensor.john_iphone_gym_enabled"
     assert hass.states.get(other) is None
 
     await _sync(hass, [alarm_payload(), alarm_payload(alarm_id=OTHER_ID, label="Gym")])
@@ -54,6 +54,34 @@ async def test_sync_adds_and_removes_alarm_entities(hass: HomeAssistant, entry) 
     assert not dr.async_get(hass).async_get_device_by_identifier(
         (DOMAIN, PHONE_ID, OTHER_ID), entry.entry_id
     )
+
+
+async def test_alarm_device_name_has_time_only_for_shared_or_empty_label(
+    hass: HomeAssistant, entry
+) -> None:
+    third_id = "FFFFFFFF-0000-1111-2222-333333333333"
+    unlabeled_id = "99999999-8888-7777-6666-555555555555"
+    await _sync(
+        hass,
+        [
+            alarm_payload(),
+            alarm_payload(alarm_id=OTHER_ID, label="Alarm", hour=6, minute=30),
+            alarm_payload(alarm_id=third_id, label="Alarm", hour=8, minute=5),
+            alarm_payload(alarm_id=unlabeled_id, label="", hour=9, minute=0),
+        ],
+    )
+    registry = dr.async_get(hass)
+
+    def name(alarm_id: str) -> str | None:
+        device = registry.async_get_device_by_identifier(
+            (DOMAIN, PHONE_ID, alarm_id), entry.entry_id
+        )
+        return device.name
+
+    assert name(ALARM_ID) == "John iPhone Wake"
+    assert name(OTHER_ID) == "John iPhone 06:30 Alarm"
+    assert name(third_id) == "John iPhone 08:05 Alarm"
+    assert name(unlabeled_id) == "John iPhone 09:00"
 
 
 async def test_disabled_alarms_not_synced_when_turned_off(hass: HomeAssistant) -> None:
@@ -108,9 +136,7 @@ async def test_alarm_event_fires_trigger_for_alarm_device(
         (DOMAIN, PHONE_ID, ALARM_ID), entry.entry_id
     )
     assert triggers[0].data == {"device_id": alarm_device.id, "subtype": "alarm"}
-    assert hass.states.get("sensor.john_iphone_07_00_wake_last_snoozed").state != (
-        "unknown"
-    )
+    assert hass.states.get("sensor.john_iphone_wake_last_snoozed").state != "unknown"
 
 
 async def test_alarm_time_updates_last_alarm(
@@ -138,7 +164,7 @@ async def test_alarm_time_updates_last_alarm(
     )
     assert (
         dt_util.parse_datetime(
-            hass.states.get("sensor.john_iphone_07_00_wake_last_occurrence").state
+            hass.states.get("sensor.john_iphone_wake_last_occurrence").state
         )
         == alarm_at
     )
@@ -188,7 +214,7 @@ async def _report_goes_off(hass: HomeAssistant) -> None:
     await hass.async_block_till_done()
 
 
-SWITCH = "switch.john_iphone_07_00_wake_estimated_goes_off"
+SWITCH = "switch.john_iphone_wake_estimated_goes_off"
 
 
 async def test_estimated_goes_off_fires_once_per_ring(
@@ -205,7 +231,7 @@ async def test_estimated_goes_off_fires_once_per_ring(
         (ALARM_ID, True)
     ]
     assert triggers[0].data["subtype"] == "alarm"
-    alarm_event = hass.states.get("event.john_iphone_07_00_wake_alarm")
+    alarm_event = hass.states.get("event.john_iphone_wake_alarm")
     assert alarm_event.attributes["event_type"] == "goes_off"
     assert alarm_event.attributes["estimated"] is True
     assert hass.states.get("event.john_iphone_any_alarm").state == "unknown"
@@ -257,9 +283,7 @@ async def test_shortcut_takes_over_from_estimate_without_a_duplicate(
 
     assert [e.data["estimated"] for e in events] == [not shortcut_first]
     assert hass.states.get(SWITCH).state == "off"
-    assert hass.states.get("sensor.john_iphone_07_00_wake_last_went_off").state != (
-        "unknown"
-    )
+    assert hass.states.get("sensor.john_iphone_wake_last_went_off").state != "unknown"
 
     # From now on only the shortcut fires.
     await _ring(hass, freezer, alarm_at + timedelta(days=7))
@@ -278,7 +302,7 @@ async def test_estimate_is_off_for_a_phone_that_reports_goes_off(
     assert hass.states.get(SWITCH).state == "off"
 
     await _sync(hass, [alarm_payload(), alarm_payload(alarm_id=OTHER_ID, label="Gym")])
-    gym = "switch.john_iphone_07_00_gym_estimated_goes_off"
+    gym = "switch.john_iphone_gym_estimated_goes_off"
     assert hass.states.get(gym).state == "off"
 
 
@@ -356,7 +380,7 @@ async def test_loads_and_keeps_v1_4_options(
     assert alarm["last_event_goes_off_at"] == "2026-11-12T06:00:00+00:00"
     assert "icon" not in alarm
     assert "last_alarm_id" not in config_entry.options
-    assert hass.states.get("number.john_iphone_07_00_wake_snooze_time").state == "5"
+    assert hass.states.get("number.john_iphone_wake_snooze_time").state == "5"
 
 
 async def test_malformed_alarm_is_rejected_and_nothing_stored(
@@ -401,7 +425,7 @@ async def test_empty_sync_removes_nothing(hass: HomeAssistant, entry) -> None:
 
 
 async def test_snooze_time_is_kept_and_needs_snooze(hass: HomeAssistant, entry) -> None:
-    number = "number.john_iphone_07_00_wake_snooze_time"
+    number = "number.john_iphone_wake_snooze_time"
     set_value = {"entity_id": number, "value": 5}
     await hass.services.async_call("number", "set_value", set_value, blocking=True)
     assert hass.states.get(number).state == "5"
@@ -483,7 +507,7 @@ async def test_sync_reads_repeat_days_in_the_iphone_language(
     monday = _local(2026, 11, 16, 6, 15)
     assert (
         dt_util.parse_datetime(
-            hass.states.get("sensor.john_iphone_06_15_wecker_next_occurrence").state
+            hass.states.get("sensor.john_iphone_wecker_next_occurrence").state
         )
         == monday
     )
@@ -516,7 +540,7 @@ async def test_sync_keeps_unknown_repeat_days(
     # Duplicates after translation are harmless.
     assert _repeats_on(alarms[OTHER_ID]) == ["monday"]
     assert dt_util.parse_datetime(
-        hass.states.get("sensor.john_iphone_07_00_gym_next_occurrence").state
+        hass.states.get("sensor.john_iphone_gym_next_occurrence").state
     ) == _local(2026, 11, 16, 7, 0)
 
 
@@ -524,7 +548,7 @@ async def test_repeating_alarm_with_only_unknown_days_has_no_next_occurrence(
     hass: HomeAssistant, entry
 ) -> None:
     await _sync(hass, [alarm_payload(repeats=True, repeat_days=["Funday"])])
-    state = hass.states.get("sensor.john_iphone_07_00_wake_next_occurrence")
+    state = hass.states.get("sensor.john_iphone_wake_next_occurrence")
     assert state.state == "unknown"
 
 
