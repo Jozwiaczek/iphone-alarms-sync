@@ -22,7 +22,6 @@ module.exports = {
         message: ':bookmark: v${nextRelease.version} [skip ci]',
       },
     ],
-    // No "included in version" comment on every released PR: it mails each one.
-    ['@semantic-release/github', { successComment: false }],
+    '@semantic-release/github',
   ],
 };
