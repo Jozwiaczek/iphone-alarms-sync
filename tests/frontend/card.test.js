@@ -5,7 +5,7 @@ import { test } from "node:test";
 import { card } from "./dom.js";
 import { makeHass, NOW, PHONE, SECOND_PHONE, TIME_ZONE } from "./fixtures.js";
 
-const { validateConfig, describeRepeat, formatClock, formatEventTime, buildIndex, selectAlarms, relatedItems, timeContext, strings } = card;
+const { validateConfig, describeRepeat, formatClock, formatEventTime, lastRing, buildIndex, selectAlarms, relatedItems, timeContext, strings } = card;
 const ctx = (overrides = {}) => ({ h12: false, timeZone: TIME_ZONE, now: NOW, t: strings(), ...overrides });
 const config = (overrides = {}) => validateConfig(overrides);
 
@@ -59,6 +59,20 @@ test("formatEventTime shows how old an event is", () => {
   // 23:30 UTC on the 23rd is already the 24th in Warsaw.
   assert.equal(formatEventTime("2026-11-23T23:30:00Z", ctx()), "00:30");
   for (const empty of [null, "unknown", "unavailable", "nonsense"]) assert.equal(formatEventTime(empty, ctx()), null);
+});
+
+test("lastRing prefers what the phone reported", () => {
+  const at = (iso, estimated) => ({ at: new Date(iso), estimated });
+  assert.equal(lastRing(null, "unknown"), null);
+  assert.deepEqual(lastRing("2026-11-09T07:37:00Z", null), at("2026-11-09T07:37:00Z", false));
+  // The alarm was due today, the phone last reported a ring on the 9th.
+  assert.deepEqual(lastRing("2026-11-09T07:37:00Z", "2026-11-24T06:35:00Z"), at("2026-11-24T06:35:00Z", true));
+  assert.deepEqual(lastRing(undefined, "2026-11-24T06:35:00Z"), at("2026-11-24T06:35:00Z", true));
+  // The phone's "goes off" a few seconds before or after the scheduled minute confirms it.
+  assert.deepEqual(lastRing("2026-11-24T06:34:56Z", "2026-11-24T06:35:00Z"), at("2026-11-24T06:34:56Z", false));
+  assert.deepEqual(lastRing("2026-11-24T06:36:10Z", "2026-11-24T06:35:00Z"), at("2026-11-24T06:36:10Z", false));
+  // A test event from the phone later in the day is the latest ring.
+  assert.deepEqual(lastRing("2026-11-24T11:36:59Z", "2026-11-24T06:35:00Z"), at("2026-11-24T11:36:59Z", false));
 });
 
 test("selectAlarms filters by phone and alarm", () => {

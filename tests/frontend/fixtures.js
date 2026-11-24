@@ -43,6 +43,7 @@ export const PHONE = {
       minute: 35,
       repeat_days: EVERY_DAY,
       next: "2026-11-25T06:35:00Z",
+      last: "2026-11-24T06:35:00Z",
       events: {
         last_event_goes_off_at: "2026-11-24T06:35:00Z",
         last_event_snoozed_at: "2026-11-24T06:44:00Z",
@@ -57,6 +58,8 @@ export const PHONE = {
       minute: 40,
       repeat_days: WEEKDAYS,
       next: "2026-11-25T06:40:00Z",
+      // Rang today, but only yesterday's "goes off" reached Home Assistant.
+      last: "2026-11-24T06:40:00Z",
       events: { last_event_goes_off_at: "2026-11-23T06:40:00Z" },
       automations: MORNING.map((name) => `automation.${slug(name)}`),
     },
@@ -123,6 +126,7 @@ export function makeHass({ phones = [PHONE], locale = {}, callWS } = {}) {
         allows_snooze: alarm.allows_snooze ?? true,
       });
       add(`sensor.${base}_next_occurrence_datetime`, alarm.id, "next_occurrence_datetime", alarm.next);
+      add(`sensor.${base}_last_occurrence_datetime`, alarm.id, "last_occurrence_datetime", alarm.last);
       for (const key of ["last_event_goes_off_at", "last_event_snoozed_at", "last_event_stopped_at"]) {
         add(`sensor.${base}_${key}`, alarm.id, key, alarm.events?.[key]);
       }

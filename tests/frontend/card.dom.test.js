@@ -29,8 +29,8 @@ test("lists the alarms like the Clock app", () => {
   assert.deepEqual($$(el, ".time").map(text), ["06:00", "07:35", "07:40", "16:43"]);
   assert.deepEqual($$(el, ".subtitle").map(text), [
     "Gym · Weekends",
-    "1️⃣ Pierwszy · Every day",
-    "⚠️ Drugi · Weekdays",
+    "1️⃣ Pierwszy · Every day Went off Today 07:35",
+    "⚠️ Drugi · Weekdays Went off Today 07:40 · estimated",
     "Test 2 · Tue and Wed",
   ]);
   assert.deepEqual($$(el, ".status").map((s) => s.getAttribute("aria-label")), ["Off", "On", "On", "On"]);

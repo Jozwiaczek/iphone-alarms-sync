@@ -73,6 +73,25 @@
         "no-phones": { hass: { phones: [] } },
         "filter-empty": { config: { devices: ["deleted_alarm"] } },
         "12h": { hass: { locale: { time_format: "12" } } },
+        "last-ring": {
+          hass: {
+            phones: [
+              {
+                ...PHONE,
+                alarms: [
+                  // Confirmed by the phone a moment after the scheduled minute.
+                  { id: "a1", label: "Confirmed", hour: 6, minute: 0, repeat_days: ["Tuesday"], last: "2026-11-24T05:00:00Z", events: { last_event_goes_off_at: "2026-11-24T05:00:40Z" } },
+                  // Only estimated, long ago, with a label too long for the row.
+                  { id: "a2", label: "A very long alarm label that does not fit on one line", hour: 6, minute: 30, repeat_days: ["Monday"], last: "2026-11-10T05:30:00Z" },
+                  // Off now, but it rang before.
+                  { id: "a3", label: "Old trip", hour: 4, minute: 15, enabled: false, last: "2026-11-20T03:15:00Z", events: { last_event_goes_off_at: "2026-11-20T03:15:05Z" } },
+                  // Never rang.
+                  { id: "a4", label: "New", hour: 21, minute: 0 },
+                ],
+              },
+            ],
+          },
+        },
       };
 
       const params = new URLSearchParams(location.search);
