@@ -1,0 +1,98 @@
+<!doctype html>
+<!-- The dashboard card with fake data and Home Assistant's default theme.
+     Serve the repo root and open tests/frontend/preview.html?scenario=...&theme=dark&width=390
+     (scripts/card_screenshots.mjs does this for every scenario). -->
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width" />
+    <link rel="icon" href="data:," />
+    <style>
+      :root {
+        --primary-color: #009ac7;
+        --primary-background-color: #fafafa;
+        --card-background-color: #ffffff;
+        --primary-text-color: #141414;
+        --secondary-text-color: #5e5e5e;
+        --divider-color: rgba(0, 0, 0, 0.12);
+        --rgb-warning-color: 255, 166, 0;
+      }
+      :root.dark {
+        --primary-color: #009ac7;
+        --primary-background-color: #111111;
+        --card-background-color: #1c1c1c;
+        --primary-text-color: #e1e1e1;
+        --secondary-text-color: #9b9b9b;
+        --divider-color: rgba(225, 225, 225, 0.12);
+      }
+      body {
+        margin: 0;
+        padding: 16px;
+        background: var(--primary-background-color);
+        font-family: Roboto, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        -webkit-font-smoothing: antialiased;
+      }
+      #stage { box-sizing: border-box; }
+    </style>
+  </head>
+  <body>
+    <div id="stage"></div>
+    <script type="module">
+      import { makeHass, PHONE, SECOND_PHONE } from "./fixtures.js";
+
+      // Stand-in for Home Assistant's ha-card, with the same default look.
+      customElements.define(
+        "ha-card",
+        class extends HTMLElement {
+          connectedCallback() {
+            Object.assign(this.style, {
+              display: "block",
+              background: "var(--ha-card-background, var(--card-background-color))",
+              borderRadius: "var(--ha-card-border-radius, 12px)",
+              border: "1px solid var(--ha-card-border-color, var(--divider-color))",
+              color: "var(--primary-text-color)",
+            });
+          }
+        },
+      );
+      await import("../../custom_components/iphone_alarms_sync/frontend/iphone-alarms-card.js");
+
+      const SCENARIOS = {
+        default: {},
+        readme: { config: { title: "Alarms" }, expand: "1a2b3c4d5e6f7a8b" },
+        expanded: { expand: "1a2b3c4d5e6f7a8b" },
+        sleep: { expand: "sleep:0f3e9a1b2c4d5e6f" },
+        many: { expand: "2b3c4d5e6f7a8b9c" },
+        "many-all": { expand: "2b3c4d5e6f7a8b9c", all: true },
+        "no-automations": { expand: "3c4d5e6f7a8b9c0d" },
+        loading: { expand: "1a2b3c4d5e6f7a8b", hass: { callWS: () => new Promise(() => {}) } },
+        error: { expand: "1a2b3c4d5e6f7a8b", hass: { callWS: async () => Promise.reject(new Error("x")) } },
+        "two-phones": { config: { title: "Alarms" }, hass: { phones: [PHONE, SECOND_PHONE] } },
+        "picked-alarms": { config: { devices: ["1a2b3c4d5e6f7a8b", "3c4d5e6f7a8b9c0d", "deleted_alarm"] } },
+        "no-sleep": { config: { show_sleep: false, show_disabled: false } },
+        "no-alarms": { hass: { phones: [{ ...SECOND_PHONE, alarms: [] }] } },
+        "no-phones": { hass: { phones: [] } },
+        "filter-empty": { config: { devices: ["deleted_alarm"] } },
+        evening: { hass: { phones: [{ ...PHONE, sleep: { ...PHONE.sleep, bedtime_last_event_at: "2026-11-24T08:50:00Z" } }] } },
+        "12h": { hass: { locale: { time_format: "12" } } },
+      };
+
+      const params = new URLSearchParams(location.search);
+      const scenario = SCENARIOS[params.get("scenario") ?? "default"];
+      document.documentElement.classList.toggle("dark", params.get("theme") === "dark");
+      if (params.has("transparent")) document.body.style.background = "transparent";
+      document.getElementById("stage").style.width = `${params.get("width") ?? 390}px`;
+
+      const card = document.createElement("iphone-alarms-card");
+      card.setConfig({ type: "custom:iphone-alarms-card", ...scenario.config });
+      card.hass = makeHass(scenario.hass);
+      document.getElementById("stage").appendChild(card);
+      const click = (selector) => card.shadowRoot.querySelector(selector)?.click();
+      if (scenario.expand) click(`button.row[data-key="${scenario.expand}"]`);
+      await new Promise((resolve) => setTimeout(resolve, 0));
+      if (scenario.all) click(".more");
+      document.body.dataset.ready = "true";
+      window.SCENARIOS = Object.keys(SCENARIOS);
+    </script>
+  </body>
+</html>

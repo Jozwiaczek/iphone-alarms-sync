@@ -35,6 +35,8 @@ CI runs the same checks. The maintainer reviews the pull request and squash-merg
 - The integration lives in `custom_components/iphone_alarms_sync`, the tests in `tests`.
 - Texts shown to users are in `translations/en.json`. Entity names and icons use the entity key (`translations/en.json`, `icons.json`).
 - Keep it small: no options or abstractions that nobody asked for.
+- The dashboard card is one file with no build step: `custom_components/iphone_alarms_sync/frontend/iphone-alarms-card.js`. Its tests are in `tests/frontend` (`npm install`, then `node --test tests/frontend/`). To see it, serve the repo root (`python3 -m http.server`) and open `tests/frontend/preview.html`.
+- Changed how the card looks? Run `node scripts/card_screenshots.mjs --readme` to update the README pictures, and `node scripts/card_screenshots.mjs` for every state (needs Google Chrome).
 
 ## Pull request title
 

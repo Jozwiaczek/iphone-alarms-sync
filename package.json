@@ -10,7 +10,9 @@
     "@semantic-release/git": "^11.0.1",
     "commitlint-config-gitmoji": "^2.3.0",
     "gitmojis": "^3.15.0",
+    "happy-dom": "^21.0.4",
     "husky": "^9.0.0",
+    "playwright-core": "^1.65.1",
     "semantic-release": "^26.0.1"
   }
 }

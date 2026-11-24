@@ -48,3 +48,6 @@ dist/
 
 # Created by pytest-homeassistant during tests
 tests/testing_config/
+
+# scripts/card_screenshots.mjs output
+card-screenshots/

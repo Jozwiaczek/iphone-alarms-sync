@@ -2,9 +2,12 @@ from __future__ import annotations
 
 import logging
 from datetime import datetime, timedelta
+from pathlib import Path
 from typing import Any, cast
 
 import voluptuous as vol
+from homeassistant.components.frontend import add_extra_js_url
+from homeassistant.components.http import StaticPathConfig
 from homeassistant.config_entries import ConfigEntryState
 from homeassistant.core import CALLBACK_TYPE, HomeAssistant, ServiceCall, callback
 from homeassistant.exceptions import HomeAssistantError, ServiceValidationError
@@ -17,10 +20,13 @@ from homeassistant.helpers.event import (
     async_track_time_interval,
 )
 from homeassistant.helpers.typing import ConfigType
+from homeassistant.loader import async_get_integration
 from homeassistant.util import dt as dt_util
 
 from .const import (
     ALARM_EVENTS,
+    CARD_PATH,
+    CARD_URL,
     CONF_ALARM_ID,
     CONF_ALARMS,
     CONF_EVENT,
@@ -368,8 +374,19 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
     hass.services.async_register(
         DOMAIN, "report_device_event", handle_report_device_event
     )
+    # The dashboard card ships with the integration, so users add no resource.
+    if "frontend" in hass.config.components:
+        await _async_register_card(hass)
 
     return True
+
+
+async def _async_register_card(hass: HomeAssistant) -> None:
+    version = (await async_get_integration(hass, DOMAIN)).version
+    await hass.http.async_register_static_paths(
+        [StaticPathConfig(CARD_URL, str(Path(__file__).parent / CARD_PATH), True)]
+    )
+    add_extra_js_url(hass, f"{CARD_URL}?v={version}")
 
 
 @callback

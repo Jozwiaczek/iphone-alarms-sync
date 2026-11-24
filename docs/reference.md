@@ -1,6 +1,6 @@
 # Reference
 
-Everything iPhone Alarms Sync adds to Home Assistant. For setup, see the [README](../README.md) and the [Shortcuts Setup Guide](shortcuts.md).
+Everything iPhone Alarms Sync adds to Home Assistant. For setup, see the [README](../README.md) and the [Shortcuts Setup Guide](shortcuts.md). The dashboard card has its own page: [Dashboard card](dashboard-card.md).
 
 ## Entities
 
