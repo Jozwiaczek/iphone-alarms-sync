@@ -17,7 +17,7 @@ Everything iPhone Alarms Sync adds to Home Assistant. For setup, see the [README
 | Bedtime last started, Wind down last started, Last woke up | Last sleep events (Device Event shortcut) |
 | Alarm event missed | On when an alarm rang but no *Goes Off* event arrived ([details](shortcuts.md#alarm-event-missed)) |
 
-**Alarm device** (one per alarm, named like in the Clock app, e.g. *John's iPhone 07:00 Wake*; the name follows the alarm's time and label)
+**Alarm device** (one per alarm, named after its label, e.g. *John's iPhone Wake*; an alarm without a label or with a label another alarm has, such as the default *Alarm*, also gets its time, e.g. *John's iPhone 07:00 Alarm*. The name follows the alarm; entity IDs keep the name they were created with)
 
 | Entity | Description |
 |---|---|

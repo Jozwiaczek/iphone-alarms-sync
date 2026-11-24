@@ -49,8 +49,8 @@ async def test_alarm_goes_off_trigger_for_chosen_alarms(
                     "trigger": f"{DOMAIN}.goes_off",
                     "target": {
                         "entity_id": [
-                            "event.john_iphone_07_00_wake_alarm",
-                            "event.john_iphone_06_00_gym_alarm",
+                            "event.john_iphone_wake_alarm",
+                            "event.john_iphone_gym_alarm",
                             "event.john_iphone_wake_up_alarm",
                         ]
                     },
@@ -71,8 +71,8 @@ async def test_alarm_goes_off_trigger_for_chosen_alarms(
     await hass.async_block_till_done()
 
     assert [c.data["entity"] for c in calls] == [
-        "event.john_iphone_07_00_wake_alarm",
-        "event.john_iphone_06_00_gym_alarm",
+        "event.john_iphone_wake_alarm",
+        "event.john_iphone_gym_alarm",
         "event.john_iphone_wake_up_alarm",
     ]
     state = hass.states.get("event.john_iphone_any_alarm")
@@ -88,7 +88,7 @@ async def test_sleep_event_entity(hass: HomeAssistant, entry) -> None:
 async def test_area_target_skips_other_integrations(hass: HomeAssistant, entry) -> None:
     area = ar.async_get(hass).async_create("Bedroom")
     registry = er.async_get(hass)
-    ours = "event.john_iphone_07_00_wake_alarm"
+    ours = "event.john_iphone_wake_alarm"
     foreign = registry.async_get_or_create("event", "other", "door").entity_id
     for entity_id in (ours, foreign):
         registry.async_update_entity(entity_id, area_id=area.id)

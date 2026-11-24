@@ -37,7 +37,7 @@ from .test_init import (
     _sync,
 )
 
-GYM_SWITCH = "switch.john_iphone_07_00_gym_estimated_goes_off"
+GYM_SWITCH = "switch.john_iphone_gym_estimated_goes_off"
 FRIDAY = {"repeats": True, "repeat_days": ["Friday"]}
 # Friday 2026-11-13.
 SIX = (2026, 11, 13, 6, 0)
@@ -67,7 +67,7 @@ async def test_new_user_with_sync_only(
             "automation": {
                 "triggers": {
                     "trigger": f"{DOMAIN}.goes_off",
-                    "target": {"entity_id": "event.john_iphone_07_00_wake_alarm"},
+                    "target": {"entity_id": "event.john_iphone_wake_alarm"},
                 },
                 "actions": {"action": "test.automation"},
             }
