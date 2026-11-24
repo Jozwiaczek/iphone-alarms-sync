@@ -1,0 +1,137 @@
+exports[`Polish: the card and its editor 1`] = `
+[
+  "Sen | Pobudka",
+  "08:30",
+  "Pora snu 00:00·8 godz. 30 min·Dziś",
+  "Inne",
+  "06:00",
+  "Gym · Weekendy",
+  "Wyłączony",
+  "07:35",
+  "1️⃣ Pierwszy · Codziennie",
+  "Włączony",
+  "Drzemka",
+  "Dozwolona",
+  "Następny dzwonek",
+  "Jutro 07:35",
+  "Zadzwonił",
+  "07:35",
+  "Odłożony",
+  "07:44",
+  "Zatrzymany",
+  "07:52",
+  "Pokaż wszystkie encje",
+  "Automatyzacje",
+  "Bedroom lights on",
+  "Coffee machine",
+  "Open the blindsWyłączona",
+  "07:40",
+  "⚠️ Drugi · Dni robocze",
+  "Włączony",
+  "16:43",
+  "Test 2 · wt. i śr.",
+  "Włączony"
+]
+`;
+
+exports[`Polish: the card and its editor 2`] = `
+[
+  [
+    "Tytuł",
+    "Zostaw puste, aby karta była bardziej zwarta."
+  ],
+  [
+    "Telefony lub budziki",
+    "Wybierz telefony (wszystkie ich budziki) albo pojedyncze budziki. Zostaw puste, aby pokazać wszystkie budziki."
+  ],
+  [
+    "Pokaż Sen | Pobudka",
+    "Ostatnia pora snu, pobudka i długość snu. Wymaga skrótu Device Event."
+  ],
+  [
+    "Pokaż inne budziki",
+    "Wszystkie budziki telefonu oprócz budzika pobudki. Budziki wybrane pojedynczo są zawsze widoczne."
+  ],
+  [
+    "Pokaż wyłączone budziki",
+    "Wyszarzone, z przekreślonym zegarem."
+  ],
+  [
+    "Pokaż ostatnie zdarzenia budzika",
+    "Dotknij budzika, aby zobaczyć, kiedy ostatnio zadzwonił, przeszedł w drzemkę albo został zatrzymany."
+  ],
+  [
+    "Pokaż automatyzacje budzika",
+    "Dotknij budzika, aby zobaczyć automatyzacje i skrypty, które go używają."
+  ]
+]
+`;
+
+exports[`a language the card doesn't know falls back to English 1`] = `
+[
+  "Sleep | Wake Up",
+  "08:30",
+  "Bedtime 00:00·8 hr 30 min·Today",
+  "Other",
+  "06:00",
+  "Gym · Weekends",
+  "Off",
+  "07:35",
+  "1️⃣ Pierwszy · Every day",
+  "On",
+  "Snooze",
+  "Allowed",
+  "Next ring",
+  "Tomorrow 07:35",
+  "Went off",
+  "07:35",
+  "Snoozed",
+  "07:44",
+  "Stopped",
+  "07:52",
+  "Show all entities",
+  "Automations",
+  "Bedroom lights on",
+  "Coffee machine",
+  "Open the blindsOff",
+  "07:40",
+  "⚠️ Drugi · Weekdays",
+  "On",
+  "16:43",
+  "Test 2 · Tue and Wed",
+  "On"
+]
+`;
+
+exports[`a language the card doesn't know falls back to English 2`] = `
+[
+  [
+    "Title",
+    "Leave empty for a more compact card."
+  ],
+  [
+    "Phones or alarms",
+    "Pick phones (all their alarms) or single alarms. Leave empty to show every alarm."
+  ],
+  [
+    "Show Sleep | Wake Up",
+    "Last bedtime, wake-up and how long you slept. Needs the Device Event shortcut."
+  ],
+  [
+    "Show other alarms",
+    "Every alarm of a phone besides the Wake-Up alarm. Alarms picked one by one always show."
+  ],
+  [
+    "Show alarms that are off",
+    "Shown grayed out, with a crossed-out clock."
+  ],
+  [
+    "Show last events of an alarm",
+    "Tap an alarm to see when it last went off, was snoozed or stopped."
+  ],
+  [
+    "Show automations of an alarm",
+    "Tap an alarm to see the automations and scripts that use it."
+  ]
+]
+`;

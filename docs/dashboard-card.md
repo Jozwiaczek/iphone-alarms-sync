@@ -91,6 +91,7 @@ target:
 
 ## Limits
 
+- **Language**: the card and its editor follow the language of your Home Assistant profile. They come in English and Polish; any other language shows English. To add one, see [Adding a language](../CONTRIBUTING.md#adding-a-language).
 - **Automations of Sleep | Wake Up**: the card finds automations that use the phone's *Wake-Up alarm* or *Sleep* event entities. It misses device triggers on the phone itself, such as *Wake-Up alarm goes off*: telling those apart from *any alarm* needs admin rights. A line under the list says so.
 - **Automations of an alarm**: the card finds every automation and script that uses the alarm's device or one of its entities, through Home Assistant's own search.
 - **An alarm is missing**: it needs its **Alarm ID** sensor. If you disabled that entity, the card can't read the alarm.

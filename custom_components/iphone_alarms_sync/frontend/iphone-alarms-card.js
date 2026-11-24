@@ -9,17 +9,18 @@ const DAY_MS = 86400000;
 const WEEK = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
 // In the order the card shows them.
 const BOOLEANS = ["show_sleep", "show_other", "show_disabled", "show_last_events", "show_automations"];
+// Entity and the text key of its event name.
 const ALARM_EVENTS = [
-  ["last_event_goes_off_at", "Went off"],
-  ["last_event_snoozed_at", "Snoozed"],
-  ["last_event_stopped_at", "Stopped"],
+  ["last_event_goes_off_at", "went_off"],
+  ["last_event_snoozed_at", "snoozed"],
+  ["last_event_stopped_at", "stopped"],
 ];
 const SLEEP_EVENTS = [
-  ["wind_down_last_event_at", "Wind down"],
-  ["wakeup_last_event_goes_off_at", "Went off"],
-  ["wakeup_last_event_snoozed_at", "Snoozed"],
-  ["wakeup_last_event_stopped_at", "Stopped"],
-  ["waking_up_last_event_at", "Waking up"],
+  ["wind_down_last_event_at", "wind_down"],
+  ["wakeup_last_event_goes_off_at", "went_off"],
+  ["wakeup_last_event_snoozed_at", "snoozed"],
+  ["wakeup_last_event_stopped_at", "stopped"],
+  ["waking_up_last_event_at", "waking_up"],
 ];
 const ALARM_KEYS = ["alarm_id", "next_occurrence_datetime", ...ALARM_EVENTS.map(([key]) => key)];
 const PHONE_KEYS = ["bedtime_last_event_at", ...SLEEP_EVENTS.map(([key]) => key)];
@@ -29,24 +30,140 @@ const SLEEP_TARGETS = ["wakeup_alarm", "sleep"];
 const BED_ICON =
   "M19,7H11V14H3V5H1V20H3V17H21V20H23V11A4,4 0 0,0 19,7M7,13A3,3 0 0,0 10,10A3,3 0 0,0 7,7A3,3 0 0,0 4,10A3,3 0 0,0 7,13Z";
 
-const LABELS = {
-  title: "Title",
-  devices: "Phones or alarms",
-  show_sleep: "Show Sleep | Wake Up",
-  show_other: "Show other alarms",
-  show_disabled: "Show alarms that are off",
-  show_automations: "Show automations of an alarm",
-  show_last_events: "Show last events of an alarm",
+// Every text the card shows, by language. A language or key missing here falls back to English.
+const STRINGS = {
+  en: {
+    description: "Your iPhone alarms, the way the Clock app shows them.",
+    title: "Title",
+    title_helper: "Leave empty for a more compact card.",
+    devices: "Phones or alarms",
+    devices_helper: "Pick phones (all their alarms) or single alarms. Leave empty to show every alarm.",
+    show_sleep: "Show Sleep | Wake Up",
+    show_sleep_helper: "Last bedtime, wake-up and how long you slept. Needs the Device Event shortcut.",
+    show_other: "Show other alarms",
+    show_other_helper: "Every alarm of a phone besides the Wake-Up alarm. Alarms picked one by one always show.",
+    show_disabled: "Show alarms that are off",
+    show_disabled_helper: "Shown grayed out, with a crossed-out clock.",
+    show_automations: "Show automations of an alarm",
+    show_automations_helper: "Tap an alarm to see the automations and scripts that use it.",
+    show_last_events: "Show last events of an alarm",
+    show_last_events_helper: "Tap an alarm to see when it last went off, was snoozed or stopped.",
+    every_day: "Every day",
+    weekdays: "Weekdays",
+    weekends: "Weekends",
+    // day: the weekday's full name; i: 0 for Monday.
+    every: (day) => `Every ${day}`,
+    and: "and",
+    today: "Today",
+    yesterday: "Yesterday",
+    tomorrow: "Tomorrow",
+    hours: (n) => `${n} hr`,
+    minutes: (n) => `${n} min`,
+    alarm: "Alarm",
+    sleep_wake_up: "Sleep | Wake Up",
+    other: "Other",
+    alarm_on: "On",
+    alarm_off: "Off",
+    bedtime: "Bedtime",
+    went_off: "Went off",
+    snoozed: "Snoozed",
+    stopped: "Stopped",
+    wind_down: "Wind down",
+    waking_up: "Waking up",
+    snooze: "Snooze",
+    allowed: "Allowed",
+    not_allowed: "Not allowed",
+    next_ring: "Next ring",
+    last_events: "Last events",
+    none_yet: "None yet",
+    show_all_entities: "Show all entities",
+    automations: "Automations",
+    loading: "Loading…",
+    load_error: "Couldn't load automations.",
+    no_alarm_automations: "No automations use this alarm.",
+    no_sleep_automations: "No automations use this schedule.",
+    script: "Script",
+    automation_off: "Off",
+    show_all: (n) => `Show all (${n})`,
+    sleep_note: "Device triggers on the phone, such as Bedtime starts, aren't listed.",
+    no_phones: "No phones yet. Add one in Settings → Devices & services → iPhone Alarms Sync.",
+    no_match: "No alarms match this card's filters.",
+    no_alarms: "No alarms yet. Run the Sync shortcut on your phone.",
+    missing: (n) => (n === 1 ? "1 selected device no longer exists." : `${n} selected devices no longer exist.`),
+  },
+  pl: {
+    description: "Twoje budziki z iPhone'a, tak jak pokazuje je aplikacja Zegar.",
+    title: "Tytuł",
+    title_helper: "Zostaw puste, aby karta była bardziej zwarta.",
+    devices: "Telefony lub budziki",
+    devices_helper: "Wybierz telefony (wszystkie ich budziki) albo pojedyncze budziki. Zostaw puste, aby pokazać wszystkie budziki.",
+    show_sleep: "Pokaż Sen | Pobudka",
+    show_sleep_helper: "Ostatnia pora snu, pobudka i długość snu. Wymaga skrótu Device Event.",
+    show_other: "Pokaż inne budziki",
+    show_other_helper: "Wszystkie budziki telefonu oprócz budzika pobudki. Budziki wybrane pojedynczo są zawsze widoczne.",
+    show_disabled: "Pokaż wyłączone budziki",
+    show_disabled_helper: "Wyszarzone, z przekreślonym zegarem.",
+    show_automations: "Pokaż automatyzacje budzika",
+    show_automations_helper: "Dotknij budzika, aby zobaczyć automatyzacje i skrypty, które go używają.",
+    show_last_events: "Pokaż ostatnie zdarzenia budzika",
+    show_last_events_helper: "Dotknij budzika, aby zobaczyć, kiedy ostatnio zadzwonił, przeszedł w drzemkę albo został zatrzymany.",
+    every_day: "Codziennie",
+    weekdays: "Dni robocze",
+    weekends: "Weekendy",
+    // "Co" takes the accusative, which Intl doesn't give.
+    every: (day, i) => `Co ${["poniedziałek", "wtorek", "środę", "czwartek", "piątek", "sobotę", "niedzielę"][i]}`,
+    and: "i",
+    today: "Dziś",
+    yesterday: "Wczoraj",
+    tomorrow: "Jutro",
+    hours: (n) => `${n} godz.`,
+    alarm: "Budzik",
+    sleep_wake_up: "Sen | Pobudka",
+    other: "Inne",
+    alarm_on: "Włączony",
+    alarm_off: "Wyłączony",
+    bedtime: "Pora snu",
+    went_off: "Zadzwonił",
+    snoozed: "Odłożony",
+    stopped: "Zatrzymany",
+    wind_down: "Wyciszenie",
+    waking_up: "Budzenie",
+    snooze: "Drzemka",
+    allowed: "Dozwolona",
+    not_allowed: "Niedozwolona",
+    next_ring: "Następny dzwonek",
+    last_events: "Ostatnie zdarzenia",
+    none_yet: "Jeszcze brak",
+    show_all_entities: "Pokaż wszystkie encje",
+    automations: "Automatyzacje",
+    loading: "Wczytywanie…",
+    load_error: "Nie udało się wczytać automatyzacji.",
+    no_alarm_automations: "Żadna automatyzacja nie używa tego budzika.",
+    no_sleep_automations: "Żadna automatyzacja nie używa tego harmonogramu.",
+    script: "Skrypt",
+    automation_off: "Wyłączona",
+    show_all: (n) => `Pokaż wszystkie (${n})`,
+    sleep_note: "Wyzwalacze urządzenia na telefonie, takie jak początek pory snu, nie są tu wymienione.",
+    no_phones: "Brak telefonów. Dodaj telefon w Ustawienia → Urządzenia oraz usługi → iPhone Alarms Sync.",
+    no_match: "Żaden budzik nie pasuje do filtrów tej karty.",
+    no_alarms: "Brak budzików. Uruchom skrót Sync na telefonie.",
+    missing: (n) =>
+      ({
+        one: "1 wybrane urządzenie już nie istnieje.",
+        few: `${n} wybrane urządzenia już nie istnieją.`,
+      })[new Intl.PluralRules("pl").select(n)] ?? `${n} wybranych urządzeń już nie istnieje.`,
+  },
 };
-const HELPERS = {
-  title: "Leave empty for a more compact card.",
-  devices: "Pick phones (all their alarms) or single alarms. Leave empty to show every alarm.",
-  show_sleep: "Last bedtime, wake-up and how long you slept. Needs the Device Event shortcut.",
-  show_other: "Every alarm of a phone besides the Wake-Up alarm. Alarms picked one by one always show.",
-  show_disabled: "Shown grayed out, with a crossed-out clock.",
-  show_automations: "Tap an alarm to see the automations and scripts that use it.",
-  show_last_events: "Tap an alarm to see when it last went off, was snoozed or stopped.",
-};
+
+/** The card's texts in a language, such as "pl" or "en-GB", and the locale for its dates. */
+export function strings(language) {
+  const own = STRINGS[language] ?? STRINGS[language?.split("-")[0]];
+  // Dates follow the texts, so one line never mixes two languages.
+  return { ...STRINGS.en, ...own, locale: own ? language : "en-US" };
+}
+
+// The editor form gets no `hass`; Home Assistant puts the user's language on <html lang>.
+const editorStrings = () => strings(document.documentElement.lang);
 
 /** Check the card config and fill in the defaults. Throws on a wrong type. */
 export function validateConfig(config) {
@@ -73,16 +190,18 @@ export function validateConfig(config) {
 }
 
 /** The repeat text iOS shows under an alarm: "Every day", "Weekdays", "Tue and Wed". */
-export function describeRepeat(days) {
+export function describeRepeat(days, t = strings()) {
   const set = new Set(days ?? []);
-  const picked = WEEK.filter((day) => set.has(day));
-  const key = picked.map((day) => day.slice(0, 2)).join("");
-  if (picked.length === 7) return "Every day";
-  if (key === "MoTuWeThFr") return "Weekdays";
-  if (key === "SaSu") return "Weekends";
-  if (picked.length === 1) return `Every ${picked[0]}`;
-  const short = picked.map((day) => day.slice(0, 3));
-  if (short.length === 2) return `${short[0]} and ${short[1]}`;
+  const picked = WEEK.flatMap((day, i) => (set.has(day) ? [i] : []));
+  const key = picked.join("");
+  if (picked.length === 7) return t.every_day;
+  if (key === "01234") return t.weekdays;
+  if (key === "56") return t.weekends;
+  // 1 January 2024 was a Monday.
+  const name = (i, weekday) => new Date(Date.UTC(2024, 0, 1 + i)).toLocaleDateString(t.locale, { timeZone: "UTC", weekday });
+  if (picked.length === 1) return t.every(name(picked[0], "long"), picked[0]);
+  const short = picked.map((i) => name(i, "short"));
+  if (short.length === 2) return `${short[0]} ${t.and} ${short[1]}`;
   return short.join(", ");
 }
 
@@ -97,7 +216,7 @@ export function timeContext(hass, now = new Date()) {
     h12 = cycle === "h11" || cycle === "h12";
   }
   const timeZone = locale.time_zone === "server" ? hass.config?.time_zone : undefined;
-  return { h12, timeZone, now };
+  return { h12, timeZone, now, t: strings(locale.language) };
 }
 
 /** Clock time, as the Clock app writes it: "07:35" or "7:35 AM". */
@@ -131,23 +250,24 @@ function parseTime(value) {
 }
 
 /** A moment near now, short: "07:35", "Yesterday 07:35", "Tomorrow 07:35", "Mon 07:35" or "Nov 12". */
-export function formatEventTime(value, ctx, today = "") {
+export function formatEventTime(value, ctx, withToday = false) {
   const date = parseTime(value);
   if (!date) return null;
   const at = parts(date, ctx.timeZone);
   const days = dayNumber(parts(ctx.now, ctx.timeZone)) - dayNumber(at);
   const clock = formatClock(at.hour, at.minute, ctx);
   const time = clock.period ? `${clock.time} ${clock.period}` : clock.time;
+  const { t } = ctx;
   const options = { timeZone: ctx.timeZone };
-  if (days === 0) return `${today}${time}`;
-  if (days === 1) return `Yesterday ${time}`;
-  if (days === -1) return `Tomorrow ${time}`;
-  if (Math.abs(days) < 7) return `${date.toLocaleDateString("en-US", { ...options, weekday: "short" })} ${time}`;
-  return date.toLocaleDateString("en-US", { ...options, month: "short", day: "numeric" });
+  if (days === 0) return withToday ? `${t.today} ${time}` : time;
+  if (days === 1) return `${t.yesterday} ${time}`;
+  if (days === -1) return `${t.tomorrow} ${time}`;
+  if (Math.abs(days) < 7) return `${date.toLocaleDateString(t.locale, { ...options, weekday: "short" })} ${time}`;
+  return date.toLocaleDateString(t.locale, { ...options, month: "short", day: "numeric" });
 }
 
 function formatDay(date, ctx) {
-  const text = formatEventTime(date.toISOString(), ctx, "Today ");
+  const text = formatEventTime(date.toISOString(), ctx, true);
   return text.replace(/\s\d{1,2}:\d\d.*$/, "");
 }
 
@@ -169,7 +289,7 @@ export function sleepSummary(bedtimeValue, wakeValue, ctx) {
   if (paired) {
     const minutes = Math.round(slept / 60000);
     const hours = Math.floor(minutes / 60);
-    duration = [hours && `${hours} hr`, minutes % 60 && `${minutes % 60} min`].filter(Boolean).join(" ") || null;
+    duration = [hours && ctx.t.hours(hours), minutes % 60 && ctx.t.minutes(minutes % 60)].filter(Boolean).join(" ") || null;
   }
   return {
     main: clock(wake ?? bedtime),
@@ -202,24 +322,24 @@ export function buildIndex(hass) {
   return { phones, alarms };
 }
 
-function readAlarm(alarm, states) {
+function readAlarm(alarm, states, t) {
   const state = states[alarm.entities.alarm_id];
   const attrs = state?.attributes;
   if (!attrs || state.state === "unavailable" || !Number.isInteger(attrs.hour)) return null;
   return {
     key: alarm.id,
     entities: alarm.entities,
-    label: attrs.label || "Alarm",
+    label: attrs.label || t.alarm,
     hour: attrs.hour,
     minute: attrs.minute ?? 0,
     enabled: attrs.enabled !== false,
     allowsSnooze: attrs.allows_snooze !== false,
-    repeat: attrs.repeats ? describeRepeat(attrs.repeat_days) : "",
+    repeat: attrs.repeats ? describeRepeat(attrs.repeat_days, t) : "",
   };
 }
 
 /** What the card shows: phones with their alarms, after the config's filters. */
-export function selectAlarms(index, config, states) {
+export function selectAlarms(index, config, states, t = strings()) {
   const picked = new Map();
   let missing = 0;
   const pick = (phoneId, whole, alarmId) => {
@@ -240,7 +360,7 @@ export function selectAlarms(index, config, states) {
     const phone = index.phones.get(phoneId);
     const alarms = phone.alarms
       .filter((alarm) => whole || alarmIds.has(alarm.id))
-      .map((alarm) => readAlarm(alarm, states))
+      .map((alarm) => readAlarm(alarm, states, t))
       .filter((alarm) => alarm && (config.show_disabled || alarm.enabled))
       .sort((a, b) => a.hour * 60 + a.minute - (b.hour * 60 + b.minute) || a.label.localeCompare(b.label));
     groups.push({ phone, whole, alarms });
@@ -271,7 +391,7 @@ const LIST_ICON = "M7,5H21V7H7V5M7,13V11H21V13H7M4,4.5A1.5,1.5 0 0,1 5.5,6A1.5,1
 // One icon for two facts: the clock says whether the alarm is on, the arrow in its corner whether the row is open.
 const clockIcon = (state, label) =>
   `<svg class="status ${state}" viewBox="0 0 32 32" ` +
-  (label ? `role="img" aria-label="${label}"><title>${label}</title>` : `aria-hidden="true">`) +
+  (label ? `role="img" aria-label="${escape(label)}"><title>${escape(label)}</title>` : `aria-hidden="true">`) +
   `<path class="bells" d="M4.5 9.5a5.5 5.5 0 0 1 6-6M27.5 9.5a5.5 5.5 0 0 0-6-6"/>` +
   `<circle class="face" cx="16" cy="17" r="10"/>` +
   `<path class="hands" d="M16 11.5V17l3.5 2.5"/>` +
@@ -334,6 +454,9 @@ button:focus-visible { outline: 2px solid var(--primary-color); outline-offset: 
   .time { font-size: var(--iphone-alarms-time-size, 2rem); }
   .subtitle { font-size: 0.8125rem; flex-wrap: wrap; white-space: normal; }
   .subtitle span { overflow: visible; }
+  /* Too narrow for two columns: each label above its value. */
+  .info { grid-template-columns: minmax(0, 1fr); gap: 0; }
+  .info dd { margin-bottom: 8px; }
 }
 @media (prefers-reduced-motion: reduce) { .status .badge path { transition: none; } }
 `;
@@ -346,8 +469,8 @@ class IPhoneAlarmsCard extends HTMLElement {
         { name: "devices", selector: { device: { multiple: true, filter: { integration: DOMAIN } } } },
         ...BOOLEANS.map((name) => ({ name, default: true, selector: { boolean: {} } })),
       ],
-      computeLabel: (schema) => LABELS[schema.name],
-      computeHelper: (schema) => HELPERS[schema.name],
+      computeLabel: (schema) => editorStrings()[schema.name],
+      computeHelper: (schema) => editorStrings()[`${schema.name}_helper`],
     };
   }
 
@@ -480,7 +603,8 @@ class IPhoneAlarmsCard extends HTMLElement {
 
   _render(ctx) {
     const { _config: config, _hass: hass } = this;
-    this._view = selectAlarms(this._index, config, hass.states);
+    const { t } = ctx;
+    this._view = selectAlarms(this._index, config, hass.states, t);
     const { groups, missing } = this._view;
     const keys = new Set();
     let body = "";
@@ -488,12 +612,11 @@ class IPhoneAlarmsCard extends HTMLElement {
       let html = config.show_sleep && group.whole ? this._sleepSection(group.phone, ctx, keys) : "";
       // Alarms picked one by one stay even with show_other off.
       if ((config.show_other || !group.whole) && group.alarms.length) {
-        html += `<section class="section"><h2 class="section-header">Other</h2>`;
+        html += `<section class="section"><h2 class="section-header">${escape(t.other)}</h2>`;
         for (const alarm of group.alarms) {
           keys.add(alarm.key);
           const subtitle = [alarm.label, alarm.repeat].filter(Boolean).join(" · ");
-          const on = alarm.enabled ? "On" : "Off";
-          const status = clockIcon(on.toLowerCase(), on);
+          const status = alarm.enabled ? clockIcon("on", t.alarm_on) : clockIcon("off", t.alarm_off);
           html += this._item(
             alarm.key,
             alarm.enabled ? "" : "off",
@@ -511,15 +634,12 @@ class IPhoneAlarmsCard extends HTMLElement {
     }
     if (this._expanded && !keys.has(this._expanded)) this._expanded = null;
     if (!this._index.phones.size) {
-      body = `<div class="empty">No phones yet. Add one in Settings → Devices &amp; services → iPhone Alarms Sync.</div>`;
+      body = `<div class="empty">${escape(t.no_phones)}</div>`;
     } else if (!keys.size) {
-      body = config.devices.length || groups.some((group) => group.alarms.length)
-        ? `<div class="empty">No alarms match this card's filters.</div>`
-        : `<div class="empty">No alarms yet. Run the Sync shortcut on your phone.</div>`;
+      const empty = config.devices.length || groups.some((group) => group.alarms.length) ? t.no_match : t.no_alarms;
+      body = `<div class="empty">${escape(empty)}</div>`;
     }
-    const warning = missing
-      ? `<div class="warning">${missing} selected device${missing > 1 ? "s" : ""} no longer exist${missing > 1 ? "" : "s"}.</div>`
-      : "";
+    const warning = missing ? `<div class="warning">${escape(t.missing(missing))}</div>` : "";
     const title = config.title ? `<h1 class="title">${escape(config.title)}</h1>` : "";
     const focused = this.shadowRoot.activeElement?.dataset;
     this._content.innerHTML = `${title}${warning}${body}`;
@@ -538,17 +658,18 @@ class IPhoneAlarmsCard extends HTMLElement {
     if (!sleep) return "";
     const key = `sleep:${phone.id}`;
     keys.add(key);
+    const { t } = ctx;
     const meta = [
-      sleep.bedtime ? `<span>Bedtime ${clockHtml(sleep.bedtime)}</span>` : "",
+      sleep.bedtime ? `<span>${escape(t.bedtime)} ${clockHtml(sleep.bedtime)}</span>` : "",
       sleep.duration ? `<span>${escape(sleep.duration)}</span>` : "",
-      `<span>${sleep.isWake ? "" : "Bedtime · "}${escape(sleep.day)}</span>`,
+      `<span>${sleep.isWake ? "" : `${escape(t.bedtime)} · `}${escape(sleep.day)}</span>`,
     ]
       .filter(Boolean)
       .join(`<span aria-hidden="true">·</span>`);
     // The row already shows the wake-up, bedtime and sleep length; details add the events.
     const details = () => this._details(key, [], SLEEP_EVENTS, phone.entities, ctx, null);
     return (
-      `<section class="section"><h2 class="section-header">${bed()}Sleep | Wake Up</h2>` +
+      `<section class="section"><h2 class="section-header">${bed()}${escape(t.sleep_wake_up)}</h2>` +
       this._item(key, "", clockHtml(sleep.main), meta, clockIcon("sleep"), details) +
       `</section>`
     );
@@ -566,21 +687,23 @@ class IPhoneAlarmsCard extends HTMLElement {
   }
 
   _alarmDetails(alarm, ctx) {
-    const next = formatEventTime(this._hass.states[alarm.entities.next_occurrence_datetime]?.state, ctx, "Today ");
+    const { t } = ctx;
+    const next = formatEventTime(this._hass.states[alarm.entities.next_occurrence_datetime]?.state, ctx, true);
     // Only what the row doesn't show already.
     const rows = [
-      ["Snooze", alarm.allowsSnooze ? "Allowed" : "Not allowed"],
-      ["Next ring", next],
+      [t.snooze, alarm.allowsSnooze ? t.allowed : t.not_allowed],
+      [t.next_ring, next],
     ];
     return this._details(alarm.key, rows, ALARM_EVENTS, alarm.entities, ctx, alarm.key);
   }
 
   _details(key, rows, events, entities, ctx, deviceId) {
     const states = this._hass.states;
+    const { t } = ctx;
     const info = [...rows];
     if (this._config.show_last_events) {
-      const last = events.map(([entityKey, label]) => [label, formatEventTime(states[entities[entityKey]]?.state, ctx)]);
-      info.push(...(last.some(([, when]) => when) ? last : [["Last events", "None yet"]]));
+      const last = events.map(([entityKey, label]) => [t[label], formatEventTime(states[entities[entityKey]]?.state, ctx)]);
+      info.push(...(last.some(([, when]) => when) ? last : [[t.last_events, t.none_yet]]));
     }
     let html = `<dl class="info">${info
       .filter(([, value]) => value)
@@ -588,30 +711,30 @@ class IPhoneAlarmsCard extends HTMLElement {
       .join("")}</dl>`;
     // Above the automations, whose list can be long. The device page is under Settings, which only admins can open.
     if (deviceId && this._hass.user?.is_admin) {
-      html += `<button class="link" data-action="device" data-key="${escape(deviceId)}"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="${LIST_ICON}"/></svg><span class="name">Show all entities</span></button>`;
+      html += `<button class="link" data-action="device" data-key="${escape(deviceId)}"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="${LIST_ICON}"/></svg><span class="name">${escape(t.show_all_entities)}</span></button>`;
     }
     if (this._config.show_automations) {
       const related = this._related?.key === key ? this._related : { status: "loading" };
-      html += `<div class="label">Automations</div>`;
-      if (related.status === "loading") html += `<p>Loading…</p>`;
-      else if (related.status === "error") html += `<p>Couldn't load automations.</p>`;
+      html += `<div class="label">${escape(t.automations)}</div>`;
+      if (related.status === "loading") html += `<p>${escape(t.loading)}</p>`;
+      else if (related.status === "error") html += `<p>${escape(t.load_error)}</p>`;
       else {
         const items = relatedItems(related.items, states);
-        if (!items.length) html += `<p>No automations use this ${key.startsWith("sleep:") ? "schedule" : "alarm"}.</p>`;
+        if (!items.length) html += `<p>${escape(key.startsWith("sleep:") ? t.no_sleep_automations : t.no_alarm_automations)}</p>`;
         const shown = this._showAll ? items : items.slice(0, PREVIEW_LIMIT);
         for (const item of shown) {
           html +=
             `<button class="automation${item.off ? " disabled" : ""}" data-action="open" data-key="${escape(item.id)}">` +
             `<span class="name">${escape(item.name)}</span>` +
-            (item.script ? `<span class="tag">Script</span>` : "") +
-            (item.off ? `<span class="tag">Off</span>` : "") +
+            (item.script ? `<span class="tag">${escape(t.script)}</span>` : "") +
+            (item.off ? `<span class="tag">${escape(t.automation_off)}</span>` : "") +
             `</button>`;
         }
         if (shown.length < items.length) {
-          html += `<button class="more" data-action="more" data-key="${escape(key)}">Show all (${items.length})</button>`;
+          html += `<button class="more" data-action="more" data-key="${escape(key)}">${escape(t.show_all(items.length))}</button>`;
         }
         // Telling those apart from "any alarm" triggers needs admin rights, so the search misses them.
-        if (key.startsWith("sleep:")) html += `<p class="note">Device triggers on the phone, such as Bedtime starts, aren't listed.</p>`;
+        if (key.startsWith("sleep:")) html += `<p class="note">${escape(t.sleep_note)}</p>`;
       }
     }
     return html;
@@ -624,7 +747,10 @@ if (!customElements.get(CARD)) {
   window.customCards.push({
     type: CARD,
     name: "iPhone Alarms",
-    description: "Your iPhone alarms, the way the Clock app shows them.",
+    // Read when the picker opens, after Home Assistant has set the language.
+    get description() {
+      return editorStrings().description;
+    },
     preview: true,
     documentationURL: "https://github.com/Jozwiaczek/iphone-alarms-sync/blob/main/docs/dashboard-card.md",
   });

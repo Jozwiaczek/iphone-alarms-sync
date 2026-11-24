@@ -38,6 +38,28 @@ CI runs the same checks. The maintainer reviews the pull request and squash-merg
 - The dashboard card is one file with no build step: `custom_components/iphone_alarms_sync/frontend/iphone-alarms-card.js`. Its tests are in `tests/frontend` (`npm install`, then `node --test tests/frontend/`). To see it, serve the repo root (`python3 -m http.server`) and open `tests/frontend/preview.html`.
 - Changed how the card looks? Run `node scripts/card_screenshots.mjs --readme` to update the README pictures, and `node scripts/card_screenshots.mjs` for every state (needs Google Chrome).
 
+## Adding a language
+
+The integration and the dashboard card are translated together, so the whole UI stays in one language. Use the language code Home Assistant uses, such as `de` or `pt-BR`.
+
+**Integration.** Copy `custom_components/iphone_alarms_sync/translations/en.json` to `<code>.json` and translate the values. Keep unchanged:
+
+- the keys and the placeholders (`{phone_id}`, `{subtype}` and the like);
+- the names of the shortcuts (Sync, Device Event, Alarm Event) and of their import questions and steps (`Phone ID`, `Server`, `Action`, `Perform action`): they stay in English on the phone.
+
+Home Assistant shows English for a missing key without a warning. `tests/test_translations.py` fails on a missing or extra key and on a changed placeholder.
+
+**Card.** In `frontend/iphone-alarms-card.js`, add a `<code>` block to `STRINGS`, next to `en` and `pl`, with the keys of `en`. A missing key falls back to English, so leave out what reads the same. Dates and day names come from `Intl` in the user's language; only the words around them, such as "Today", need translating. Some entries are functions, for plurals or grammar: see how `pl` does `missing` and `every`.
+
+**Checking.**
+
+- Add a test like `Polish: the card and its editor` to `tests/frontend/card.dom.test.js`, write its snapshot with `node --test --test-update-snapshots tests/frontend/` and read the snapshot through.
+- `uv run scripts/check.sh` runs everything, the JS tests included.
+- `node scripts/card_screenshots.mjs card-screenshots-<code> --lang=<code>` takes every state of the card in your language. Check the narrow ones (`expanded-dark-180.png`): longer words wrap there first. In the browser preview, add `?lang=<code>` to `tests/frontend/preview.html`.
+- In Home Assistant: your profile → **Language**, then open the integration's pages, the card and its editor.
+
+**Pull request.** Title it `🌐 Add <language>`, one language per pull request. If you can, ask a native speaker to review it.
+
 ## Pull request title
 
 The pull request is squash-merged, so its title becomes the commit, the version bump and a line in the release notes that users read in Home Assistant. Write it for users, start it with a [gitmoji](https://gitmoji.dev) and keep it at most 72 characters, for example `🐛 Fix next alarm after midnight`. CI checks the title.

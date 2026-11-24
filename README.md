@@ -31,6 +31,7 @@ Works on iPhone, iPad and Mac.
 - **Alarm goes off trigger.** Fires at the alarm's time ([estimated](docs/shortcuts.md#estimated-goes-off)). Pick one alarm or many.
 - **Every phone at home.** Add each one. Each gets its own alarms.
 - **Any iPhone language.** Repeat days are read in every one.
+- **Home Assistant in your language.** Setup, entities, triggers and the dashboard card come in 🇬🇧 English and 🇵🇱 Polish. Missing yours? [Add it](CONTRIBUTING.md#adding-a-language): one JSON file and a short list of card texts.
 
 **Private.** The shortcut templates hold no personal data. [Read their source](shortcuts/).
 
@@ -138,6 +139,8 @@ Still stuck? Ask in [Q&A](https://github.com/Jozwiaczek/iphone-alarms-sync/discu
 ## 🤝 Contributing
 
 Bug reports, ideas and pull requests are welcome. [CONTRIBUTING.md](CONTRIBUTING.md) shows where to ask a question, report a bug or suggest an idea, and how to send a pull request.
+
+Speak a language other than English or Polish? A translation is a good first pull request: [Adding a language](CONTRIBUTING.md#adding-a-language).
 
 ## ☕ Support
 
