@@ -263,7 +263,7 @@ const escape = (value) =>
   String(value).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
 
 const bed = () => `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="${BED_ICON}"/></svg>`;
-const PHONE_ICON = "M17,19H7V5H17M17,1H7C5.89,1 5,1.89 5,3V21A2,2 0 0,0 7,23H17A2,2 0 0,0 19,21V3C19,1.89 18.1,1 17,1Z";
+const LIST_ICON = "M7,5H21V7H7V5M7,13V11H21V13H7M4,4.5A1.5,1.5 0 0,1 5.5,6A1.5,1.5 0 0,1 4,7.5A1.5,1.5 0 0,1 2.5,6A1.5,1.5 0 0,1 4,4.5M4,10.5A1.5,1.5 0 0,1 5.5,12A1.5,1.5 0 0,1 4,13.5A1.5,1.5 0 0,1 2.5,12A1.5,1.5 0 0,1 4,10.5M7,19V17H21V19H7M4,16.5A1.5,1.5 0 0,1 5.5,18A1.5,1.5 0 0,1 4,19.5A1.5,1.5 0 0,1 2.5,18A1.5,1.5 0 0,1 4,16.5Z";
 // One icon for two facts: the clock says whether the alarm is on, the arrow in its corner whether the row is open.
 const clockIcon = (state, label) =>
   `<svg class="status ${state}" viewBox="0 0 32 32" ` +
@@ -590,7 +590,7 @@ class IPhoneAlarmsCard extends HTMLElement {
       .join("")}</dl>`;
     // Above the automations, whose list can be long. The device page is under Settings, which only admins can open.
     if (deviceId && this._hass.user?.is_admin) {
-      html += `<button class="link" data-action="device" data-key="${escape(deviceId)}"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="${PHONE_ICON}"/></svg><span class="name">Open device</span></button>`;
+      html += `<button class="link" data-action="device" data-key="${escape(deviceId)}"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="${LIST_ICON}"/></svg><span class="name">Show all entities</span></button>`;
     }
     if (this._config.show_automations) {
       const related = this._related?.key === key ? this._related : { status: "loading" };

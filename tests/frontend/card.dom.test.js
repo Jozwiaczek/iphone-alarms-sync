@@ -87,7 +87,7 @@ test("a tap shows everything else about an alarm", async () => {
   });
   assert.deepEqual(names(el), ["Bedroom lights on", "Coffee machine", "Open the blinds"]);
   assert.deepEqual($$(el, ".automation .tag").map(text), ["Off"]);
-  assert.equal(text($(el, ".link")), "Open device");
+  assert.equal(text($(el, ".link")), "Show all entities");
   assert.equal($(el, ".link").nextElementSibling.className, "label");
   // One row open at a time; a second tap closes it.
   row(el, TEST).click();
@@ -105,7 +105,7 @@ test("an alarm that is off has no next ring", () => {
   assert.equal(info(el)["Next ring"], undefined);
 });
 
-test("'Open device' goes to the device page, for admins only", () => {
+test("'Show all entities' goes to the device page, for admins only", () => {
   const hass = makeHass();
   const el = mount({ show_automations: false }, hass);
   const pushed = [];

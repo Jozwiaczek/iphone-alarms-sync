@@ -11,7 +11,7 @@ The **iPhone Alarms** card lists your alarms the way the Clock app does. It is r
 
 - **Sleep | Wake Up**: when the Wake-Up alarm last rang, when bedtime began before it, how long you slept in between, and on which day.
 - **Other**: every alarm with its time, label and repeat days. The clock on the right is green when the alarm is on, and crossed out, with grayed-out text, when it is off. The arrow in its corner shows whether the alarm is open.
-- **Tap an alarm** for the rest: whether snooze is allowed, when it rings next, when it last went off, was snoozed and was stopped, and the automations and scripts that use it. Tap an automation to open it. Admins also get **Open device**, the alarm's device page.
+- **Tap an alarm** for the rest: whether snooze is allowed, when it rings next, when it last went off, was snoozed and was stopped, and the automations and scripts that use it. Tap an automation to open it. Admins also get **Show all entities**, the alarm's device page in Settings with its entities and history.
 
 ## Add the card
 
