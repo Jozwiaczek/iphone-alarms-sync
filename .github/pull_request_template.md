@@ -6,10 +6,11 @@
 
 ## Screenshots
 
-<!-- Only if something visible in Home Assistant changes (setup dialog, entities, options). Otherwise delete this section. -->
+<!-- Only if something visible in Home Assistant changes (setup dialog, entities, options, the dashboard card). Otherwise delete this section. -->
 
 ## How I checked it
 
 - [ ] `uv run scripts/check.sh` passes
 - [ ] Added a test for the new behavior or the fixed bug, or not needed because:
+- [ ] Changed the dashboard card's look: ran `node scripts/card_screenshots.mjs --readme`, or not needed
 - [ ] Tried in Home Assistant (say what you did), or not needed because:

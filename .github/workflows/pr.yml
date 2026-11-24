@@ -32,5 +32,5 @@ jobs:
           TITLE: ${{ github.event.pull_request.title }}
         run: printf '%s\n' "$TITLE" | npx commitlint
 
-      - name: Test the release notes
-        run: node --test release/
+      - name: Test the release notes and the dashboard card
+        run: node --test release/ tests/frontend/

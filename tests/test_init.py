@@ -568,3 +568,25 @@ async def test_alarm_saved_with_localized_days_works_without_a_sync(
     assert dt_util.parse_datetime(
         hass.states.get("sensor.john_iphone_next_alarm").state
     ) == _local(2026, 11, 16, 7, 0)
+
+
+async def test_dashboard_card_is_served(hass: HomeAssistant) -> None:
+    """With the frontend loaded, the card file is served and loads on dashboards."""
+    from pathlib import Path
+    from unittest.mock import AsyncMock, Mock
+
+    from homeassistant.components.frontend import DATA_EXTRA_MODULE_URL
+    from homeassistant.setup import async_setup_component
+
+    from custom_components.iphone_alarms_sync.const import CARD_URL
+
+    hass.config.components.add("frontend")
+    hass.data[DATA_EXTRA_MODULE_URL] = Mock()
+    hass.http = Mock(async_register_static_paths=AsyncMock())
+    assert await async_setup_component(hass, DOMAIN, {})
+
+    (config,) = hass.http.async_register_static_paths.call_args.args[0]
+    assert config.url_path == CARD_URL
+    assert Path(config.path).is_file()
+    (url,) = hass.data[DATA_EXTRA_MODULE_URL].add.call_args.args
+    assert url.startswith(f"{CARD_URL}?v=")

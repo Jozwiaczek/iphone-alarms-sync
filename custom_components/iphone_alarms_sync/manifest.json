@@ -2,6 +2,8 @@
   "domain": "iphone_alarms_sync",
   "name": "iPhone Alarms Sync",
   "after_dependencies": [
+    "frontend",
+    "http",
     "mobile_app"
   ],
   "categories": [

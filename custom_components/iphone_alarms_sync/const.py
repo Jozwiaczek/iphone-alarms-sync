@@ -48,3 +48,6 @@ STALE_AFTER = timedelta(days=7)
 STALE_CHECK_INTERVAL = timedelta(hours=12)
 # Time the "goes off" shortcut gets to reach HA before the alarm counts as missed.
 MISSED_EVENT_GRACE = timedelta(minutes=5)
+# The dashboard card, served by the integration and loaded on every dashboard.
+CARD_PATH = "frontend/iphone-alarms-card.js"
+CARD_URL = f"/{DOMAIN}/iphone-alarms-card.js"
