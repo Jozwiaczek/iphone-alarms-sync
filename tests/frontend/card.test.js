@@ -116,10 +116,10 @@ test("relatedItems sorts by name and drops what is gone", () => {
     "automation.a": { state: "off", attributes: {} },
     "script.c": { state: "off", attributes: { friendly_name: "Alpha" } },
   };
-  assert.deepEqual(relatedItems(["automation.b", "automation.a", "script.c", "automation.gone"], states), [
-    { id: "script.c", name: "Alpha", off: false, script: true },
-    { id: "automation.a", name: "automation.a", off: true, script: false },
-    { id: "automation.b", name: "Beta", off: false, script: false },
+  assert.deepEqual(relatedItems(["automation.b", "automation.a", "script.c", "automation.gone"], states, ["automation.b"]), [
+    { id: "script.c", name: "Alpha", off: false, script: true, phone: false },
+    { id: "automation.a", name: "automation.a", off: true, script: false, phone: false },
+    { id: "automation.b", name: "Beta", off: false, script: false, phone: true },
   ]);
 });
 

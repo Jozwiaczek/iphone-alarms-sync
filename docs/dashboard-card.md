@@ -10,7 +10,7 @@ The **iPhone Alarms** card lists your alarms the way the Clock app does. It is r
 </p>
 
 - **Alarms**: every alarm with its time, label and repeat days, and below them when it last went off. The clock on the right is green when the alarm is on, and crossed out, with grayed-out text, when it is off. The arrow in its corner shows whether the alarm is open.
-- **Tap an alarm** for the rest: whether snooze is allowed, when it rings next, when it last went off, was snoozed and was stopped, and the automations and scripts that use it. Tap an automation to open it. Admins also get **Show all entities**, the alarm's device page in Settings with its entities and history.
+- **Tap an alarm** for the rest: whether snooze is allowed, when it rings next, when it last went off, was snoozed and was stopped, and the automations and scripts that use it or its phone (tagged *Phone*). Tap an automation to open it. Admins also get **Show all entities**, the alarm's device page in Settings with its entities and history.
 
 ## Add the card
 
@@ -35,7 +35,7 @@ All of them can be set in the card editor.
 | `title` | none | A title above the list, such as `Alarms`. Leave it out for a more compact card. |
 | `devices` | all | Phones or single alarms to show. A phone shows all its alarms. An alarm shows only that alarm. |
 | `show_disabled` | `true` | Show alarms that are off. |
-| `show_automations` | `true` | Tapping an alarm shows the automations and scripts that use it. |
+| `show_automations` | `true` | Tapping an alarm shows the automations and scripts that use it or its phone. |
 | `show_last_events` | `true` | Tapping an alarm shows when it last went off, was snoozed and was stopped. |
 
 **Examples**
@@ -81,7 +81,7 @@ target:
 ## Limits
 
 - **Language**: the card and its editor follow the language of your Home Assistant profile. They come in English and Polish; any other language shows English. To add one, see [Adding a language](../CONTRIBUTING.md#adding-a-language).
-- **Automations of an alarm**: the card finds every automation and script that uses the alarm's device or one of its entities, through Home Assistant's own search.
+- **Automations of an alarm**: the card finds every automation and script that uses the alarm's device or one of its entities, through Home Assistant's own search. It adds those of the phone's device, such as an "any alarm", Wake-Up or sleep trigger, tagged *Phone*.
 - **An alarm is missing**: it needs its **Alarm ID** sensor. If you disabled that entity, the card can't read the alarm.
 
 ## Change the look
