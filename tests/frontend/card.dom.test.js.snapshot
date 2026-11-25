@@ -75,7 +75,7 @@ exports[`Polish: the card and its editor 2`] = `
   ],
   [
     "Ustawienia z szablonów",
-    "Każde zaznaczone staje się szablonem Jinja2. \`user\` to imię osoby, która patrzy na kartę."
+    "Każde zaznaczone staje się szablonem Jinja2. W nim „user” to imię osoby, która patrzy na kartę."
   ]
 ]
 `;
@@ -157,7 +157,7 @@ exports[`a language the card doesn't know falls back to English 2`] = `
   ],
   [
     "Settings from templates",
-    "Each one picked turns into a Jinja2 template. \`user\` is the name of who looks at the card."
+    "Each one picked turns into a Jinja2 template. In it, \\"user\\" is the name of who looks at the card."
   ]
 ]
 `;

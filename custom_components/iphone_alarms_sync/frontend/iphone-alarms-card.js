@@ -80,7 +80,7 @@ const STRINGS = {
     no_alarms: "No alarms yet. Run the Sync shortcut on your phone.",
     missing: (n) => (n === 1 ? "1 selected device no longer exists." : `${n} selected devices no longer exist.`),
     templates: "Settings from templates",
-    templates_helper: "Each one picked turns into a Jinja2 template. `user` is the name of who looks at the card.",
+    templates_helper: 'Each one picked turns into a Jinja2 template. In it, "user" is the name of who looks at the card.',
     // option: the setting's label; error: what Home Assistant said.
     template_error: (option, error) => `The template of "${option}" doesn't work: ${error}`,
     template_type: (option) => `The template of "${option}" gives the wrong kind of value. See the card's documentation.`,
@@ -136,7 +136,7 @@ const STRINGS = {
     no_phones: "Brak telefonów. Dodaj telefon w Ustawienia → Urządzenia oraz usługi → iPhone Alarms Sync.",
     no_match: "Żaden budzik nie pasuje do filtrów tej karty.",
     templates: "Ustawienia z szablonów",
-    templates_helper: "Każde zaznaczone staje się szablonem Jinja2. `user` to imię osoby, która patrzy na kartę.",
+    templates_helper: "Każde zaznaczone staje się szablonem Jinja2. W nim „user” to imię osoby, która patrzy na kartę.",
     template_error: (option, error) => `Szablon „${option}” nie działa: ${error}`,
     template_type: (option) => `Szablon „${option}” daje wartość złego rodzaju. Zajrzyj do dokumentacji karty.`,
     no_alarms: "Brak budzików. Uruchom skrót Sync na telefonie.",

@@ -94,8 +94,18 @@
         "no-phones": { hass: { phones: [] } },
         "filter-empty": { config: { devices: ["deleted_alarm"] } },
         "12h": { hass: { locale: { time_format: "12" } } },
-        // Templates: one works, one gives the wrong type, one fails; each answered as Home Assistant would.
+        // Templates that work: of two phones only the viewer's, its title from `user`, alarms that are off hidden.
         templates: {
+          config: { title: "{{ user }}'s alarms", show_disabled: "{{ is_state('input_boolean.guests', 'off') }}", devices: "{{ phones[user] }}" },
+          hass: { phones: [PHONE, SECOND_PHONE] },
+          answers: {
+            "{{ user }}'s alarms": { result: "John's alarms" },
+            "{{ is_state('input_boolean.guests', 'off') }}": { result: false },
+            "{{ phones[user] }}": { result: [PHONE.id] },
+          },
+        },
+        // Templates that don't: one gives the wrong type, one fails; each answered as Home Assistant would.
+        "templates-error": {
           config: { title: "{{ user }}'s alarms", show_disabled: "{{ states('input_boolean.guests') }}", devices: "{{ phones[user] }}" },
           answers: {
             "{{ user }}'s alarms": { result: "Anna's alarms" },
