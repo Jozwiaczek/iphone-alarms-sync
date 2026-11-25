@@ -64,7 +64,7 @@ devices:
 
 Any option can be a [Jinja2 template](https://www.home-assistant.io/docs/configuration/templating/). The card follows it live, like a template sensor. The variable `user` is the name of the person who looks at the card.
 
-In the card editor, pick the options under **Settings from templates**. Each one picked turns into a template editor that starts from its current value. Unpick it to go back to the usual field and the option's default.
+In the card editor, tick the options under **Use a template for**. Each ticked option gets a template field that starts from its current value. Untick it to go back to the usual field and the option's default.
 
 A template must give the option's type:
 

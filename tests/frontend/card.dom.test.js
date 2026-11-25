@@ -360,11 +360,11 @@ test("templates set the options and change them live", async () => {
   devices.send({ error: "'x' is undefined", level: "WARNING" });
   assert.equal($$(el, ".warning").length, 0);
   devices.send({ error: "UndefinedError: 'device_list' is undefined", level: "ERROR" });
-  assert.equal(text($(el, ".warning")), `The template of "Phones or alarms" doesn't work: UndefinedError: 'device_list' is undefined`);
+  assert.equal(text($(el, ".warning")), `The "Phones or alarms" template failed: UndefinedError: 'device_list' is undefined`);
   assert.equal($$(el, `${ALARM} .time`).length, 3);
   // "on" is text, not true.
   disabled.send({ result: "on" });
-  assert.equal(text($$(el, ".warning")[1]), `The template of "Show alarms that are off" gives the wrong kind of value. See the card's documentation.`);
+  assert.equal(text($$(el, ".warning")[1]), `The "Show alarms that are off" template returns a value of the wrong type. See the card's documentation.`);
 });
 
 test("a template that Home Assistant refuses says so", async () => {
@@ -374,7 +374,7 @@ test("a template that Home Assistant refuses says so", async () => {
   };
   const el = mount({ title: "{{ x }" }, hass);
   await flush();
-  assert.equal(text($(el, ".warning")), `The template of "Title" doesn't work: TemplateSyntaxError: unexpected '}'`);
+  assert.equal(text($(el, ".warning")), `The "Title" template failed: TemplateSyntaxError: unexpected '}'`);
   ok(!$(el, ".title"));
 });
 

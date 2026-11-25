@@ -79,11 +79,11 @@ const STRINGS = {
     no_match: "No alarms match this card's filters.",
     no_alarms: "No alarms yet. Run the Sync shortcut on your phone.",
     missing: (n) => (n === 1 ? "1 selected device no longer exists." : `${n} selected devices no longer exist.`),
-    templates: "Settings from templates",
-    templates_helper: 'Each one picked turns into a Jinja2 template. In it, "user" is the name of who looks at the card.',
+    templates: "Use a template for",
+    templates_helper: 'A ticked option gets a Jinja2 template field. The variable "user" is the name of the person viewing the card.',
     // option: the setting's label; error: what Home Assistant said.
-    template_error: (option, error) => `The template of "${option}" doesn't work: ${error}`,
-    template_type: (option) => `The template of "${option}" gives the wrong kind of value. See the card's documentation.`,
+    template_error: (option, error) => `The "${option}" template failed: ${error}`,
+    template_type: (option) => `The "${option}" template returns a value of the wrong type. See the card's documentation.`,
   },
   pl: {
     description: "Twoje budziki z iPhone'a, tak jak pokazuje je aplikacja Zegar.",
@@ -135,10 +135,10 @@ const STRINGS = {
     retry: "Spróbuj ponownie",
     no_phones: "Brak telefonów. Dodaj telefon w Ustawienia → Urządzenia oraz usługi → iPhone Alarms Sync.",
     no_match: "Żaden budzik nie pasuje do filtrów tej karty.",
-    templates: "Ustawienia z szablonów",
-    templates_helper: "Każde zaznaczone staje się szablonem Jinja2. W nim „user” to imię osoby, która patrzy na kartę.",
+    templates: "Użyj szablonu dla",
+    templates_helper: "Zaznaczona opcja dostaje pole na szablon Jinja2. Zmienna „user” to imię osoby, która ogląda kartę.",
     template_error: (option, error) => `Szablon „${option}” nie działa: ${error}`,
-    template_type: (option) => `Szablon „${option}” daje wartość złego rodzaju. Zajrzyj do dokumentacji karty.`,
+    template_type: (option) => `Szablon „${option}” zwraca wartość złego typu. Zajrzyj do dokumentacji karty.`,
     no_alarms: "Brak budzików. Uruchom skrót Sync na telefonie.",
     missing: (n) =>
       ({

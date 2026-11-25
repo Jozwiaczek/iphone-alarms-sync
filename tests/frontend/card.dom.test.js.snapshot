@@ -74,8 +74,8 @@ exports[`Polish: the card and its editor 2`] = `
     "Wiersz nad budzikami z automatyzacjami i skryptami telefonu oraz budzików."
   ],
   [
-    "Ustawienia z szablonów",
-    "Każde zaznaczone staje się szablonem Jinja2. W nim „user” to imię osoby, która patrzy na kartę."
+    "Użyj szablonu dla",
+    "Zaznaczona opcja dostaje pole na szablon Jinja2. Zmienna „user” to imię osoby, która ogląda kartę."
   ]
 ]
 `;
@@ -156,8 +156,8 @@ exports[`a language the card doesn't know falls back to English 2`] = `
     "A row above the alarms with automations and scripts of the phone and its alarms."
   ],
   [
-    "Settings from templates",
-    "Each one picked turns into a Jinja2 template. In it, \\"user\\" is the name of who looks at the card."
+    "Use a template for",
+    "A ticked option gets a Jinja2 template field. The variable \\"user\\" is the name of the person viewing the card."
   ]
 ]
 `;
