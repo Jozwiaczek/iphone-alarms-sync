@@ -61,12 +61,33 @@
         default: {},
         readme: { config: { title: "Alarms" }, expand: "1a2b3c4d5e6f7a8b" },
         expanded: { expand: "1a2b3c4d5e6f7a8b" },
-        many: { expand: "2b3c4d5e6f7a8b9c" },
-        "many-all": { expand: "2b3c4d5e6f7a8b9c", all: true },
-        "no-automations": { expand: "3c4d5e6f7a8b9c0d" },
-        loading: { expand: "1a2b3c4d5e6f7a8b", hass: { callWS: () => new Promise(() => {}) } },
-        error: { expand: "1a2b3c4d5e6f7a8b", hass: { callWS: async () => Promise.reject(new Error("x")) } },
+        // The Automations row: each alarm's automations, five shown, then all.
+        many: { expand: PHONE.id },
+        "many-all": { expand: PHONE.id, all: true },
+        "no-automations": { config: { devices: ["3c4d5e6f7a8b9c0d"] }, expand: PHONE.id },
+        // The phone's subjects, the alarms and "Other" together: one device trigger, one off, a long label.
+        phone: {
+          all: true,
+          expand: PHONE.id,
+          hass: {
+            phones: [
+              {
+                ...PHONE,
+                alarms: [
+                  ...PHONE.alarms.filter((alarm) => alarm.label !== "⚠️ Drugi"),
+                  { id: "a5", label: "A very long alarm label that does not fit on one line", hour: 8, minute: 15, repeat_days: ["Monday"], automations: ["automation.heat_the_bathroom"] },
+                ],
+                automations: ["automation.wake_the_kids", "automation.kitchen_lights", "automation.garage_heater", "automation.feed_the_cat"],
+                entityAutomations: { any_alarm: ["automation.wake_the_kids", "automation.feed_the_cat"], sleep: ["automation.kitchen_lights"] },
+              },
+            ],
+          },
+        },
+        loading: { expand: PHONE.id, hass: { callWS: () => new Promise(() => {}) } },
+        error: { expand: PHONE.id, hass: { callWS: async () => Promise.reject(new Error("x")) } },
         "two-phones": { config: { title: "Alarms" }, hass: { phones: [PHONE, SECOND_PHONE] } },
+        // Each phone has its own row; one open at a time.
+        "two-phones-open": { config: { title: "Alarms" }, expand: PHONE.id, hass: { phones: [PHONE, SECOND_PHONE] } },
         "picked-alarms": { config: { devices: ["1a2b3c4d5e6f7a8b", "3c4d5e6f7a8b9c0d", "deleted_alarm"] } },
         "no-disabled": { config: { show_disabled: false } },
         "no-alarms": { hass: { phones: [{ ...SECOND_PHONE, alarms: [] }] } },

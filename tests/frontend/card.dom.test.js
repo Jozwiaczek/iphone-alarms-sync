@@ -9,7 +9,11 @@ const [FIRST, SECOND, TEST, GYM] = PHONE.alarms.map((a) => a.id);
 const $ = (el, selector) => el.shadowRoot.querySelector(selector);
 const $$ = (el, selector) => [...el.shadowRoot.querySelectorAll(selector)];
 const text = (node) => node?.textContent.replace(/\s+/g, " ").trim();
+// Alarm rows only, without the phone row under them.
+const ALARM = ".item:not(.phone-row)";
 const row = (el, key) => $$(el, "button.row").find((b) => b.dataset.key === key);
+const labels = (el) => $$(el, ".details .label .group").map(text);
+const counts = (el) => $$(el, ".details .label .count").map(text);
 const names = (el) => $$(el, ".automation .name").map((n) => n.textContent);
 const info = (el) => Object.fromEntries($$(el, ".info dt").map((dt) => [dt.textContent, dt.nextElementSibling.textContent]));
 // Compare booleans and strings only: assert on a DOM node prints the whole tree.
@@ -26,14 +30,14 @@ test("lists the alarms like the Clock app", () => {
   const el = mount({}, makeHass());
   // Only what the Sync shortcut sent: iOS shares no Sleep schedule.
   ok(!$(el, "h2"));
-  assert.deepEqual($$(el, ".time").map(text), ["06:00", "07:35", "07:40", "16:43"]);
-  assert.deepEqual($$(el, ".subtitle").map(text), [
+  assert.deepEqual($$(el, `${ALARM} .time`).map(text), ["06:00", "07:35", "07:40", "16:43"]);
+  assert.deepEqual($$(el, `${ALARM} .subtitle`).map(text), [
     "Gym · Weekends",
     "1️⃣ Pierwszy · Every day Went off Today 07:35",
     "⚠️ Drugi · Weekdays Went off Today 07:40 · estimated",
     "Test 2 · Tue and Wed",
   ]);
-  assert.deepEqual($$(el, ".status").map((s) => s.getAttribute("aria-label")), ["Off", "On", "On", "On"]);
+  assert.deepEqual($$(el, `${ALARM} .status`).map((s) => s.getAttribute("aria-label")), ["Off", "On", "On", "On"]);
   ok(row(el, GYM).parentElement.classList.contains("off"));
   ok(!$(el, ".title") && !$(el, ".phone"));
 });
@@ -50,7 +54,7 @@ test("renders again only when what it shows changes", () => {
   const sensor = "sensor.johns_iphone_test_2_alarm_id";
   el.hass = withState(hass, sensor, "x", { ...hass.states[sensor].attributes, hour: 5 });
   ok($(el, ".section") !== first, "rendered");
-  assert.equal(text($$(el, ".time")[0]), "05:43");
+  assert.equal(text($$(el, `${ALARM} .time`)[0]), "05:43");
 });
 
 test("ha-card stays across renders, so card-mod styles survive", () => {
@@ -71,14 +75,14 @@ test("a new day relabels 'Today' without any state change", () => {
   assert.equal(info(el)["Next ring"], "Yesterday 16:43");
 });
 
-test("a tap shows everything else about an alarm", async () => {
-  const el = mount({}, makeHass());
+test("a tap shows everything else about an alarm, and asks Home Assistant nothing", () => {
+  const hass = makeHass();
+  hass.callWS = () => assert.fail("an alarm's automations are in the Automations row");
+  const el = mount({}, hass);
   row(el, FIRST).click();
   assert.equal(row(el, FIRST).getAttribute("aria-expanded"), "true");
   assert.equal(row(el, FIRST).getAttribute("aria-controls"), "details");
   assert.equal($(el, "#details")?.className, "details");
-  assert.match(text($(el, ".details")), /Loading…/);
-  await flush();
   assert.deepEqual(info(el), {
     Snooze: "Allowed",
     "Next ring": "Tomorrow 07:35",
@@ -86,16 +90,12 @@ test("a tap shows everything else about an alarm", async () => {
     Snoozed: "07:44",
     Stopped: "07:52",
   });
-  assert.deepEqual(names(el), ["Bedroom lights on", "Coffee machine", "Open the blinds"]);
-  assert.deepEqual($$(el, ".automation .tag").map(text), ["Off"]);
   assert.equal(text($(el, ".link")), "Show all entities");
-  assert.equal($(el, ".link").nextElementSibling.className, "label");
+  ok(!$(el, ".details .label") && !$(el, ".automation"));
   // One row open at a time; a second tap closes it.
   row(el, TEST).click();
-  await flush();
   assert.equal(row(el, FIRST).getAttribute("aria-expanded"), "false");
   assert.deepEqual(info(el), { Snooze: "Not allowed", "Next ring": "Today 16:43", "Last events": "None yet" });
-  assert.match(text($(el, ".details")), /No automations use this alarm\./);
   row(el, TEST).click();
   ok(!$(el, ".details"));
 });
@@ -106,25 +106,82 @@ test("an alarm that is off has no next ring", () => {
   assert.equal(info(el)["Next ring"], undefined);
 });
 
-test("scripts that use an alarm are listed and tagged", async () => {
-  const el = mount({}, makeHass());
-  row(el, GYM).click();
+test("the Automations row lists everything: the phone's subjects, each alarm, then the rest", async () => {
+  // "Wake the kids" uses the Any alarm entity, "Kitchen lights" the Sleep one. "Coffee machine" and
+  // "Garage heater" are device triggers on the phone; the first also uses an alarm, so it is listed there only.
+  const phone = {
+    ...PHONE,
+    alarms: PHONE.alarms.filter((alarm) => alarm.id !== SECOND),
+    automations: ["automation.coffee_machine", "automation.garage_heater", "automation.wake_the_kids", "automation.kitchen_lights"],
+    entityAutomations: { any_alarm: ["automation.wake_the_kids"], sleep: ["automation.kitchen_lights", "automation.wake_the_kids"] },
+  };
+  const el = mount({}, makeHass({ phones: [phone] }));
+  const phoneRow = row(el, PHONE.id);
+  assert.equal(text($(el, ".phone-row .time")), "Automations");
+  assert.equal(text($(el, ".phone-row .subtitle")), "");
+  // Above the alarms, like Sleep | Wake Up in the Clock app.
+  assert.equal($$(el, "button.row").at(0), phoneRow);
+  phoneRow.click();
   await flush();
-  assert.deepEqual(names(el), ["Good morning"]);
-  assert.deepEqual($$(el, ".automation .tag").map(text), ["Script"]);
+  assert.equal(text($(el, ".more")), "Show all (7)");
+  $(el, ".more").click();
+  assert.deepEqual(labels(el), ["Any alarm", "Sleep", "06:00 · Gym", "07:35 · 1️⃣ Pierwszy", "Other"]);
+  assert.deepEqual(names(el), ["Wake the kids", "Kitchen lights", "Good morning", "Bedroom lights on", "Coffee machine", "Open the blinds", "Garage heater"]);
+  assert.deepEqual($$(el, ".automation .tag").map(text), ["Script", "Off", "Off"]);
 });
 
-test("automations of the phone are listed with the alarm's, tagged, once", async () => {
-  // "Coffee machine" uses both the alarm and the phone; "Wake the kids" only the phone.
-  const phone = { ...PHONE, automations: ["automation.coffee_machine", "automation.wake_the_kids"] };
-  const el = mount({}, makeHass({ phones: [phone] }));
-  row(el, FIRST).click();
+test("the Automations row follows what the card shows", async () => {
+  const hidden = mount({ show_disabled: false }, makeHass());
+  row(hidden, PHONE.id).click();
   await flush();
-  assert.deepEqual(names(el), ["Bedroom lights on", "Coffee machine", "Open the blinds", "Wake the kids"]);
-  assert.deepEqual($$(el, ".automation .tag").map(text), ["Off", "Phone"]);
-  row(el, TEST).click();
+  $(hidden, ".more").click();
+  assert.deepEqual(labels(hidden), ["07:35 · 1️⃣ Pierwszy", "07:40 · ⚠️ Drugi"]);
+  // Picked alarms keep the row, with only their own groups.
+  const picked = mount({ devices: [GYM] }, makeHass());
+  row(picked, PHONE.id).click();
   await flush();
-  assert.deepEqual(names(el), ["Coffee machine", "Wake the kids"]);
+  assert.deepEqual(labels(picked), ["06:00 · Gym"]);
+  assert.deepEqual(names(picked), ["Good morning"]);
+});
+
+test("alarm groups are named after the alarms as shown now", async () => {
+  let hass = makeHass();
+  const el = mount({ devices: [FIRST, GYM] }, hass);
+  row(el, PHONE.id).click();
+  await flush();
+  assert.deepEqual(labels(el), ["06:00 · Gym", "07:35 · 1️⃣ Pierwszy"]);
+  const sensor = Object.values(hass.entities).find((e) => e.device_id === FIRST && e.translation_key === "alarm_id").entity_id;
+  hass = withState(hass, sensor, "x", { ...hass.states[sensor].attributes, label: "", hour: 5 });
+  el.hass = hass;
+  assert.deepEqual(labels(el), ["05:35 · Alarm", "06:00 · Gym"]);
+  el.hass = withState(hass, sensor, "unavailable");
+  assert.deepEqual(labels(el), ["06:00 · Gym"]);
+  const h12 = mount({ devices: [GYM] }, makeHass({ locale: { time_format: "12" } }));
+  row(h12, PHONE.id).click();
+  await flush();
+  assert.deepEqual(labels(h12), ["6:00 AM · Gym"]);
+});
+
+test("an Automations row with nothing says so", async () => {
+  const el = mount({ devices: [TEST] }, makeHass());
+  row(el, PHONE.id).click();
+  await flush();
+  assert.equal(text($(el, ".details p")), "No automations use this phone or its alarms.");
+  assert.equal(text($(el, ".link")), "Show all entities");
+});
+
+test("the phone row stays when no alarm is shown, above the empty message", () => {
+  const none = mount({}, makeHass({ phones: [{ ...PHONE, alarms: [] }] }));
+  assert.match(text($(none, ".empty")), /No alarms yet/);
+  ok(row(none, PHONE.id).compareDocumentPosition($(none, ".empty")) & Node.DOCUMENT_POSITION_FOLLOWING);
+  const allOff = PHONE.alarms.map((alarm) => ({ ...alarm, enabled: false }));
+  const hidden = mount({ show_disabled: false }, makeHass({ phones: [{ ...PHONE, alarms: allOff }] }));
+  ok(row(hidden, PHONE.id));
+  assert.equal($$(hidden, `${ALARM} .time`).length, 0);
+});
+
+test("no Automations row with automations off", () => {
+  ok(!row(mount({ show_automations: false }, makeHass()), PHONE.id));
 });
 
 test("'Show all entities' goes to the device page, for admins only", () => {
@@ -143,23 +200,38 @@ test("'Show all entities' goes to the device page, for admins only", () => {
   ok(!$(user, ".link"));
 });
 
-test("many automations: five, then all", async () => {
+test("many automations: five, then all, counted across groups", async () => {
   const hass = makeHass();
   const el = mount({}, hass);
-  row(el, SECOND).click();
+  row(el, PHONE.id).click();
   await flush();
   assert.equal(names(el).length, 5);
-  assert.equal(text($(el, ".more")), "Show all (20)");
+  assert.deepEqual(labels(el), ["06:00 · Gym", "07:35 · 1️⃣ Pierwszy", "07:40 · ⚠️ Drugi"]);
+  // Drugi shows one of its 20: the count says so.
+  assert.deepEqual(counts(el), ["1", "3", "20"]);
+  // Drugi's 20 repeat Pierwszy's 3: each alarm lists all of its own.
+  assert.equal(text($(el, ".more")), "Show all (24)");
   $(el, ".more").focus();
   // A state change while "Show all" only has focus keeps it there.
   el.hass = withState(hass, "automation.bedroom_lights_on", "off");
   assert.equal(el.shadowRoot.activeElement, $(el, ".more"));
   $(el, ".more").click();
-  assert.equal(names(el).length, 20);
-  ok(!$(el, ".more"));
+  assert.equal(names(el).length, 24);
+  ok(!$(el, '[data-action="more"]'));
   // The keyboard goes on with the first automation that "Show all" revealed.
   assert.equal(el.shadowRoot.activeElement, $$(el, ".automation")[5]);
-  assert.deepEqual(names(el), [...names(el)].sort((a, b) => a.localeCompare(b)));
+  const drugi = names(el).slice(4);
+  assert.deepEqual(drugi, [...drugi].sort((a, b) => a.localeCompare(b)));
+  // Focus stays on the copy under Drugi when a state change renders again.
+  const copies = () => $$(el, ".automation").filter((b) => b.dataset.key === "automation.coffee_machine");
+  copies()[1].focus();
+  el.hass = withState(hass, "automation.coffee_machine", "off");
+  assert.equal(el.shadowRoot.activeElement, copies()[1]);
+  // A long list folds back, with focus on "Show all" so the panel stays in view.
+  assert.equal(text($$(el, ".more").at(-1)), "Show less");
+  $$(el, ".more").at(-1).click();
+  assert.equal(names(el).length, 5);
+  assert.equal(el.shadowRoot.activeElement, $(el, '[data-action="more"]'));
 });
 
 test("a failed lookup says so and the next tap tries again", async () => {
@@ -168,13 +240,15 @@ test("a failed lookup says so and the next tap tries again", async () => {
   hass.callWS = async () => {
     throw new Error("nope");
   };
-  const el = mount({}, hass);
-  row(el, FIRST).click();
+  const el = mount({ devices: [FIRST] }, hass);
+  row(el, PHONE.id).click();
   await flush();
   assert.match(text($(el, ".details")), /Couldn't load automations\./);
   hass.callWS = working;
-  row(el, FIRST).click();
-  row(el, FIRST).click();
+  assert.equal(text($(el, '[data-action="retry"]')), "Try again");
+  $(el, '[data-action="retry"]').click();
+  assert.match(text($(el, ".details")), /Loading…/);
+  assert.equal(el.shadowRoot.activeElement, row(el, PHONE.id));
   await flush();
   assert.equal(names(el).length, 3);
 });
@@ -182,20 +256,20 @@ test("a failed lookup says so and the next tap tries again", async () => {
 test("a late reply for a closed row is dropped, a detached card keeps it", async () => {
   const hass = makeHass();
   let replies = [];
-  // One lookup for the alarm, one for its phone.
+  // The phone's device comes first, then its event entities and the alarm.
   hass.callWS = () => new Promise((resolve) => replies.push(resolve));
   const reply = (result) => {
     replies.forEach((resolve, i) => resolve(i === 0 ? result : {}));
     replies = [];
   };
-  const el = mount({}, hass);
-  row(el, FIRST).click();
-  row(el, FIRST).click();
+  const el = mount({ devices: [FIRST] }, hass);
+  row(el, PHONE.id).click();
+  row(el, PHONE.id).click();
   reply({ automation: ["automation.coffee_machine"] });
   await flush();
   ok(!$(el, ".details"));
 
-  row(el, FIRST).click();
+  row(el, PHONE.id).click();
   document.body.removeChild(el);
   reply({ automation: ["automation.coffee_machine"] });
   await flush();
@@ -212,10 +286,10 @@ test("changing the options closes the open row", async () => {
 });
 
 test("an automation opens its more-info dialog", async () => {
-  const el = mount({}, makeHass());
+  const el = mount({ devices: [FIRST] }, makeHass());
   const opened = [];
   document.body.addEventListener("hass-more-info", (ev) => opened.push(ev.detail.entityId));
-  row(el, FIRST).click();
+  row(el, PHONE.id).click();
   await flush();
   $(el, ".automation").click();
   assert.deepEqual(opened, ["automation.bedroom_lights_on"]);
@@ -223,8 +297,8 @@ test("an automation opens its more-info dialog", async () => {
 
 test("an automation gone after the lookup leaves the list", async () => {
   const hass = makeHass();
-  const el = mount({}, hass);
-  row(el, FIRST).click();
+  const el = mount({ devices: [FIRST] }, hass);
+  row(el, PHONE.id).click();
   await flush();
   const states = Object.fromEntries(Object.entries(hass.states).filter(([id]) => id !== "automation.coffee_machine"));
   el.hass = { ...hass, states };
@@ -249,12 +323,12 @@ test("options: title, no disabled alarms, two phones", () => {
 
 test("options of older versions are ignored", () => {
   const el = mount({ show_sleep: true, show_other: false }, makeHass());
-  assert.equal($$(el, ".time").length, 4);
+  assert.equal($$(el, `${ALARM} .time`).length, 4);
 });
 
 test("picked alarms show alone", () => {
   const el = mount({ devices: [TEST] }, makeHass());
-  assert.deepEqual($$(el, ".time").map(text), ["16:43"]);
+  assert.deepEqual($$(el, `${ALARM} .time`).map(text), ["16:43"]);
 });
 
 test("empty states and a deleted device", () => {
@@ -274,7 +348,7 @@ test("a bad config is refused", () => {
 
 test("12-hour clocks", () => {
   const el = mount({}, makeHass({ locale: { time_format: "12" } }));
-  assert.deepEqual($$(el, ".time").map((t) => t.textContent), ["6:00AM", "7:35AM", "7:40AM", "4:43PM"]);
+  assert.deepEqual($$(el, `${ALARM} .time`).map((t) => t.textContent), ["6:00AM", "7:35AM", "7:40AM", "4:43PM"]);
 });
 
 test("the documented styling hooks exist", async () => {
@@ -283,7 +357,7 @@ test("the documented styling hooks exist", async () => {
   for (const name of ["time-size", "time-weight", "row-padding", "disabled-opacity", "on-color", "panel-color"]) {
     ok(style.includes(`--iphone-alarms-${name}`), name);
   }
-  row(el, FIRST).click();
+  row(el, PHONE.id).click();
   await flush();
   for (const cls of ["section", "row", "time", "subtitle", "status", "details", "automation"]) {
     ok($(el, `.${cls}`), cls);
@@ -320,16 +394,18 @@ const editor = (lang) => {
 };
 const inLanguage = (language, config = {}) => mount(config, makeHass({ locale: { language } }));
 
-async function openFirst(language) {
+// An open alarm, then the open Automations row.
+async function openBoth(language) {
   const el = inLanguage(language);
   row(el, FIRST).click();
+  const alarm = screen(el);
+  row(el, PHONE.id).click();
   await flush();
-  return el;
+  return [...alarm, "---", ...screen(el)];
 }
 
 test("Polish: the card and its editor", async (t) => {
-  const el = await openFirst("pl");
-  t.assert.snapshot(screen(el));
+  t.assert.snapshot(await openBoth("pl"));
   t.assert.snapshot(editor("pl"));
   const gone = (n) => text($(inLanguage("pl", { devices: Array.from({ length: n }, (_, i) => `gone${i}`) }), ".warning"));
   assert.deepEqual([1, 2, 5].map(gone), [
@@ -340,8 +416,8 @@ test("Polish: the card and its editor", async (t) => {
 });
 
 test("a language the card doesn't know falls back to English", async (t) => {
-  const el = await openFirst("tlh");
-  assert.deepEqual(screen(el), screen(await openFirst("en")));
-  t.assert.snapshot(screen(el));
+  const shown = await openBoth("tlh");
+  assert.deepEqual(shown, await openBoth("en"));
+  t.assert.snapshot(shown);
   t.assert.snapshot(editor("tlh"));
 });

@@ -1,5 +1,6 @@
 exports[`Polish: the card and its editor 1`] = `
 [
+  "Automatyzacje",
   "06:00",
   "Gym · Weekendy",
   "Wyłączony",
@@ -17,10 +18,30 @@ exports[`Polish: the card and its editor 1`] = `
   "Zatrzymany",
   "07:52",
   "Pokaż wszystkie encje",
+  "07:40",
+  "⚠️ Drugi · Dni robocze Zadzwonił Dziś 07:40 · szacowane",
+  "Włączony",
+  "16:43",
+  "Test 2 · wt. i śr.",
+  "Włączony",
+  "---",
   "Automatyzacje",
+  "06:00 · Gym1",
+  "Good morningSkrypt",
+  "07:35 · 1️⃣ Pierwszy3",
   "Bedroom lights on",
   "Coffee machine",
   "Open the blindsWyłączona",
+  "07:40 · ⚠️ Drugi20",
+  "Bedroom lights on",
+  "Pokaż wszystkie (24)",
+  "Pokaż wszystkie encje",
+  "06:00",
+  "Gym · Weekendy",
+  "Wyłączony",
+  "07:35",
+  "1️⃣ Pierwszy · Codziennie Zadzwonił Dziś 07:35",
+  "Włączony",
   "07:40",
   "⚠️ Drugi · Dni robocze Zadzwonił Dziś 07:40 · szacowane",
   "Włączony",
@@ -49,14 +70,15 @@ exports[`Polish: the card and its editor 2`] = `
     "Dotknij budzika, aby zobaczyć, kiedy ostatnio zadzwonił, przeszedł w drzemkę albo został zatrzymany."
   ],
   [
-    "Pokaż automatyzacje budzika",
-    "Dotknij budzika, aby zobaczyć automatyzacje i skrypty, które używają jego albo jego telefonu."
+    "Pokaż automatyzacje",
+    "Wiersz nad budzikami z automatyzacjami i skryptami telefonu oraz budzików."
   ]
 ]
 `;
 
 exports[`a language the card doesn't know falls back to English 1`] = `
 [
+  "Automations",
   "06:00",
   "Gym · Weekends",
   "Off",
@@ -74,10 +96,30 @@ exports[`a language the card doesn't know falls back to English 1`] = `
   "Stopped",
   "07:52",
   "Show all entities",
+  "07:40",
+  "⚠️ Drugi · Weekdays Went off Today 07:40 · estimated",
+  "On",
+  "16:43",
+  "Test 2 · Tue and Wed",
+  "On",
+  "---",
   "Automations",
+  "06:00 · Gym1",
+  "Good morningScript",
+  "07:35 · 1️⃣ Pierwszy3",
   "Bedroom lights on",
   "Coffee machine",
   "Open the blindsOff",
+  "07:40 · ⚠️ Drugi20",
+  "Bedroom lights on",
+  "Show all (24)",
+  "Show all entities",
+  "06:00",
+  "Gym · Weekends",
+  "Off",
+  "07:35",
+  "1️⃣ Pierwszy · Every day Went off Today 07:35",
+  "On",
   "07:40",
   "⚠️ Drugi · Weekdays Went off Today 07:40 · estimated",
   "On",
@@ -106,8 +148,8 @@ exports[`a language the card doesn't know falls back to English 2`] = `
     "Tap an alarm to see when it last went off, was snoozed or stopped."
   ],
   [
-    "Show automations of an alarm",
-    "Tap an alarm to see the automations and scripts that use it or its phone."
+    "Show automations",
+    "A row above the alarms with automations and scripts of the phone and its alarms."
   ]
 ]
 `;

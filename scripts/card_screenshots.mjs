@@ -46,7 +46,9 @@ try {
     for (const scenario of scenarios) {
       for (const theme of ["light", "dark"]) shots.push({ scenario, theme, width: 390, file: `${scenario}-${theme}.png` });
     }
-    for (const width of [180, 300, 600]) shots.push({ scenario: "expanded", theme: "dark", width, file: `expanded-dark-${width}.png` });
+    for (const scenario of ["expanded", "phone"]) {
+      for (const width of [180, 300, 600]) shots.push({ scenario, theme: "dark", width, file: `${scenario}-dark-${width}.png` });
+    }
   }
   for (const shot of shots) {
     const page = await browser.newPage({ deviceScaleFactor: 2, viewport: { width: shot.width + 32, height: 800 } });
