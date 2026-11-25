@@ -1,6 +1,6 @@
 exports[`Polish: the card and its editor 1`] = `
 [
-  "Automatyzacje",
+  "Ogólne automatyzacje",
   "06:00",
   "Gym · Weekendy",
   "Wyłączony",
@@ -58,7 +58,7 @@ exports[`Polish: the card and its editor 2`] = `
 
 exports[`a language the card doesn't know falls back to English 1`] = `
 [
-  "Automations",
+  "General automations",
   "06:00",
   "Gym · Weekends",
   "Off",

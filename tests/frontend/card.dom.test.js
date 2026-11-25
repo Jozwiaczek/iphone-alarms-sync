@@ -125,7 +125,7 @@ test("the phone's automations get a row of their own, by subject", async () => {
   };
   const el = mount({}, makeHass({ phones: [phone] }));
   const phoneRow = row(el, PHONE.id);
-  assert.equal(text($(el, ".phone-row .time")), "Automations");
+  assert.equal(text($(el, ".phone-row .time")), "General automations");
   assert.equal(text($(el, ".phone-row .subtitle")), "");
   // Above the alarms, like Sleep | Wake Up in the Clock app.
   assert.equal($$(el, "button.row").at(0), phoneRow);
@@ -144,6 +144,7 @@ test("a phone row with nothing says so", async () => {
   row(el, PHONE.id).click();
   await flush();
   assert.match(text($(el, ".details")), /No automations use this phone\./);
+  assert.match(text($(el, ".details")), /Tap an alarm for its own automations\./);
   assert.equal(text($(el, ".link")), "Show all entities");
 });
 

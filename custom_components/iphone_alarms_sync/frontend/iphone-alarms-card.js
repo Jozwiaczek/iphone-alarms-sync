@@ -63,7 +63,9 @@ const STRINGS = {
     no_alarm_automations: "No automations use this alarm.",
     script: "Script",
     automation_off: "Off",
-    phone_automations: "Automations",
+    phone_automations: "General automations",
+    // Says this is not every automation: each alarm lists its own.
+    phone_automations_hint: "These use the whole phone. Tap an alarm for its own automations.",
     no_phone_automations: "No automations use this phone.",
     // Named like the phone's event entities.
     any_alarm: "Any alarm",
@@ -118,7 +120,8 @@ const STRINGS = {
     no_alarm_automations: "Żadna automatyzacja nie używa tego budzika.",
     script: "Skrypt",
     automation_off: "Wyłączona",
-    phone_automations: "Automatyzacje",
+    phone_automations: "Ogólne automatyzacje",
+    phone_automations_hint: "Te dotyczą całego telefonu. Automatyzacje budzika zobaczysz po jego dotknięciu.",
     no_phone_automations: "Żadna automatyzacja nie używa tego telefonu.",
     any_alarm: "Dowolny budzik",
     wakeup_alarm: "Budzik pobudki",
@@ -663,7 +666,8 @@ class IPhoneAlarmsCard extends HTMLElement {
   }
 
   _phoneDetails(key, ctx) {
-    return this._deviceLink(key, ctx.t) + this._automations(key, ctx.t, ctx.t.no_phone_automations);
+    const { t } = ctx;
+    return `<p>${escape(t.phone_automations_hint)}</p>${this._deviceLink(key, t)}${this._automations(key, t, t.no_phone_automations)}`;
   }
 
   // Above the automations, whose list can be long. The device page is under Settings, which only admins can open.
