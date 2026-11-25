@@ -27,8 +27,7 @@ exports[`Polish: the card and its editor 1`] = `
   "16:43",
   "Test 2 · wt. i śr.",
   "Włączony",
-  "Automatyzacje telefonu",
-  "Dowolny budzik · Budzik pobudki · Sen"
+  "Automatyzacje telefonu"
 ]
 `;
 
@@ -86,8 +85,7 @@ exports[`a language the card doesn't know falls back to English 1`] = `
   "16:43",
   "Test 2 · Tue and Wed",
   "On",
-  "Phone automations",
-  "Any alarm · Wake-Up alarm · Sleep"
+  "Phone automations"
 ]
 `;
 

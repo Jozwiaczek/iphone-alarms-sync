@@ -126,7 +126,7 @@ test("the phone's automations get a row of their own, by subject", async () => {
   const el = mount({}, makeHass({ phones: [phone] }));
   const phoneRow = row(el, PHONE.id);
   assert.equal(text($(el, ".phone-row .time")), "Phone automations");
-  assert.equal(text($(el, ".phone-row .subtitle")), "Any alarm · Wake-Up alarm · Sleep");
+  assert.equal(text($(el, ".phone-row .subtitle")), "");
   // Below the alarms, last.
   assert.equal($$(el, "button.row").at(-1), phoneRow);
   phoneRow.click();

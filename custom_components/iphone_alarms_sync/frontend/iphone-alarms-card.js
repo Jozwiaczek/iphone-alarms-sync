@@ -379,8 +379,9 @@ button:focus-visible { outline: 2px solid var(--primary-color); outline-offset: 
 .subtitle { display: flex; align-items: center; gap: 6px; margin-top: 4px; overflow: hidden; font-size: 0.9375rem; line-height: 1.35; white-space: nowrap; flex-wrap: wrap; color: var(--primary-text-color); }
 .subtitle span { overflow: hidden; text-overflow: ellipsis; }
 .subtitle .last { flex-basis: 100%; font-size: 0.8125rem; color: var(--secondary-text-color); }
-.phone-row .time { font-size: 1.0625rem; font-weight: 600; letter-spacing: 0; }
-.phone-row .subtitle { font-size: 0.8125rem; color: var(--secondary-text-color); }
+/* One line, not an alarm: its groups are named inside. */
+.phone-row .time { font-size: 1rem; font-weight: 500; letter-spacing: 0; }
+.phone-row .subtitle { display: none; }
 .off .main { opacity: var(--iphone-alarms-disabled-opacity, 0.45); }
 .status { flex: none; width: 36px; height: 36px; overflow: visible; fill: none; stroke: var(--secondary-text-color); stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
 .status.on { --clock: var(--iphone-alarms-on-color, #34c759); }
@@ -606,7 +607,7 @@ class IPhoneAlarmsCard extends HTMLElement {
           group.phone.id,
           "phone-row",
           escape(t.phone_automations),
-          `<span>${escape(PHONE_SUBJECTS.filter((subject) => group.phone.entities[subject]).map((subject) => t[subject]).join(" · "))}</span>`,
+          "",
           phoneIcon(),
           () => this._phoneDetails(group.phone.id, ctx),
         );
