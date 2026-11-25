@@ -180,6 +180,8 @@ The Home Assistant app (2026.10.1+) waits 10 s for Home Assistant. The phone mus
 
 The same lost connection can also show *XPC error received on message reply handler*.
 
+Several shortcuts in a row failing on a working connection? In app 2026.10.3 a connection attempt can hang. Every shortcut then times out until the app reconnects, which can take minutes, and those events never reach Home Assistant. Update the app when a newer version is out: it gives up on a hanging attempt after 30 s ([HAKit #129](https://github.com/home-assistant/HAKit/pull/129)). To confirm, export the app logs (**Debugging → Export logs** in the app settings) and look for `HAReconnectManagerError.timeout` in `HomeAssistant-Extensions-Widgets.txt`.
+
 Shortcuts can't catch this error, so don't run **Perform action** without a connection. If your shortcut runs a helper shortcut first (for example to reconnect a VPN), **Stop This Shortcut** in the helper stops only the helper. Return a result with **Stop and Output** and stop the calling shortcut when it reports a failure.
 
 ### Alarm event missed
