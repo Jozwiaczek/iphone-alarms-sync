@@ -94,6 +94,15 @@
         "no-phones": { hass: { phones: [] } },
         "filter-empty": { config: { devices: ["deleted_alarm"] } },
         "12h": { hass: { locale: { time_format: "12" } } },
+        // Templates: one works, one gives the wrong type, one fails; each answered as Home Assistant would.
+        templates: {
+          config: { title: "{{ user }}'s alarms", show_disabled: "{{ states('input_boolean.guests') }}", devices: "{{ phones[user] }}" },
+          answers: {
+            "{{ user }}'s alarms": { result: "Anna's alarms" },
+            "{{ states('input_boolean.guests') }}": { result: "on" },
+            "{{ phones[user] }}": { error: "UndefinedError: 'phones' is undefined", level: "ERROR" },
+          },
+        },
         "last-ring": {
           hass: {
             phones: [
@@ -124,8 +133,11 @@
       const card = document.createElement("iphone-alarms-card");
       card.setConfig({ type: "custom:iphone-alarms-card", ...scenario.config });
       const language = params.get("lang") ?? "en";
-      card.hass = makeHass({ ...scenario.hass, locale: { ...scenario.hass?.locale, language } });
+      const hass = makeHass({ ...scenario.hass, locale: { ...scenario.hass?.locale, language } });
+      card.hass = hass;
       document.getElementById("stage").appendChild(card);
+      await new Promise((resolve) => setTimeout(resolve, 0));
+      for (const [template, answer] of Object.entries(scenario.answers ?? {})) hass.templates.get(template)?.send(answer);
       const click = (selector) => card.shadowRoot.querySelector(selector)?.click();
       if (scenario.expand) click(`button.row[data-key="${scenario.expand}"]`);
       await new Promise((resolve) => setTimeout(resolve, 0));

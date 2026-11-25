@@ -93,8 +93,19 @@ export function makeHass({ phones = [PHONE], locale = {}, callWS } = {}) {
     devices: {},
     config: { time_zone: TIME_ZONE },
     locale: { language: "en", time_format: "24", time_zone: "server", ...locale },
-    user: { is_admin: true },
+    user: { is_admin: true, name: "Anna" },
     related: {},
+    // Template subscriptions the card opened, by template; `send` answers one like Home Assistant.
+    templates: new Map(),
+  };
+  hass.connection = {
+    subscribeMessage: async (callback, msg) => {
+      const sub = { msg, send: callback, closed: false };
+      hass.templates.set(msg.template, sub);
+      return () => {
+        sub.closed = true;
+      };
+    },
   };
   const add = (entityId, deviceId, key, value, attributes) => {
     hass.entities[entityId] = { entity_id: entityId, device_id: deviceId, platform: DOMAIN, translation_key: key };

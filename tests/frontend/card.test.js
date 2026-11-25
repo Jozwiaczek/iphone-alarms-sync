@@ -5,7 +5,7 @@ import { test } from "node:test";
 import { card } from "./dom.js";
 import { makeHass, NOW, PHONE, SECOND_PHONE, TIME_ZONE } from "./fixtures.js";
 
-const { validateConfig, describeRepeat, formatClock, formatEventTime, lastRing, buildIndex, selectAlarms, relatedItems, timeContext, strings } = card;
+const { validateConfig, resolveConfig, isTemplate, editorForm, editorChange, describeRepeat, formatClock, formatEventTime, lastRing, buildIndex, selectAlarms, relatedItems, timeContext, strings } = card;
 const ctx = (overrides = {}) => ({ h12: false, timeZone: TIME_ZONE, now: NOW, t: strings(), ...overrides });
 const config = (overrides = {}) => validateConfig(overrides);
 
@@ -20,9 +20,71 @@ test("validateConfig fills defaults and rejects wrong types", () => {
   assert.equal(validateConfig({ show_disabled: false }).show_disabled, false);
   // Options of older versions are kept, not rejected, so old cards still load.
   assert.equal(validateConfig({ show_sleep: true }).show_sleep, true);
-  for (const bad of [null, [], { title: 3 }, { devices: "a" }, { devices: [1] }, { show_disabled: "no" }]) {
+  for (const bad of [null, [], { title: 3 }, { devices: [1] }, { show_disabled: 1 }]) {
     assert.throws(() => validateConfig(bad));
   }
+});
+
+test("any option can be a template", () => {
+  assert.equal(isTemplate("title", "Alarms"), false);
+  assert.equal(isTemplate("title", "{{ user }}'s alarms"), true);
+  assert.equal(isTemplate("title", "{% if x %}A{% endif %}"), true);
+  // Text can't be a list or a switch, so it is always a template there.
+  assert.equal(isTemplate("devices", "{{ ['a'] }}"), true);
+  assert.equal(isTemplate("show_disabled", "no"), true);
+  assert.equal(isTemplate("show_disabled", false), false);
+  const raw = { title: "{{ 1 }}", devices: "{{ x }}", show_disabled: "{{ y }}" };
+  assert.deepEqual(validateConfig(raw), { ...raw, show_automations: true, show_last_events: true });
+  // A result must have the option's type.
+  assert.throws(() => validateConfig({ show_disabled: "on" }, false), /true or false/);
+});
+
+test("resolveConfig puts results in place and reports wrong ones", () => {
+  const raw = validateConfig({ title: "{{ 1 }}", devices: "{{ x }}", show_disabled: "{{ y }}", show_automations: "{{ z }}" });
+  const { config: done, errors } = resolveConfig(raw, {
+    title: { result: 2026 },
+    devices: { result: ["a"] },
+    show_disabled: { result: "on" },
+    show_automations: { error: "UndefinedError: z" },
+  });
+  assert.equal(done.title, "2026");
+  assert.deepEqual(done.devices, ["a"]);
+  // Wrong or failed: the option's default.
+  assert.equal(done.show_disabled, true);
+  assert.equal(done.show_automations, true);
+  assert.deepEqual(errors, [
+    ["show_disabled", null],
+    ["show_automations", "UndefinedError: z"],
+  ]);
+  assert.equal(resolveConfig(validateConfig({ title: "{{ '' }}" }), { title: { result: "" } }).config.title, undefined);
+});
+
+test("the editor turns a picked option into a template and back", () => {
+  const before = { type: "custom:iphone-alarms-card", title: "It's \\ mine", devices: ["a"], show_disabled: false };
+  const form = editorForm(before);
+  assert.deepEqual(form.data.templates, []);
+  const picked = editorChange(before, { ...form.data, templates: ["title", "devices", "show_disabled", "show_automations"] });
+  assert.deepEqual(picked, {
+    type: "custom:iphone-alarms-card",
+    title: "{{ 'It\\'s \\\\ mine' }}",
+    devices: '{{ ["a"] }}',
+    show_disabled: "{{ false }}",
+    show_automations: "{{ true }}",
+  });
+  const templated = editorForm(picked);
+  assert.deepEqual(templated.data.templates, ["title", "devices", "show_disabled", "show_automations"]);
+  assert.deepEqual(
+    templated.schema.map((field) => Object.keys(field.selector)[0]),
+    ["template", "template", "template", "boolean", "template", "select"],
+  );
+  // Typing a new title template: "{" isn't a template yet, but stays one while it is ticked.
+  const typing = editorChange(picked, { ...templated.data, title: "{" }, templated.data.templates);
+  assert.equal(typing.title, "{");
+  const still = editorForm(typing, templated.data.templates);
+  assert.equal(still.schema[0].selector.template !== undefined, true);
+  assert.deepEqual(still.data.templates, templated.data.templates);
+  // Unpicked: back to the default; `templates` itself is never saved.
+  assert.deepEqual(editorChange(picked, { ...templated.data, templates: ["devices"] }), { type: "custom:iphone-alarms-card", devices: '{{ ["a"] }}' });
 });
 
 test("describeRepeat writes days like iOS", () => {

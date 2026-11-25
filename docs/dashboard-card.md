@@ -29,7 +29,7 @@ type: custom:iphone-alarms-card
 
 ## Options
 
-All of them can be set in the card editor.
+All of them can be set in the card editor, and each one can be a [template](#templates).
 
 | Option | Default | What it does |
 |---|---|---|
@@ -58,6 +58,31 @@ type: custom:iphone-alarms-card
 devices:
   - 7a8b9c0d1e2f # an alarm's device ID
   - 3f4e5d6c7b8a
+```
+
+## Templates
+
+Any option can be a [Jinja2 template](https://www.home-assistant.io/docs/configuration/templating/). The card follows it live, like a template sensor. The variable `user` is the name of the person who looks at the card.
+
+In the card editor, pick the options under **Settings from templates**. Each one picked turns into a template editor that starts from its current value. Unpick it to go back to the usual field and the option's default.
+
+A template must give the option's type:
+
+| Option | The template gives |
+|---|---|
+| `title` | Text. It counts as a template only with `{{` or `{%` in it. |
+| `devices` | A list of device IDs, such as `{{ ['1a2b3c4d5e6f'] }}`. |
+| `show_disabled`, `show_automations`, `show_last_events` | `true` or `false`, such as `{{ is_state('input_boolean.guests', 'off') }}`. `'on'` is text, not `true`. |
+
+A template that fails or gives the wrong type shows a warning on the card. That option then uses its default. Until every template gives its first answer, the card waits instead of showing the wrong alarms.
+
+Each person sees their own phone, and alarms that are off are hidden while guests stay over:
+
+```yaml
+type: custom:iphone-alarms-card
+title: "{{ user }}'s alarms"
+devices: "{{ {'Anna': ['1a2b3c4d5e6f'], 'John': ['9f8e7d6c5b4a']}.get(user, []) }}"
+show_disabled: "{{ is_state('input_boolean.guests', 'off') }}"
 ```
 
 ## Where the data comes from
