@@ -4,11 +4,14 @@
 
 const DOMAIN = "iphone_alarms_sync";
 const CARD = "iphone-alarms-card";
+const EDITOR = "iphone-alarms-card-editor";
 const PREVIEW_LIMIT = 5;
 const DAY_MS = 86400000;
 const WEEK = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
 // In the order the card shows them.
 const BOOLEANS = ["show_disabled", "show_last_events", "show_automations"];
+// Every option, in the editor's order. Each one can be a Jinja2 template.
+export const OPTIONS = ["title", "devices", ...BOOLEANS];
 // Entity and the text key of its event name.
 const ALARM_EVENTS = [
   ["last_event_goes_off_at", "went_off"],
@@ -76,6 +79,11 @@ const STRINGS = {
     no_match: "No alarms match this card's filters.",
     no_alarms: "No alarms yet. Run the Sync shortcut on your phone.",
     missing: (n) => (n === 1 ? "1 selected device no longer exists." : `${n} selected devices no longer exist.`),
+    templates: "Use a template for",
+    templates_helper: 'A ticked option gets a Jinja2 template field. The variable "user" is the name of the person viewing the card.',
+    // option: the setting's label; error: what Home Assistant said.
+    template_error: (option, error) => `The "${option}" template failed: ${error}`,
+    template_type: (option) => `The "${option}" template returns a value of the wrong type. See the card's documentation.`,
   },
   pl: {
     description: "Twoje budziki z iPhone'a, tak jak pokazuje je aplikacja Zegar.",
@@ -127,6 +135,10 @@ const STRINGS = {
     retry: "Spróbuj ponownie",
     no_phones: "Brak telefonów. Dodaj telefon w Ustawienia → Urządzenia oraz usługi → iPhone Alarms Sync.",
     no_match: "Żaden budzik nie pasuje do filtrów tej karty.",
+    templates: "Użyj szablonu dla",
+    templates_helper: "Zaznaczona opcja dostaje pole na szablon Jinja2. Zmienna „user” to imię osoby, która ogląda kartę.",
+    template_error: (option, error) => `Szablon „${option}” nie działa: ${error}`,
+    template_type: (option) => `Szablon „${option}” zwraca wartość złego typu. Zajrzyj do dokumentacji karty.`,
     no_alarms: "Brak budzików. Uruchom skrót Sync na telefonie.",
     missing: (n) =>
       ({
@@ -146,28 +158,82 @@ export function strings(language) {
 // The editor form gets no `hass`; Home Assistant puts the user's language on <html lang>.
 const editorStrings = () => strings(document.documentElement.lang);
 
-/** Check the card config and fill in the defaults. Throws on a wrong type. */
-export function validateConfig(config) {
+/** Whether an option's value is a Jinja2 template: any text for `devices` and the switches, text with {{ or {% for the title. */
+export function isTemplate(key, value) {
+  return typeof value === "string" && (key !== "title" || /\{[{%]/.test(value));
+}
+
+/** Check the card config and fill in the defaults. Throws on a wrong type. Templates pass unless `templates` is false. */
+export function validateConfig(config, templates = true) {
   if (!config || typeof config !== "object" || Array.isArray(config)) {
     throw new Error("Invalid configuration");
   }
-  if (config.title !== undefined && typeof config.title !== "string") {
+  const kept = (key) => templates && isTemplate(key, config[key]);
+  if (!kept("title") && config.title !== undefined && typeof config.title !== "string") {
     throw new Error("'title' must be text");
   }
-  const devices = config.devices ?? [];
-  if (!Array.isArray(devices) || devices.some((id) => typeof id !== "string")) {
+  const devices = kept("devices") ? config.devices : (config.devices ?? []);
+  if (!kept("devices") && (!Array.isArray(devices) || devices.some((id) => typeof id !== "string"))) {
     throw new Error("'devices' must be a list of device IDs");
   }
   for (const key of BOOLEANS) {
-    if (config[key] !== undefined && typeof config[key] !== "boolean") {
+    if (!kept(key) && config[key] !== undefined && typeof config[key] !== "boolean") {
       throw new Error(`'${key}' must be true or false`);
     }
   }
   return {
     ...config,
     devices,
-    ...Object.fromEntries(BOOLEANS.map((key) => [key, config[key] ?? true])),
+    ...Object.fromEntries(BOOLEANS.map((key) => [key, kept(key) ? config[key] : (config[key] ?? true)])),
   };
+}
+
+const TRUE = ["1", "true", "yes", "on", "enable"];
+const FALSE = ["0", "false", "no", "off", "disable"];
+
+/** A template's result read the way Home Assistant reads its own config (cv.boolean, cv.ensure_list). */
+function coerce(key, value) {
+  if (value === undefined || value === null) return undefined;
+  // A title like "2026" comes back as a number; an empty one means no title.
+  if (key === "title") return value === "" ? undefined : String(value);
+  // An empty text is what `phones[user]` gives for someone not in the map: a wrong type, so no alarm shows.
+  if (key === "devices") return typeof value === "string" && value ? [value] : value;
+  if (typeof value === "number") return value !== 0;
+  const text = typeof value === "string" ? value.trim().toLowerCase() : value;
+  return TRUE.includes(text) ? true : FALSE.includes(text) ? false : value;
+}
+
+/**
+ * The config with each template's result in its place, and the options whose result is wrong.
+ * `results` maps an option to `{ result }` or `{ error }`. An option without a usable result takes its default,
+ * except `devices`, which shows no alarm: a "just my phone" template that fails must not show everyone's.
+ * Each error is [option, Home Assistant's message], or [option, null] for a result of the wrong type.
+ */
+export function resolveConfig(config, results) {
+  const resolved = { ...config };
+  const errors = [];
+  for (const key of OPTIONS) {
+    if (!isTemplate(key, config[key])) continue;
+    const answer = results[key] ?? {};
+    let { error } = answer;
+    let value = coerce(key, answer.result);
+    if (error === undefined) {
+      try {
+        validateConfig({ [key]: value }, false);
+      } catch {
+        // A wrong type: the card says so in the user's language.
+        error = null;
+      }
+    }
+    if (error !== undefined) {
+      errors.push([key, error]);
+      value = undefined;
+    }
+    resolved[key] = value;
+  }
+  const done = validateConfig(resolved, false);
+  if (errors.some(([key]) => key === "devices")) done.devices = null;
+  return { config: done, errors };
 }
 
 /** The repeat text iOS shows under an alarm: "Every day", "Weekdays", "Tue and Wed". */
@@ -307,8 +373,9 @@ export function selectAlarms(index, config, states, t = strings()) {
     entry.whole ||= whole;
     if (alarmId) entry.alarmIds.add(alarmId);
   };
-  if (!config.devices.length) for (const id of index.phones.keys()) pick(id, true);
-  for (const id of config.devices) {
+  // null: a failed `devices` template, which shows nothing.
+  if (config.devices?.length === 0) for (const id of index.phones.keys()) pick(id, true);
+  for (const id of config.devices ?? []) {
     const alarm = index.alarms.get(id);
     if (index.phones.has(id)) pick(id, true);
     else if (alarm && index.phones.has(alarm.phoneId)) pick(alarm.phoneId, false, id);
@@ -431,17 +498,97 @@ button:focus-visible { outline: 2px solid var(--primary-color); outline-offset: 
 @media (prefers-reduced-motion: reduce) { .status .badge path { transition: none; } }
 `;
 
+const FIELDS = {
+  title: { selector: { text: {} } },
+  devices: { selector: { device: { multiple: true, filter: { integration: DOMAIN } } } },
+  ...Object.fromEntries(BOOLEANS.map((name) => [name, { default: true, selector: { boolean: {} } }])),
+};
+
+// A title being typed can lose its {{ for a moment: `picked`, what the editor last had ticked, keeps it a template.
+const templated = (config, picked) => OPTIONS.filter((name) => picked.includes(name) || isTemplate(name, config[name]));
+
+/** The editor's ha-form for a config: an option that is a template gets a Jinja2 editor in place of its usual field. */
+export function editorForm(config, picked = []) {
+  const t = editorStrings();
+  const templates = templated(config, picked);
+  return {
+    schema: [
+      ...OPTIONS.map((name) => (templates.includes(name) ? { name, selector: { template: {} } } : { name, ...FIELDS[name] })),
+      { name: "templates", selector: { select: { multiple: true, options: OPTIONS.map((value) => ({ value, label: t[value] })) } } },
+    ],
+    // `templates` isn't saved: which options are templates is read from them.
+    data: { ...config, templates },
+    computeLabel: (schema) => editorStrings()[schema.name],
+    computeHelper: (schema) => editorStrings()[`${schema.name}_helper`],
+  };
+}
+
+/** The config after the editor's form changed to `value`: a newly picked option becomes a template of what it was, an unpicked one its default. */
+export function editorChange(config, value, picked = []) {
+  const { templates = [], ...next } = value;
+  const before = templated(config, picked);
+  for (const key of OPTIONS) {
+    const was = before.includes(key);
+    if (templates.includes(key) && !was) next[key] = toTemplate(key, config[key]);
+    else if (!templates.includes(key) && was) delete next[key];
+  }
+  return next;
+}
+
+function toTemplate(key, value) {
+  if (key === "title") return `{{ '${(value ?? "").replace(/\\/g, "\\\\").replace(/'/g, "\\'")}' }}`;
+  // A JSON list of text is also a Jinja2 list.
+  if (key === "devices") return `{{ ${JSON.stringify(value ?? [])} }}`;
+  return `{{ ${value ?? true} }}`;
+}
+
+// shortcut: Home Assistant defines ha-form only once one of its own forms has loaded; a tile card's editor loads it.
+async function loadForm() {
+  if (customElements.get("ha-form")) return;
+  const helpers = await window.loadCardHelpers?.();
+  const tile = await helpers?.createCardElement({ type: "tile", entity: "sun.sun" });
+  await tile?.constructor.getConfigElement?.();
+  await customElements.whenDefined("ha-form");
+}
+
+class IPhoneAlarmsCardEditor extends HTMLElement {
+  setConfig(config) {
+    // A config from elsewhere, such as the YAML editor, says by itself which options are templates.
+    if (JSON.stringify(config) !== JSON.stringify(this._sent)) this._picked = [];
+    this._config = config;
+    this._render();
+  }
+
+  set hass(hass) {
+    this._hass = hass;
+    if (this._form) this._form.hass = hass;
+  }
+
+  async connectedCallback() {
+    await loadForm();
+    this._render();
+  }
+
+  _render() {
+    if (!this._config || !customElements.get("ha-form")) return;
+    if (!this._form) {
+      this._form = document.createElement("ha-form");
+      this._form.addEventListener("value-changed", (ev) => {
+        ev.stopPropagation();
+        const config = editorChange(this._config, ev.detail.value, this._picked);
+        this._picked = ev.detail.value.templates ?? [];
+        this._sent = config;
+        this.dispatchEvent(new CustomEvent("config-changed", { detail: { config }, bubbles: true, composed: true }));
+      });
+      this.appendChild(this._form);
+    }
+    Object.assign(this._form, { hass: this._hass, ...editorForm(this._config, this._picked) });
+  }
+}
+
 class IPhoneAlarmsCard extends HTMLElement {
-  static getConfigForm() {
-    return {
-      schema: [
-        { name: "title", selector: { text: {} } },
-        { name: "devices", selector: { device: { multiple: true, filter: { integration: DOMAIN } } } },
-        ...BOOLEANS.map((name) => ({ name, default: true, selector: { boolean: {} } })),
-      ],
-      computeLabel: (schema) => editorStrings()[schema.name],
-      computeHelper: (schema) => editorStrings()[`${schema.name}_helper`],
-    };
+  static getConfigElement() {
+    return document.createElement(EDITOR);
   }
 
   constructor() {
@@ -455,11 +602,22 @@ class IPhoneAlarmsCard extends HTMLElement {
     this._related = null;
     this._request = 0;
     this._seen = [];
+    this._templates = "";
+    this._results = {};
+    this._subscriptions = null;
+    this._generation = 0;
     this.shadowRoot.addEventListener("click", (ev) => this._onClick(ev));
   }
 
   setConfig(config) {
     this._config = validateConfig(config);
+    // The editor's preview sets the config on every key: subscribe again only when a template changed.
+    const templates = JSON.stringify(this._templateList());
+    if (templates !== this._templates) {
+      this._unsubscribe();
+      this._templates = templates;
+      this._results = {};
+    }
     // New options may need data the open row never loaded, so start closed.
     this._expanded = null;
     this._related = null;
@@ -477,8 +635,52 @@ class IPhoneAlarmsCard extends HTMLElement {
     return this._hass;
   }
 
+  connectedCallback() {
+    this._update();
+  }
+
+  // Dashboards detach and reattach cards when they rebuild columns: the results stay until new ones come.
+  disconnectedCallback() {
+    this._unsubscribe();
+  }
+
+  /** The options that are templates, as [key, template]. An empty template means the option's default. */
+  _templateList() {
+    return OPTIONS.filter((key) => isTemplate(key, this._config[key]) && this._config[key].trim()).map((key) => [key, this._config[key]]);
+  }
+
+  _subscribe() {
+    const generation = ++this._generation;
+    const set = (key, value) => {
+      if (generation !== this._generation) return;
+      this._results = { ...this._results, [key]: value };
+      this._update();
+    };
+    this._subscriptions = this._templateList().map(([key, template]) =>
+      this._hass.connection
+        .subscribeMessage(
+          (msg) => {
+            // Warnings, such as an unknown entity, come with a result after them.
+            if (msg.error === undefined) set(key, { result: msg.result });
+            else if (msg.level === "ERROR") set(key, { error: msg.error });
+          },
+          { type: "render_template", template, variables: { user: this._hass.user?.name }, report_errors: true },
+        )
+        .catch((err) => {
+          set(key, { error: err?.message ?? String(err) });
+          return null;
+        }),
+    );
+  }
+
+  _unsubscribe() {
+    this._generation += 1;
+    for (const subscription of this._subscriptions ?? []) subscription.then((unsubscribe) => unsubscribe?.()).catch(() => {});
+    this._subscriptions = null;
+  }
+
   getCardSize() {
-    const row = this._config?.show_automations ? 1 : 0;
+    const row = this._options?.show_automations ? 1 : 0;
     const alarms = this._view?.groups.reduce((sum, group) => sum + group.alarms.length + 1 + row, 0) ?? 3;
     return 1 + alarms;
   }
@@ -490,6 +692,20 @@ class IPhoneAlarmsCard extends HTMLElement {
   _update() {
     const hass = this._hass;
     if (!hass || !this._config) return;
+    const templates = this._templateList();
+    if (templates.length && this.isConnected && !this._subscriptions) this._subscribe();
+    // Before every template's first answer the card would show the wrong alarms for a moment.
+    if (templates.some(([key]) => !this._results[key])) return;
+    if (this._config !== this._resolvedConfig || this._results !== this._resolvedResults) {
+      this._resolvedConfig = this._config;
+      this._resolvedResults = this._results;
+      ({ config: this._options, errors: this._optionErrors } = resolveConfig(this._config, this._results));
+      const logged = JSON.stringify(this._optionErrors);
+      // Other templates answer again (a title with now() every minute): log each error once.
+      if (logged !== this._logged) for (const [key, error] of this._optionErrors) console.warn(`iphone-alarms-card: the ${key} template`, error ?? "returns a value of the wrong type");
+      this._logged = logged;
+      this._seen = [];
+    }
     if (hass.entities !== this._entities || hass.devices !== this._devices) {
       this._entities = hass.entities;
       this._devices = hass.devices;
@@ -599,7 +815,7 @@ class IPhoneAlarmsCard extends HTMLElement {
   }
 
   _render(ctx) {
-    const { _config: config, _hass: hass } = this;
+    const { _options: config, _hass: hass } = this;
     const { t } = ctx;
     this._view = selectAlarms(this._index, config, hass.states, t);
     const { groups, missing } = this._view;
@@ -643,10 +859,13 @@ class IPhoneAlarmsCard extends HTMLElement {
     if (!this._index.phones.size) {
       body = `<div class="empty">${escape(t.no_phones)}</div>`;
     } else if (!shown) {
-      const empty = config.devices.length || groups.some((group) => group.alarms.length) ? t.no_match : t.no_alarms;
+      const empty = config.devices?.length !== 0 || groups.some((group) => group.alarms.length) ? t.no_match : t.no_alarms;
       body += `<div class="empty">${escape(empty)}</div>`;
     }
-    const warning = missing ? `<div class="warning">${escape(t.missing(missing))}</div>` : "";
+    // Only an admin can fix the dashboard; everyone else gets the fallback without the noise.
+    const errors = hass.user?.is_admin ? this._optionErrors : [];
+    const warnings = [...errors.map(([key, error]) => (error === null ? t.template_type(t[key]) : t.template_error(t[key], error))), ...(missing ? [t.missing(missing)] : [])];
+    const warning = warnings.map((text) => `<div class="warning">${escape(text)}</div>`).join("");
     const title = config.title ? `<h1 class="title">${escape(config.title)}</h1>` : "";
     const active = this.shadowRoot.activeElement;
     const focused = active?.dataset;
@@ -683,7 +902,7 @@ class IPhoneAlarmsCard extends HTMLElement {
       [t.snooze, alarm.allowsSnooze ? t.allowed : t.not_allowed],
       [t.next_ring, formatEventTime(states[alarm.entities.next_occurrence_datetime]?.state, ctx, true)],
     ];
-    if (this._config.show_last_events) {
+    if (this._options.show_last_events) {
       const last = ALARM_EVENTS.map(([entityKey, label]) => [t[label], formatEventTime(states[alarm.entities[entityKey]]?.state, ctx)]);
       info.push(...(last.some(([, when]) => when) ? last : [[t.last_events, t.none_yet]]));
     }
@@ -750,6 +969,7 @@ class IPhoneAlarmsCard extends HTMLElement {
   }
 }
 
+if (!customElements.get(EDITOR)) customElements.define(EDITOR, IPhoneAlarmsCardEditor);
 if (!customElements.get(CARD)) {
   customElements.define(CARD, IPhoneAlarmsCard);
   window.customCards = window.customCards || [];

@@ -29,7 +29,7 @@ type: custom:iphone-alarms-card
 
 ## Options
 
-All of them can be set in the card editor.
+All of them can be set in the card editor, and each one can be a [template](#templates).
 
 | Option | Default | What it does |
 |---|---|---|
@@ -58,6 +58,37 @@ type: custom:iphone-alarms-card
 devices:
   - 7a8b9c0d1e2f # an alarm's device ID
   - 3f4e5d6c7b8a
+```
+
+## Templates
+
+Any option can be a [Jinja2 template](https://www.home-assistant.io/docs/configuration/templating/). The card follows it live, like a template sensor. The variable `user` is the name of the person who looks at the card.
+
+In the card editor, tick the options under **Use a template for**. Each ticked option gets a template field that starts from its current value. Untick it to go back to the usual field and the option's default.
+
+The card reads a template's answer the way Home Assistant reads its own configuration:
+
+| Option | The template gives |
+|---|---|
+| `title` | Text. It counts as a template only with `{{` or `{%` in it. |
+| `devices` | A list of device IDs, such as `{{ ['1a2b3c4d5e6f'] }}`, or one ID. An empty list, `{{ [] }}`, means every alarm. An empty text, such as `phones[user]` for someone not in `phones`, shows no alarm. |
+| `show_disabled`, `show_automations`, `show_last_events` | `true` or `false`. `on`, `yes`, `1` and their opposites work too, so `{{ states('input_boolean.guests') }}` is fine. |
+
+When a template fails or gives something else, such as `away` for a switch:
+
+- The option uses its default. A failed `devices` template shows no alarm instead, so a card meant for one person never shows everyone's alarms.
+- Admins see a warning on the card that says why. Everyone else sees the card without it.
+- The browser console gets the error too.
+
+Until every template gives its first answer, the card waits instead of showing the wrong alarms.
+
+Each person sees their own phone, and alarms that are off are hidden while guests stay over:
+
+```yaml
+type: custom:iphone-alarms-card
+title: "{{ user }}'s alarms"
+devices: "{{ {'Anna': ['1a2b3c4d5e6f'], 'John': ['9f8e7d6c5b4a']}.get(user, []) }}"
+show_disabled: "{{ is_state('input_boolean.guests', 'off') }}"
 ```
 
 ## Where the data comes from

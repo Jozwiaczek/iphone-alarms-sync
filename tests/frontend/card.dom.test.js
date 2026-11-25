@@ -2,7 +2,7 @@
 import assert from "node:assert/strict";
 import { afterEach, beforeEach, mock, test } from "node:test";
 
-import { flush, mount } from "./dom.js";
+import { card, flush, mount } from "./dom.js";
 import { makeHass, NOW, PHONE, SECOND_PHONE, withState } from "./fixtures.js";
 
 const [FIRST, SECOND, TEST, GYM] = PHONE.alarms.map((a) => a.id);
@@ -341,9 +341,95 @@ test("empty states and a deleted device", () => {
   assert.equal(text($(filtered, ".warning")), "1 selected device no longer exists.");
 });
 
+test("templates set the options and change them live", async () => {
+  const hass = makeHass();
+  const guests = "{{ is_state('input_boolean.guests', 'off') }}";
+  const el = mount({ devices: "{{ device_list }}", show_disabled: guests }, hass);
+  await flush();
+  const devices = hass.templates.get("{{ device_list }}");
+  const disabled = hass.templates.get(guests);
+  assert.deepEqual(devices.msg, { type: "render_template", template: "{{ device_list }}", variables: { user: "Anna" }, report_errors: true });
+  // Nothing until every template answered: a moment of every alarm would be wrong.
+  devices.send({ result: [FIRST, GYM] });
+  assert.equal($$(el, ALARM).length, 0);
+  disabled.send({ result: true });
+  assert.equal($$(el, `${ALARM} .time`).length, 2);
+  disabled.send({ result: false });
+  assert.equal($$(el, `${ALARM} .time`).length, 1);
+  // Read like Home Assistant: a switch's state works as it is.
+  disabled.send({ result: "on" });
+  assert.equal($$(el, `${ALARM} .time`).length, 2);
+  // A warning comes with a result after it.
+  devices.send({ error: "'x' is undefined", level: "WARNING" });
+  assert.equal($$(el, ".warning").length, 0);
+  // A failed `devices` shows no alarm rather than everyone's, and tells the admin why.
+  mock.method(console, "warn", () => {});
+  devices.send({ error: "UndefinedError: 'device_list' is undefined", level: "ERROR" });
+  assert.equal(text($(el, ".warning")), `The "Phones or alarms" template failed: UndefinedError: 'device_list' is undefined`);
+  assert.equal($$(el, ALARM).length, 0);
+  assert.equal(text($(el, ".empty")), "No alarms match this card's filters.");
+  disabled.send({ result: "banana" });
+  assert.equal(text($$(el, ".warning")[1]), `The "Show alarms that are off" template returns a value of the wrong type. See the card's documentation.`);
+  assert.equal(console.warn.mock.callCount(), 3);
+});
+
+test("only an admin sees why a template failed", async () => {
+  const hass = makeHass();
+  hass.user = { ...hass.user, is_admin: false };
+  mock.method(console, "warn", () => {});
+  const el = mount({ show_disabled: "{{ x }}" }, hass);
+  await flush();
+  hass.templates.get("{{ x }}").send({ error: "UndefinedError: 'x' is undefined", level: "ERROR" });
+  ok(!$(el, ".warning"));
+  // The option's default: alarms that are off show.
+  assert.equal($$(el, `${ALARM} .time`).length, 4);
+  assert.equal(console.warn.mock.callCount(), 1);
+});
+
+test("a template that Home Assistant refuses says so", async () => {
+  const hass = makeHass();
+  hass.connection.subscribeMessage = async () => {
+    throw { code: "template_error", message: "TemplateSyntaxError: unexpected '}'" };
+  };
+  const el = mount({ title: "{{ x }" }, hass);
+  await flush();
+  assert.equal(text($(el, ".warning")), `The "Title" template failed: TemplateSyntaxError: unexpected '}'`);
+  ok(!$(el, ".title"));
+});
+
+test("subscriptions end with the card and only change with their template", async () => {
+  const hass = makeHass();
+  const el = mount({ title: "{{ user }}" }, hass);
+  await flush();
+  const first = hass.templates.get("{{ user }}");
+  first.send({ result: "Anna" });
+  assert.equal(text($(el, ".title")), "Anna");
+  // The editor's preview sets the config on every key.
+  el.setConfig({ title: "{{ user }}", show_disabled: false });
+  assert.equal(text($(el, ".title")), "Anna");
+  el.setConfig({ title: "{{ user ~ '!' }}" });
+  await flush();
+  ok(first.closed);
+  // The old card stays until the new template answers; the old one's late answer is dropped.
+  first.send({ result: "late" });
+  assert.equal(text($(el, ".title")), "Anna");
+  const second = hass.templates.get("{{ user ~ '!' }}");
+  second.send({ result: "Anna!" });
+  assert.equal(text($(el, ".title")), "Anna!");
+  document.body.removeChild(el);
+  await flush();
+  ok(second.closed);
+  // Back on the dashboard: the last title shows until the new subscription answers.
+  hass.templates.clear();
+  document.body.appendChild(el);
+  await flush();
+  assert.equal(text($(el, ".title")), "Anna!");
+  ok(hass.templates.get("{{ user ~ '!' }}") !== second);
+});
+
 test("a bad config is refused", () => {
   const el = document.createElement("iphone-alarms-card");
-  assert.throws(() => el.setConfig({ devices: "phone" }), /devices/);
+  assert.throws(() => el.setConfig({ devices: 5 }), /devices/);
 });
 
 test("12-hour clocks", () => {
@@ -366,10 +452,11 @@ test("the documented styling hooks exist", async () => {
 
 test("the editor form and the card picker", () => {
   const Card = customElements.get("iphone-alarms-card");
-  const form = Card.getConfigForm();
+  ok(Card.getConfigElement() instanceof HTMLElement);
+  const form = card.editorForm({});
   assert.deepEqual(
     form.schema.map((s) => s.name),
-    ["title", "devices", "show_disabled", "show_last_events", "show_automations"],
+    ["title", "devices", "show_disabled", "show_last_events", "show_automations", "templates"],
   );
   assert.equal(form.schema[1].selector.device.filter.integration, "iphone_alarms_sync");
   for (const field of form.schema) ok(form.computeLabel(field) && form.computeHelper(field), field.name);
@@ -387,7 +474,7 @@ const screen = (el) =>
 // The editor's labels and helpers; Home Assistant puts the user's language on <html lang>.
 const editor = (lang) => {
   document.documentElement.lang = lang;
-  const form = customElements.get("iphone-alarms-card").getConfigForm();
+  const form = card.editorForm({});
   const fields = form.schema.map((field) => [form.computeLabel(field), form.computeHelper(field)]);
   document.documentElement.lang = "";
   return fields;

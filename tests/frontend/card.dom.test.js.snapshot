@@ -72,6 +72,10 @@ exports[`Polish: the card and its editor 2`] = `
   [
     "Pokaż automatyzacje",
     "Wiersz nad budzikami z automatyzacjami i skryptami telefonu oraz budzików."
+  ],
+  [
+    "Użyj szablonu dla",
+    "Zaznaczona opcja dostaje pole na szablon Jinja2. Zmienna „user” to imię osoby, która ogląda kartę."
   ]
 ]
 `;
@@ -150,6 +154,10 @@ exports[`a language the card doesn't know falls back to English 2`] = `
   [
     "Show automations",
     "A row above the alarms with automations and scripts of the phone and its alarms."
+  ],
+  [
+    "Use a template for",
+    "A ticked option gets a Jinja2 template field. The variable \\"user\\" is the name of the person viewing the card."
   ]
 ]
 `;
