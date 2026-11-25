@@ -367,7 +367,8 @@ const STYLE = `
 ha-card { overflow: hidden; container-type: inline-size; }
 .content { padding-block: 4px 12px; }
 .title { margin: 0; padding: 16px 16px 0; font-size: 1.5rem; font-weight: 700; line-height: 1.2; color: var(--primary-text-color); }
-.phone { padding: 16px 16px 0; font-size: 0.8125rem; font-weight: 600; letter-spacing: 0.02em; text-transform: uppercase; color: var(--secondary-text-color); }
+/* The phone's name leads its section, above its Automations row. */
+.phone { padding: 20px 16px 2px; font-size: 1.125rem; font-weight: 600; line-height: 1.3; overflow-wrap: anywhere; color: var(--primary-text-color); }
 .section { padding-inline: 16px; }
 .item { border-bottom: 1px solid var(--divider-color); }
 .section:last-child .item:last-child { border-bottom: 0; }
@@ -379,8 +380,10 @@ button:focus-visible { outline: 2px solid var(--primary-color); outline-offset: 
 .subtitle { display: flex; align-items: center; gap: 6px; margin-top: 4px; overflow: hidden; font-size: 0.9375rem; line-height: 1.35; white-space: nowrap; flex-wrap: wrap; color: var(--primary-text-color); }
 .subtitle span { overflow: hidden; text-overflow: ellipsis; }
 .subtitle .last { flex-basis: 100%; font-size: 0.8125rem; color: var(--secondary-text-color); }
-/* One line, not an alarm: its groups are named inside. */
-.phone-row .time { font-size: 1rem; font-weight: 500; letter-spacing: 0; }
+/* One line, quieter than the phone's name and the alarms: a way in, not a heading. */
+.phone-row .row { padding: 8px 0; }
+.phone-row .time { font-size: 0.9375rem; font-weight: 400; letter-spacing: 0; color: var(--secondary-text-color); }
+.phone-row .status { width: 28px; height: 28px; margin-inline-end: 4px; }
 .phone-row .subtitle { display: none; }
 .off .main { opacity: var(--iphone-alarms-disabled-opacity, 0.45); }
 .status { flex: none; width: 36px; height: 36px; overflow: visible; fill: none; stroke: var(--secondary-text-color); stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }

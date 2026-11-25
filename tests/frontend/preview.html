@@ -86,6 +86,8 @@
         loading: { expand: PHONE.id, hass: { callWS: () => new Promise(() => {}) } },
         error: { expand: PHONE.id, hass: { callWS: async () => Promise.reject(new Error("x")) } },
         "two-phones": { config: { title: "Alarms" }, hass: { phones: [PHONE, SECOND_PHONE] } },
+        // Each phone has its own row; one open at a time.
+        "two-phones-open": { config: { title: "Alarms" }, expand: PHONE.id, hass: { phones: [PHONE, SECOND_PHONE] } },
         "picked-alarms": { config: { devices: ["1a2b3c4d5e6f7a8b", "3c4d5e6f7a8b9c0d", "deleted_alarm"] } },
         "no-disabled": { config: { show_disabled: false } },
         "no-alarms": { hass: { phones: [{ ...SECOND_PHONE, alarms: [] }] } },
