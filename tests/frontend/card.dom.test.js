@@ -356,15 +356,34 @@ test("templates set the options and change them live", async () => {
   assert.equal($$(el, `${ALARM} .time`).length, 2);
   disabled.send({ result: false });
   assert.equal($$(el, `${ALARM} .time`).length, 1);
-  // A warning comes with a result after it; an error falls back to the default and says so.
+  // Read like Home Assistant: a switch's state works as it is.
+  disabled.send({ result: "on" });
+  assert.equal($$(el, `${ALARM} .time`).length, 2);
+  // A warning comes with a result after it.
   devices.send({ error: "'x' is undefined", level: "WARNING" });
   assert.equal($$(el, ".warning").length, 0);
+  // A failed `devices` shows no alarm rather than everyone's, and tells the admin why.
+  mock.method(console, "warn", () => {});
   devices.send({ error: "UndefinedError: 'device_list' is undefined", level: "ERROR" });
   assert.equal(text($(el, ".warning")), `The "Phones or alarms" template failed: UndefinedError: 'device_list' is undefined`);
-  assert.equal($$(el, `${ALARM} .time`).length, 3);
-  // "on" is text, not true.
-  disabled.send({ result: "on" });
+  assert.equal($$(el, ALARM).length, 0);
+  assert.equal(text($(el, ".empty")), "No alarms match this card's filters.");
+  disabled.send({ result: "banana" });
   assert.equal(text($$(el, ".warning")[1]), `The "Show alarms that are off" template returns a value of the wrong type. See the card's documentation.`);
+  assert.equal(console.warn.mock.callCount(), 3);
+});
+
+test("only an admin sees why a template failed", async () => {
+  const hass = makeHass();
+  hass.user = { ...hass.user, is_admin: false };
+  mock.method(console, "warn", () => {});
+  const el = mount({ show_disabled: "{{ x }}" }, hass);
+  await flush();
+  hass.templates.get("{{ x }}").send({ error: "UndefinedError: 'x' is undefined", level: "ERROR" });
+  ok(!$(el, ".warning"));
+  // The option's default: alarms that are off show.
+  assert.equal($$(el, `${ALARM} .time`).length, 4);
+  assert.equal(console.warn.mock.callCount(), 1);
 });
 
 test("a template that Home Assistant refuses says so", async () => {

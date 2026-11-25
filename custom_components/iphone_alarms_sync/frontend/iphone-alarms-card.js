@@ -188,9 +188,25 @@ export function validateConfig(config, templates = true) {
   };
 }
 
+const TRUE = ["1", "true", "yes", "on", "enable"];
+const FALSE = ["0", "false", "no", "off", "disable"];
+
+/** A template's result read the way Home Assistant reads its own config (cv.boolean, cv.ensure_list). */
+function coerce(key, value) {
+  if (value === undefined || value === null) return undefined;
+  // A title like "2026" comes back as a number; an empty one means no title.
+  if (key === "title") return value === "" ? undefined : String(value);
+  // An empty text is what `phones[user]` gives for someone not in the map: a wrong type, so no alarm shows.
+  if (key === "devices") return typeof value === "string" && value ? [value] : value;
+  if (typeof value === "number") return value !== 0;
+  const text = typeof value === "string" ? value.trim().toLowerCase() : value;
+  return TRUE.includes(text) ? true : FALSE.includes(text) ? false : value;
+}
+
 /**
  * The config with each template's result in its place, and the options whose result is wrong.
- * `results` maps an option to `{ result }` or `{ error }`. An option without a usable result takes its default.
+ * `results` maps an option to `{ result }` or `{ error }`. An option without a usable result takes its default,
+ * except `devices`, which shows no alarm: a "just my phone" template that fails must not show everyone's.
  * Each error is [option, Home Assistant's message], or [option, null] for a result of the wrong type.
  */
 export function resolveConfig(config, results) {
@@ -198,10 +214,9 @@ export function resolveConfig(config, results) {
   const errors = [];
   for (const key of OPTIONS) {
     if (!isTemplate(key, config[key])) continue;
-    let { result: value, error } = results[key] ?? {};
-    value ??= undefined;
-    // A title like "2026" comes back as a number; an empty one means no title.
-    if (key === "title") value = value === undefined || value === "" ? undefined : String(value);
+    const answer = results[key] ?? {};
+    let { error } = answer;
+    let value = coerce(key, answer.result);
     if (error === undefined) {
       try {
         validateConfig({ [key]: value }, false);
@@ -216,7 +231,9 @@ export function resolveConfig(config, results) {
     }
     resolved[key] = value;
   }
-  return { config: validateConfig(resolved, false), errors };
+  const done = validateConfig(resolved, false);
+  if (errors.some(([key]) => key === "devices")) done.devices = null;
+  return { config: done, errors };
 }
 
 /** The repeat text iOS shows under an alarm: "Every day", "Weekdays", "Tue and Wed". */
@@ -356,8 +373,9 @@ export function selectAlarms(index, config, states, t = strings()) {
     entry.whole ||= whole;
     if (alarmId) entry.alarmIds.add(alarmId);
   };
-  if (!config.devices.length) for (const id of index.phones.keys()) pick(id, true);
-  for (const id of config.devices) {
+  // null: a failed `devices` template, which shows nothing.
+  if (config.devices?.length === 0) for (const id of index.phones.keys()) pick(id, true);
+  for (const id of config.devices ?? []) {
     const alarm = index.alarms.get(id);
     if (index.phones.has(id)) pick(id, true);
     else if (alarm && index.phones.has(alarm.phoneId)) pick(alarm.phoneId, false, id);
@@ -682,6 +700,10 @@ class IPhoneAlarmsCard extends HTMLElement {
       this._resolvedConfig = this._config;
       this._resolvedResults = this._results;
       ({ config: this._options, errors: this._optionErrors } = resolveConfig(this._config, this._results));
+      const logged = JSON.stringify(this._optionErrors);
+      // Other templates answer again (a title with now() every minute): log each error once.
+      if (logged !== this._logged) for (const [key, error] of this._optionErrors) console.warn(`iphone-alarms-card: the ${key} template`, error ?? "returns a value of the wrong type");
+      this._logged = logged;
       this._seen = [];
     }
     if (hass.entities !== this._entities || hass.devices !== this._devices) {
@@ -837,10 +859,12 @@ class IPhoneAlarmsCard extends HTMLElement {
     if (!this._index.phones.size) {
       body = `<div class="empty">${escape(t.no_phones)}</div>`;
     } else if (!shown) {
-      const empty = config.devices.length || groups.some((group) => group.alarms.length) ? t.no_match : t.no_alarms;
+      const empty = config.devices?.length !== 0 || groups.some((group) => group.alarms.length) ? t.no_match : t.no_alarms;
       body += `<div class="empty">${escape(empty)}</div>`;
     }
-    const warnings = [...this._optionErrors.map(([key, error]) => (error === null ? t.template_type(t[key]) : t.template_error(t[key], error))), ...(missing ? [t.missing(missing)] : [])];
+    // Only an admin can fix the dashboard; everyone else gets the fallback without the noise.
+    const errors = hass.user?.is_admin ? this._optionErrors : [];
+    const warnings = [...errors.map(([key, error]) => (error === null ? t.template_type(t[key]) : t.template_error(t[key], error))), ...(missing ? [t.missing(missing)] : [])];
     const warning = warnings.map((text) => `<div class="warning">${escape(text)}</div>`).join("");
     const title = config.title ? `<h1 class="title">${escape(config.title)}</h1>` : "";
     const active = this.shadowRoot.activeElement;

@@ -66,15 +66,21 @@ Any option can be a [Jinja2 template](https://www.home-assistant.io/docs/configu
 
 In the card editor, tick the options under **Use a template for**. Each ticked option gets a template field that starts from its current value. Untick it to go back to the usual field and the option's default.
 
-A template must give the option's type:
+The card reads a template's answer the way Home Assistant reads its own configuration:
 
 | Option | The template gives |
 |---|---|
 | `title` | Text. It counts as a template only with `{{` or `{%` in it. |
-| `devices` | A list of device IDs, such as `{{ ['1a2b3c4d5e6f'] }}`. |
-| `show_disabled`, `show_automations`, `show_last_events` | `true` or `false`, such as `{{ is_state('input_boolean.guests', 'off') }}`. `'on'` is text, not `true`. |
+| `devices` | A list of device IDs, such as `{{ ['1a2b3c4d5e6f'] }}`, or one ID. An empty list, `{{ [] }}`, means every alarm. An empty text, such as `phones[user]` for someone not in `phones`, shows no alarm. |
+| `show_disabled`, `show_automations`, `show_last_events` | `true` or `false`. `on`, `yes`, `1` and their opposites work too, so `{{ states('input_boolean.guests') }}` is fine. |
 
-A template that fails or gives the wrong type shows a warning on the card. That option then uses its default. Until every template gives its first answer, the card waits instead of showing the wrong alarms.
+When a template fails or gives something else, such as `away` for a switch:
+
+- The option uses its default. A failed `devices` template shows no alarm instead, so a card meant for one person never shows everyone's alarms.
+- Admins see a warning on the card that says why. Everyone else sees the card without it.
+- The browser console gets the error too.
+
+Until every template gives its first answer, the card waits instead of showing the wrong alarms.
 
 Each person sees their own phone, and alarms that are off are hidden while guests stay over:
 

@@ -44,7 +44,7 @@ test("resolveConfig puts results in place and reports wrong ones", () => {
   const { config: done, errors } = resolveConfig(raw, {
     title: { result: 2026 },
     devices: { result: ["a"] },
-    show_disabled: { result: "on" },
+    show_disabled: { result: "banana" },
     show_automations: { error: "UndefinedError: z" },
   });
   assert.equal(done.title, "2026");
@@ -57,6 +57,21 @@ test("resolveConfig puts results in place and reports wrong ones", () => {
     ["show_automations", "UndefinedError: z"],
   ]);
   assert.equal(resolveConfig(validateConfig({ title: "{{ '' }}" }), { title: { result: "" } }).config.title, undefined);
+  // A failed `devices` shows no alarm, never everyone's.
+  assert.equal(resolveConfig(raw, { devices: { error: "x" } }).config.devices, null);
+});
+
+test("results are read the way Home Assistant reads its config", () => {
+  const raw = validateConfig({ devices: "{{ d }}", show_disabled: "{{ s }}" });
+  const read = (devices, show) => resolveConfig(raw, { devices: { result: devices }, show_disabled: { result: show } });
+  for (const yes of ["on", "True", " yes ", "1", "enable", 1]) assert.equal(read([], yes).config.show_disabled, true, String(yes));
+  for (const no of ["off", "FALSE", "no", "0", "disable", 0]) assert.equal(read([], no).config.show_disabled, false, String(no));
+  // One ID is a list of one; an empty list means every alarm, as in the editor.
+  assert.deepEqual(read("a", true).config.devices, ["a"]);
+  assert.deepEqual(read([], true).config.devices, []);
+  // An empty text is what `phones[user]` gives for someone not in the map: no alarm, never everyone's.
+  assert.equal(read("", true).config.devices, null);
+  assert.deepEqual(read(null, true).errors, []);
 });
 
 test("the editor turns a picked option into a template and back", () => {
