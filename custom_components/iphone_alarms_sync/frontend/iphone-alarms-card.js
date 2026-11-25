@@ -63,7 +63,7 @@ const STRINGS = {
     no_alarm_automations: "No automations use this alarm.",
     script: "Script",
     automation_off: "Off",
-    phone_automations: "Phone automations",
+    phone_automations: "Automations",
     no_phone_automations: "No automations use this phone.",
     // Named like the phone's event entities.
     any_alarm: "Any alarm",
@@ -118,7 +118,7 @@ const STRINGS = {
     no_alarm_automations: "Żadna automatyzacja nie używa tego budzika.",
     script: "Skrypt",
     automation_off: "Wyłączona",
-    phone_automations: "Automatyzacje telefonu",
+    phone_automations: "Automatyzacje",
     no_phone_automations: "Żadna automatyzacja nie używa tego telefonu.",
     any_alarm: "Dowolny budzik",
     wakeup_alarm: "Budzik pobudki",
@@ -581,6 +581,14 @@ class IPhoneAlarmsCard extends HTMLElement {
     let shown = 0;
     for (const group of groups) {
       let rows = "";
+      // Automations of the whole phone don't belong to one alarm: they get a row of their own, on top
+      // like Sleep | Wake Up in the Clock app. It stays when no alarm is shown, since those automations still run.
+      if (config.show_automations && group.whole) {
+        keys.add(group.phone.id);
+        rows += this._item(group.phone.id, "phone-row", escape(t.phone_automations), "", phoneIcon(), () =>
+          this._phoneDetails(group.phone.id, ctx),
+        );
+      }
       for (const alarm of group.alarms) {
         keys.add(alarm.key);
         shown += 1;
@@ -599,19 +607,6 @@ class IPhoneAlarmsCard extends HTMLElement {
           () => this._alarmDetails(alarm, ctx),
         );
       }
-      // Automations of the whole phone don't belong to one alarm: they get a row of their own,
-      // there even when no alarm is shown, since Sleep and Wake-Up automations still run.
-      if (config.show_automations && group.whole) {
-        keys.add(group.phone.id);
-        rows += this._item(
-          group.phone.id,
-          "phone-row",
-          escape(t.phone_automations),
-          "",
-          phoneIcon(),
-          () => this._phoneDetails(group.phone.id, ctx),
-        );
-      }
       if (!rows) continue;
       // A phone with nothing to show gets no heading either.
       if (groups.length > 1) body += `<div class="phone">${escape(group.phone.name)}</div>`;
@@ -622,7 +617,7 @@ class IPhoneAlarmsCard extends HTMLElement {
       body = `<div class="empty">${escape(t.no_phones)}</div>`;
     } else if (!shown) {
       const empty = config.devices.length || groups.some((group) => group.alarms.length) ? t.no_match : t.no_alarms;
-      body = `<div class="empty">${escape(empty)}</div>${body}`;
+      body += `<div class="empty">${escape(empty)}</div>`;
     }
     const warning = missing ? `<div class="warning">${escape(t.missing(missing))}</div>` : "";
     const title = config.title ? `<h1 class="title">${escape(config.title)}</h1>` : "";

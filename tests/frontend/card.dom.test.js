@@ -52,7 +52,7 @@ test("renders again only when what it shows changes", () => {
   const sensor = "sensor.johns_iphone_test_2_alarm_id";
   el.hass = withState(hass, sensor, "x", { ...hass.states[sensor].attributes, hour: 5 });
   ok($(el, ".section") !== first, "rendered");
-  assert.equal(text($$(el, ".time")[0]), "05:43");
+  assert.equal(text($$(el, `${ALARM} .time`)[0]), "05:43");
 });
 
 test("ha-card stays across renders, so card-mod styles survive", () => {
@@ -125,10 +125,10 @@ test("the phone's automations get a row of their own, by subject", async () => {
   };
   const el = mount({}, makeHass({ phones: [phone] }));
   const phoneRow = row(el, PHONE.id);
-  assert.equal(text($(el, ".phone-row .time")), "Phone automations");
+  assert.equal(text($(el, ".phone-row .time")), "Automations");
   assert.equal(text($(el, ".phone-row .subtitle")), "");
-  // Below the alarms, last.
-  assert.equal($$(el, "button.row").at(-1), phoneRow);
+  // Above the alarms, like Sleep | Wake Up in the Clock app.
+  assert.equal($$(el, "button.row").at(0), phoneRow);
   phoneRow.click();
   await flush();
   assert.deepEqual($$(el, ".details .label").map(text), ["Any alarm", "Sleep", "Other"]);
@@ -147,10 +147,10 @@ test("a phone row with nothing says so", async () => {
   assert.equal(text($(el, ".link")), "Show all entities");
 });
 
-test("the phone row stays when no alarm is shown, under the empty message", () => {
+test("the phone row stays when no alarm is shown, above the empty message", () => {
   const none = mount({}, makeHass({ phones: [{ ...PHONE, alarms: [] }] }));
   assert.match(text($(none, ".empty")), /No alarms yet/);
-  ok(row(none, PHONE.id));
+  ok(row(none, PHONE.id).compareDocumentPosition($(none, ".empty")) & Node.DOCUMENT_POSITION_FOLLOWING);
   const allOff = PHONE.alarms.map((alarm) => ({ ...alarm, enabled: false }));
   const hidden = mount({ show_disabled: false }, makeHass({ phones: [{ ...PHONE, alarms: allOff }] }));
   ok(row(hidden, PHONE.id));
