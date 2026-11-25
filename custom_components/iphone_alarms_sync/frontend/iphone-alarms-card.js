@@ -70,6 +70,8 @@ const STRINGS = {
     // Device triggers on the phone, which don't say which of the above they use.
     other: "Other",
     show_all: (n) => `Show all (${n})`,
+    show_less: "Show less",
+    retry: "Try again",
     no_phones: "No phones yet. Add one in Settings → Devices & services → iPhone Alarms Sync.",
     no_match: "No alarms match this card's filters.",
     no_alarms: "No alarms yet. Run the Sync shortcut on your phone.",
@@ -121,6 +123,8 @@ const STRINGS = {
     sleep: "Sen",
     other: "Inne",
     show_all: (n) => `Pokaż wszystkie (${n})`,
+    show_less: "Pokaż mniej",
+    retry: "Spróbuj ponownie",
     no_phones: "Brak telefonów. Dodaj telefon w Ustawienia → Urządzenia oraz usługi → iPhone Alarms Sync.",
     no_match: "Żaden budzik nie pasuje do filtrów tej karty.",
     no_alarms: "Brak budzików. Uruchom skrót Sync na telefonie.",
@@ -394,14 +398,18 @@ button:focus-visible { outline: 2px solid var(--primary-color); outline-offset: 
 .info { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 8px 16px; margin: 0 0 10px; }
 .info dt { color: var(--secondary-text-color); }
 .info dd { margin: 0; overflow-wrap: anywhere; color: var(--primary-text-color); }
-.label { margin: 16px 0 2px; font-size: 0.75rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.03em; overflow-wrap: anywhere; }
+.label { display: flex; align-items: baseline; gap: 8px; margin: 16px 0 2px; font-size: 0.75rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.03em; overflow-wrap: anywhere; }
+.label .group { flex: 1; min-width: 0; }
+.label .count { flex: none; font-weight: 500; font-variant-numeric: tabular-nums; }
 .automation, .more, .link { display: flex; align-items: center; gap: 8px; width: 100%; margin: 0; padding: 11px 0; border: 0; border-bottom: 1px solid var(--divider-color); background: none; color: var(--primary-text-color); font: inherit; font-size: 0.9375rem; text-align: start; cursor: pointer; }
+.automation .text { flex: 1; min-width: 0; display: flex; align-items: center; gap: 8px; }
 .automation .name, .link .name { flex: 1; min-width: 0; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
 .automation.disabled .name { opacity: 0.5; }
 .automation::after, .link::after { content: ""; flex: none; width: 6px; height: 6px; margin-inline-end: 4px; border: solid var(--secondary-text-color); border-width: 2px 2px 0 0; transform: rotate(45deg); }
 :host([dir="rtl"]) .automation::after, :host([dir="rtl"]) .link::after { transform: rotate(-135deg); }
 .tag { flex: none; font-size: 0.75rem; color: var(--secondary-text-color); }
 .more, .link { border-bottom: 0; color: var(--primary-color); }
+.more + .link { border-top: 1px solid var(--divider-color); }
 .link svg { flex: none; width: 18px; height: 18px; fill: currentColor; }
 .details > :last-child { border-bottom: 0; }
 .empty { padding: 16px; color: var(--secondary-text-color); }
@@ -413,6 +421,9 @@ button:focus-visible { outline: 2px solid var(--primary-color); outline-offset: 
   /* Too narrow for two columns: each label above its value. */
   .info { grid-template-columns: minmax(0, 1fr); gap: 0; }
   .info dd { margin-bottom: 8px; }
+  /* A name gets the whole line, its tag goes under it. */
+  .automation .text { flex-direction: column; align-items: flex-start; gap: 2px; }
+  .automation .name, .link .name { white-space: normal; overflow-wrap: anywhere; }
 }
 @media (prefers-reduced-motion: reduce) { .status .badge path { transition: none; } }
 `;
@@ -509,6 +520,16 @@ class IPhoneAlarmsCard extends HTMLElement {
     else if (action === "more") {
       this._showAll = true;
       this._refresh();
+    } else if (action === "less") {
+      this._showAll = false;
+      this._refresh();
+      // The list got shorter under the pointer: bring "Show all" back into view, with focus on it.
+      this._content.querySelector('[data-action="more"]')?.focus();
+    } else if (action === "retry") {
+      this._load(key);
+      this._refresh();
+      // "Try again" is gone while loading: keep the keyboard on the row it belongs to.
+      [...this._content.querySelectorAll('[data-action="toggle"]')].find((el) => el.dataset.key === key)?.focus();
     } else if (action === "open") {
       this.dispatchEvent(new CustomEvent("hass-more-info", { detail: { entityId: key }, bubbles: true, composed: true }));
     } else if (action === "device") {
@@ -589,7 +610,7 @@ class IPhoneAlarmsCard extends HTMLElement {
       if (config.show_automations) {
         keys.add(group.phone.id);
         rows += this._item(group.phone.id, "phone-row", escape(t.automations), "", phoneIcon(), () =>
-          this._deviceLink(group.phone.id, t) + this._automations(group, ctx),
+          this._automations(group, ctx) + this._deviceLink(group.phone.id, t),
         );
       }
       for (const alarm of group.alarms) {
@@ -670,7 +691,7 @@ class IPhoneAlarmsCard extends HTMLElement {
     return html + this._deviceLink(key, t);
   }
 
-  // Above the automations, whose list can be long. The device page is under Settings, which only admins can open.
+  // Last in a panel, after what the panel is about. The device page is under Settings, which only admins can open.
   _deviceLink(key, t) {
     if (!this._hass.user?.is_admin) return "";
     return `<button class="link" data-action="device" data-key="${escape(key)}"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="${LIST_ICON}"/></svg><span class="name">${escape(t.show_all_entities)}</span></button>`;
@@ -682,7 +703,9 @@ class IPhoneAlarmsCard extends HTMLElement {
     const key = group.phone.id;
     const related = this._related?.key === key ? this._related : { status: "loading" };
     if (related.status === "loading") return `<p>${escape(t.loading)}</p>`;
-    if (related.status === "error") return `<p>${escape(t.load_error)}</p>`;
+    if (related.status === "error") {
+      return `<p>${escape(t.load_error)}</p><button class="more" data-action="retry" data-key="${escape(key)}">${escape(t.retry)}</button>`;
+    }
     const found = new Map(related.groups);
     // Alarm labels come from the alarms as shown now: a renamed alarm is renamed here, a hidden one drops out.
     const labels = [
@@ -703,19 +726,22 @@ class IPhoneAlarmsCard extends HTMLElement {
     let html = "";
     for (const [label, items] of groups) {
       if (left <= 0) break;
-      html += `<div class="label">${escape(label)}</div>`;
+      // The count tells how much a group cut by the preview holds.
+      html += `<div class="label"><span class="group">${escape(label)}</span><span class="count">${items.length}</span></div>`;
       for (const item of items.slice(0, left)) {
         html +=
           `<button class="automation${item.off ? " disabled" : ""}" data-action="open" data-key="${escape(item.id)}">` +
-          `<span class="name">${escape(item.name)}</span>` +
+          `<span class="text"><span class="name">${escape(item.name)}</span>` +
           (item.script ? `<span class="tag">${escape(t.script)}</span>` : "") +
           (item.off ? `<span class="tag">${escape(t.automation_off)}</span>` : "") +
-          `</button>`;
+          `</span></button>`;
       }
       left -= items.length;
     }
-    if (total > PREVIEW_LIMIT && !this._showAll) {
-      html += `<button class="more" data-action="more" data-key="${escape(key)}">${escape(t.show_all(total))}</button>`;
+    if (total > PREVIEW_LIMIT) {
+      html += this._showAll
+        ? `<button class="more" data-action="less" data-key="${escape(key)}">${escape(t.show_less)}</button>`
+        : `<button class="more" data-action="more" data-key="${escape(key)}">${escape(t.show_all(total))}</button>`;
     }
     return html;
   }

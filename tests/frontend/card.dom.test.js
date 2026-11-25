@@ -12,7 +12,8 @@ const text = (node) => node?.textContent.replace(/\s+/g, " ").trim();
 // Alarm rows only, without the phone row under them.
 const ALARM = ".item:not(.phone-row)";
 const row = (el, key) => $$(el, "button.row").find((b) => b.dataset.key === key);
-const labels = (el) => $$(el, ".details .label").map(text);
+const labels = (el) => $$(el, ".details .label .group").map(text);
+const counts = (el) => $$(el, ".details .label .count").map(text);
 const names = (el) => $$(el, ".automation .name").map((n) => n.textContent);
 const info = (el) => Object.fromEntries($$(el, ".info dt").map((dt) => [dt.textContent, dt.nextElementSibling.textContent]));
 // Compare booleans and strings only: assert on a DOM node prints the whole tree.
@@ -206,6 +207,8 @@ test("many automations: five, then all, counted across groups", async () => {
   await flush();
   assert.equal(names(el).length, 5);
   assert.deepEqual(labels(el), ["06:00 · Gym", "07:35 · 1️⃣ Pierwszy", "07:40 · ⚠️ Drugi"]);
+  // Drugi shows one of its 20: the count says so.
+  assert.deepEqual(counts(el), ["1", "3", "20"]);
   // Drugi's 20 repeat Pierwszy's 3: each alarm lists all of its own.
   assert.equal(text($(el, ".more")), "Show all (24)");
   $(el, ".more").focus();
@@ -214,7 +217,7 @@ test("many automations: five, then all, counted across groups", async () => {
   assert.equal(el.shadowRoot.activeElement, $(el, ".more"));
   $(el, ".more").click();
   assert.equal(names(el).length, 24);
-  ok(!$(el, ".more"));
+  ok(!$(el, '[data-action="more"]'));
   // The keyboard goes on with the first automation that "Show all" revealed.
   assert.equal(el.shadowRoot.activeElement, $$(el, ".automation")[5]);
   const drugi = names(el).slice(4);
@@ -224,6 +227,11 @@ test("many automations: five, then all, counted across groups", async () => {
   copies()[1].focus();
   el.hass = withState(hass, "automation.coffee_machine", "off");
   assert.equal(el.shadowRoot.activeElement, copies()[1]);
+  // A long list folds back, with focus on "Show all" so the panel stays in view.
+  assert.equal(text($$(el, ".more").at(-1)), "Show less");
+  $$(el, ".more").at(-1).click();
+  assert.equal(names(el).length, 5);
+  assert.equal(el.shadowRoot.activeElement, $(el, '[data-action="more"]'));
 });
 
 test("a failed lookup says so and the next tap tries again", async () => {
@@ -237,8 +245,10 @@ test("a failed lookup says so and the next tap tries again", async () => {
   await flush();
   assert.match(text($(el, ".details")), /Couldn't load automations\./);
   hass.callWS = working;
-  row(el, PHONE.id).click();
-  row(el, PHONE.id).click();
+  assert.equal(text($(el, '[data-action="retry"]')), "Try again");
+  $(el, '[data-action="retry"]').click();
+  assert.match(text($(el, ".details")), /Loading…/);
+  assert.equal(el.shadowRoot.activeElement, row(el, PHONE.id));
   await flush();
   assert.equal(names(el).length, 3);
 });
