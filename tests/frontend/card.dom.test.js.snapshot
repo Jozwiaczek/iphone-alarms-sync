@@ -71,7 +71,7 @@ exports[`Polish: the card and its editor 2`] = `
   ],
   [
     "Pokaż automatyzacje",
-    "Dodaje nad budzikami wiersz Automatyzacje ze wszystkimi automatyzacjami i skryptami, które używają telefonu lub jego budzików."
+    "Wiersz nad budzikami z automatyzacjami i skryptami telefonu oraz budzików."
   ]
 ]
 `;
@@ -149,7 +149,7 @@ exports[`a language the card doesn't know falls back to English 2`] = `
   ],
   [
     "Show automations",
-    "Adds an Automations row above the alarms, with every automation and script that uses the phone or its alarms."
+    "A row above the alarms with automations and scripts of the phone and its alarms."
   ]
 ]
 `;
