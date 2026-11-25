@@ -15,7 +15,7 @@ const ALARM_EVENTS = [
   ["last_event_snoozed_at", "snoozed"],
   ["last_event_stopped_at", "stopped"],
 ];
-// The phone's event entities, in the order the phone row lists their automations.
+// The phone's event entities, in the order the Automations row lists them, before the alarms.
 const PHONE_SUBJECTS = ["any_alarm", "wakeup_alarm", "sleep"];
 const ALARM_KEYS = ["alarm_id", "next_occurrence_datetime", "last_occurrence_datetime", ...ALARM_EVENTS.map(([key]) => key)];
 // A "goes off" from the phone this close after the scheduled time confirms that ring.
@@ -30,8 +30,8 @@ const STRINGS = {
     devices_helper: "Pick phones (all their alarms) or single alarms. Leave empty to show every alarm.",
     show_disabled: "Show alarms that are off",
     show_disabled_helper: "Shown grayed out, with a crossed-out clock.",
-    show_automations: "Show automations of an alarm",
-    show_automations_helper: "Tap an alarm to see the automations and scripts that use it. Those of the whole phone get a row of their own.",
+    show_automations: "Show automations",
+    show_automations_helper: "An Automations row above the alarms: everything that uses the phone and its alarms.",
     show_last_events: "Show last events of an alarm",
     show_last_events_helper: "Tap an alarm to see when it last went off, was snoozed or stopped.",
     every_day: "Every day",
@@ -60,13 +60,9 @@ const STRINGS = {
     automations: "Automations",
     loading: "Loading…",
     load_error: "Couldn't load automations.",
-    no_alarm_automations: "No automations use this alarm.",
     script: "Script",
     automation_off: "Off",
-    phone_automations: "General automations",
-    // Says this is not every automation: each alarm lists its own.
-    phone_automations_hint: "These use the whole phone. Tap an alarm for its own automations.",
-    no_phone_automations: "No automations use this phone.",
+    no_automations: "No automations use this phone or its alarms.",
     // Named like the phone's event entities.
     any_alarm: "Any alarm",
     wakeup_alarm: "Wake-Up alarm",
@@ -87,8 +83,8 @@ const STRINGS = {
     devices_helper: "Wybierz telefony (wszystkie ich budziki) albo pojedyncze budziki. Zostaw puste, aby pokazać wszystkie budziki.",
     show_disabled: "Pokaż wyłączone budziki",
     show_disabled_helper: "Wyszarzone, z przekreślonym zegarem.",
-    show_automations: "Pokaż automatyzacje budzika",
-    show_automations_helper: "Dotknij budzika, aby zobaczyć automatyzacje i skrypty, które go używają. Automatyzacje całego telefonu mają osobny wiersz.",
+    show_automations: "Pokaż automatyzacje",
+    show_automations_helper: "Wiersz Automatyzacje nad budzikami: wszystko, co używa telefonu i jego budzików.",
     show_last_events: "Pokaż ostatnie zdarzenia budzika",
     show_last_events_helper: "Dotknij budzika, aby zobaczyć, kiedy ostatnio zadzwonił, przeszedł w drzemkę albo został zatrzymany.",
     every_day: "Codziennie",
@@ -117,12 +113,9 @@ const STRINGS = {
     automations: "Automatyzacje",
     loading: "Wczytywanie…",
     load_error: "Nie udało się wczytać automatyzacji.",
-    no_alarm_automations: "Żadna automatyzacja nie używa tego budzika.",
     script: "Skrypt",
     automation_off: "Wyłączona",
-    phone_automations: "Ogólne automatyzacje",
-    phone_automations_hint: "Te dotyczą całego telefonu. Automatyzacje budzika zobaczysz po jego dotknięciu.",
-    no_phone_automations: "Żadna automatyzacja nie używa tego telefonu.",
+    no_automations: "Żadna automatyzacja nie używa tego telefonu ani jego budzików.",
     any_alarm: "Dowolny budzik",
     wakeup_alarm: "Budzik pobudki",
     sleep: "Sen",
@@ -401,7 +394,7 @@ button:focus-visible { outline: 2px solid var(--primary-color); outline-offset: 
 .info { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 8px 16px; margin: 0 0 10px; }
 .info dt { color: var(--secondary-text-color); }
 .info dd { margin: 0; overflow-wrap: anywhere; color: var(--primary-text-color); }
-.label { margin: 16px 0 2px; font-size: 0.75rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.03em; }
+.label { margin: 16px 0 2px; font-size: 0.75rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.03em; overflow-wrap: anywhere; }
 .automation, .more, .link { display: flex; align-items: center; gap: 8px; width: 100%; margin: 0; padding: 11px 0; border: 0; border-bottom: 1px solid var(--divider-color); background: none; color: var(--primary-text-color); font: inherit; font-size: 0.9375rem; text-align: start; cursor: pointer; }
 .automation .name, .link .name { flex: 1; min-width: 0; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
 .automation.disabled .name { opacity: 0.5; }
@@ -471,7 +464,8 @@ class IPhoneAlarmsCard extends HTMLElement {
   }
 
   getCardSize() {
-    const alarms = this._view?.groups.reduce((sum, group) => sum + group.alarms.length + 1, 0) ?? 3;
+    const row = this._config?.show_automations ? 1 : 0;
+    const alarms = this._view?.groups.reduce((sum, group) => sum + group.alarms.length + 1 + row, 0) ?? 3;
     return 1 + alarms;
   }
 
@@ -533,7 +527,8 @@ class IPhoneAlarmsCard extends HTMLElement {
     this._showAll = false;
     this._related = null;
     this._expanded = this._expanded === key ? null : key;
-    if (this._expanded && this._config.show_automations) this._load(key);
+    // Only the Automations row lists automations; an alarm has nothing to look up.
+    if (this._index.phones.has(this._expanded)) this._load(key);
     this._refresh();
   }
 
@@ -553,25 +548,30 @@ class IPhoneAlarmsCard extends HTMLElement {
     this._refresh();
   }
 
-  /** What uses an alarm, as one group, or a phone, grouped by its event entities. */
-  async _lookup(key) {
+  /** Everything that uses a phone, as [key, ids]: by its event entities, by each alarm the card shows, then "other". */
+  async _lookup(phoneId) {
     const search = async (type, id) => {
       const result = await this._hass.callWS({ type: "search/related", item_type: type, item_id: id });
       return [...(result.automation ?? []), ...(result.script ?? [])];
     };
-    const phone = this._index.phones.get(key);
-    if (!phone) return [[null, await search("device", key)]];
+    const phone = this._index.phones.get(phoneId);
+    // shortcut: the alarms shown when the row opens; one synced later shows once the row is opened again.
+    const alarms = this._view.groups.find((group) => group.phone.id === phoneId)?.alarms ?? [];
     const subjects = PHONE_SUBJECTS.filter((subject) => phone.entities[subject]);
-    // The device search also finds device triggers, which name no entity: those go under "Other".
+    // The phone's device search also finds device triggers, which name no entity: those go under "Other".
     const [all, ...found] = await Promise.all([
-      search("device", key),
+      search("device", phoneId),
       ...subjects.map((subject) => search("entity", phone.entities[subject])),
+      ...alarms.map((alarm) => search("device", alarm.key)),
     ]);
     const seen = new Set();
-    return [...subjects.map((subject, i) => [subject, found[i]]), ["other", all]].map(([subject, ids]) => [
-      subject,
-      ids.filter((id) => !seen.has(id) && seen.add(id)),
-    ]);
+    // The phone's subjects don't repeat each other; an automation on two alarms is under both.
+    const groups = [...subjects, ...alarms.map((alarm) => alarm.key)].map((key, i) => {
+      const ids = i < subjects.length ? found[i].filter((id) => !seen.has(id)) : found[i];
+      for (const id of ids) seen.add(id);
+      return [key, ids];
+    });
+    return [...groups, ["other", all.filter((id) => !seen.has(id))]];
   }
 
   _render(ctx) {
@@ -584,12 +584,12 @@ class IPhoneAlarmsCard extends HTMLElement {
     let shown = 0;
     for (const group of groups) {
       let rows = "";
-      // Automations of the whole phone don't belong to one alarm: they get a row of their own, on top
-      // like Sleep | Wake Up in the Clock app. It stays when no alarm is shown, since those automations still run.
-      if (config.show_automations && group.whole) {
+      // All of a phone's automations in one row, on top like Sleep | Wake Up in the Clock app.
+      // It stays when no alarm is shown, since the phone's own automations still run.
+      if (config.show_automations) {
         keys.add(group.phone.id);
-        rows += this._item(group.phone.id, "phone-row", escape(t.phone_automations), "", phoneIcon(), () =>
-          this._phoneDetails(group.phone.id, ctx),
+        rows += this._item(group.phone.id, "phone-row", escape(t.automations), "", phoneIcon(), () =>
+          this._deviceLink(group.phone.id, t) + this._automations(group, ctx),
         );
       }
       for (const alarm of group.alarms) {
@@ -624,13 +624,18 @@ class IPhoneAlarmsCard extends HTMLElement {
     }
     const warning = missing ? `<div class="warning">${escape(t.missing(missing))}</div>` : "";
     const title = config.title ? `<h1 class="title">${escape(config.title)}</h1>` : "";
-    const focused = this.shadowRoot.activeElement?.dataset;
+    const active = this.shadowRoot.activeElement;
+    const focused = active?.dataset;
+    // An automation on two alarms has two buttons with the same key: keep the one that had focus.
+    const twins = () => [...this._content.querySelectorAll(`[data-action="${focused.action}"]`)].filter((el) => el.dataset.key === focused.key);
+    const nth = focused?.action ? twins().indexOf(active) : -1;
     this._content.innerHTML = `${title}${warning}${body}`;
     if (focused?.action === "more" && this._showAll) {
       // "Show all" is gone after the render: go on with the first automation it revealed.
       this._content.querySelectorAll(".automation")[PREVIEW_LIMIT]?.focus();
     } else if (focused?.action) {
-      [...this._content.querySelectorAll(`[data-action="${focused.action}"]`)].find((el) => el.dataset.key === focused.key)?.focus();
+      const now = twins();
+      (now[nth] ?? now[0])?.focus();
     }
   }
 
@@ -662,12 +667,7 @@ class IPhoneAlarmsCard extends HTMLElement {
       .filter(([, value]) => value)
       .map(([label, value]) => `<dt>${escape(label)}</dt><dd>${escape(value)}</dd>`)
       .join("")}</dl>`;
-    return html + this._deviceLink(key, t) + (this._config.show_automations ? `<div class="label">${escape(t.automations)}</div>${this._automations(key, t, t.no_alarm_automations)}` : "");
-  }
-
-  _phoneDetails(key, ctx) {
-    const { t } = ctx;
-    return `<p>${escape(t.phone_automations_hint)}</p>${this._deviceLink(key, t)}${this._automations(key, t, t.no_phone_automations)}`;
+    return html + this._deviceLink(key, t);
   }
 
   // Above the automations, whose list can be long. The device page is under Settings, which only admins can open.
@@ -676,21 +676,34 @@ class IPhoneAlarmsCard extends HTMLElement {
     return `<button class="link" data-action="device" data-key="${escape(key)}"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="${LIST_ICON}"/></svg><span class="name">${escape(t.show_all_entities)}</span></button>`;
   }
 
-  /** The automations of the open row: a label over each group that has a subject, "Show all" counting across groups. */
-  _automations(key, t, empty) {
+  /** The Automations row's list, a label over each group, "Show all" counting across groups. */
+  _automations(group, ctx) {
+    const { t } = ctx;
+    const key = group.phone.id;
     const related = this._related?.key === key ? this._related : { status: "loading" };
     if (related.status === "loading") return `<p>${escape(t.loading)}</p>`;
     if (related.status === "error") return `<p>${escape(t.load_error)}</p>`;
-    const groups = related.groups
-      .map(([subject, ids]) => [subject, relatedItems(ids, this._hass.states)])
+    const found = new Map(related.groups);
+    // Alarm labels come from the alarms as shown now: a renamed alarm is renamed here, a hidden one drops out.
+    const labels = [
+      ...PHONE_SUBJECTS.map((subject) => [subject, t[subject]]),
+      ...group.alarms.map((alarm) => {
+        const { time, period } = formatClock(alarm.hour, alarm.minute, ctx);
+        return [alarm.key, `${time}${period ? ` ${period}` : ""} · ${alarm.label}`];
+      }),
+      ["other", t.other],
+    ];
+    const groups = labels
+      .filter(([id]) => found.has(id))
+      .map(([id, label]) => [label, relatedItems(found.get(id), this._hass.states)])
       .filter(([, items]) => items.length);
     const total = groups.reduce((sum, [, items]) => sum + items.length, 0);
-    if (!total) return `<p>${escape(empty)}</p>`;
+    if (!total) return `<p>${escape(t.no_automations)}</p>`;
     let left = this._showAll ? total : PREVIEW_LIMIT;
     let html = "";
-    for (const [subject, items] of groups) {
+    for (const [label, items] of groups) {
       if (left <= 0) break;
-      if (subject) html += `<div class="label">${escape(t[subject])}</div>`;
+      html += `<div class="label">${escape(label)}</div>`;
       for (const item of items.slice(0, left)) {
         html +=
           `<button class="automation${item.off ? " disabled" : ""}" data-action="open" data-key="${escape(item.id)}">` +

@@ -47,12 +47,12 @@ Add the event shortcuts any time: [Shortcuts Setup Guide](docs/shortcuts.md).
 **On your dashboard**
 
 - **A ready card.** Your alarms, the way the Clock app shows them. Nothing extra to install.
-- **What each alarm runs.** Tap an alarm to see when it last rang and which automations use it.
+- **What your alarms run.** Tap an alarm to see when it last rang. Tap **Automations** to see every automation that uses the phone and its alarms.
 
 <p align="center">
   <picture>
     <source media="(prefers-color-scheme: dark)" srcset="assets/card-dark.png">
-    <img src="assets/card-light.png" width="390" alt="The iPhone Alarms card: the alarms with their times, labels and repeat days. One is open: its snooze, next ring, last events and the automations that use it">
+    <img src="assets/card-light.png" width="390" alt="The iPhone Alarms card: the alarms with their times, labels and repeat days. An Automations row above them. One alarm is open: its snooze, next ring and last events">
   </picture>
 </p>
 

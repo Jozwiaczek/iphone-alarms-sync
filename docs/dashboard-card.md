@@ -10,8 +10,8 @@ The **iPhone Alarms** card lists your alarms the way the Clock app does. It is r
 </p>
 
 - **Alarms**: every alarm with its time, label and repeat days, and below them when it last went off. The clock on the right is green when the alarm is on, and crossed out, with grayed-out text, when it is off. The arrow in its corner shows whether the alarm is open.
-- **Tap an alarm** for the rest: whether snooze is allowed, when it rings next, when it last went off, was snoozed and was stopped, and the automations and scripts that use it. Tap an automation to open it. Admins also get **Show all entities**, the alarm's device page in Settings with its entities and history.
-- **General automations**, the row with a phone icon above a phone's alarms, lists what uses the whole phone rather than one alarm, with a note that each alarm lists its own, grouped by *Any alarm*, *Wake-Up alarm* and *Sleep*.
+- **Tap an alarm** for the rest: whether snooze is allowed, when it rings next, when it last went off, was snoozed and was stopped. Admins also get **Show all entities**, the alarm's device page in Settings with its entities and history.
+- **Automations**, the row with a phone icon above a phone's alarms, lists every automation and script that uses the phone or one of the alarms on the card: first by the phone's *Any alarm*, *Wake-Up alarm* and *Sleep*, then by alarm (such as *07:35 · Wake up*), then *Other*. Tap one to open it.
 
 ## Add the card
 
@@ -36,7 +36,7 @@ All of them can be set in the card editor.
 | `title` | none | A title above the list, such as `Alarms`. Leave it out for a more compact card. |
 | `devices` | all | Phones or single alarms to show. A phone shows all its alarms. An alarm shows only that alarm. |
 | `show_disabled` | `true` | Show alarms that are off. |
-| `show_automations` | `true` | Tapping an alarm shows the automations and scripts that use it. Adds the *General automations* row of the phone. |
+| `show_automations` | `true` | Shows the *Automations* row above each phone's alarms. |
 | `show_last_events` | `true` | Tapping an alarm shows when it last went off, was snoozed and was stopped. |
 
 **Examples**
@@ -82,7 +82,7 @@ target:
 ## Limits
 
 - **Language**: the card and its editor follow the language of your Home Assistant profile. They come in English and Polish; any other language shows English. To add one, see [Adding a language](../CONTRIBUTING.md#adding-a-language).
-- **Automations of an alarm**: the card finds every automation and script that uses the alarm's device or one of its entities, through Home Assistant's own search. The *General automations* row above the alarms does the same for the phone's device. An automation lands under the phone's event entity it uses. Device triggers on the phone name no entity, so they land under *Other*. The row shows only when the card shows the whole phone, not when you picked single alarms.
+- **Automations**: the card finds every automation and script that uses the phone, an alarm, or one of their entities, through Home Assistant's own search. An automation lands under the phone's event entity it uses, or under each alarm it uses. Device triggers on the phone name no entity, so they land under *Other*. Only the alarms the card shows get a group: with single alarms picked, or alarms that are off hidden, the others are left out. An alarm synced while the row is open shows the next time you open it.
 - **An alarm is missing**: it needs its **Alarm ID** sensor. If you disabled that entity, the card can't read the alarm.
 
 ## Change the look
