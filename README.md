@@ -47,7 +47,7 @@ Add the event shortcuts any time: [Shortcuts Setup Guide](docs/shortcuts.md).
 **On your dashboard**
 
 - **A ready card.** Your alarms, the way the Clock app shows them. Nothing extra to install.
-- **What your alarms run.** Tap an alarm to see when it last rang. Tap **Automations** to see every automation that uses the phone and its alarms.
+- **What your alarms run.** Tap an alarm to see when it last rang. Tap **Automations** to see every automation and script that uses the phone or its alarms.
 
 <p align="center">
   <picture>
