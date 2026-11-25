@@ -26,7 +26,9 @@ exports[`Polish: the card and its editor 1`] = `
   "Włączony",
   "16:43",
   "Test 2 · wt. i śr.",
-  "Włączony"
+  "Włączony",
+  "Automatyzacje telefonu",
+  "Dowolny budzik · Budzik pobudki · Sen"
 ]
 `;
 
@@ -50,7 +52,7 @@ exports[`Polish: the card and its editor 2`] = `
   ],
   [
     "Pokaż automatyzacje budzika",
-    "Dotknij budzika, aby zobaczyć automatyzacje i skrypty, które używają jego albo jego telefonu."
+    "Dotknij budzika, aby zobaczyć automatyzacje i skrypty, które go używają. Automatyzacje całego telefonu mają osobny wiersz."
   ]
 ]
 `;
@@ -83,7 +85,9 @@ exports[`a language the card doesn't know falls back to English 1`] = `
   "On",
   "16:43",
   "Test 2 · Tue and Wed",
-  "On"
+  "On",
+  "Phone automations",
+  "Any alarm · Wake-Up alarm · Sleep"
 ]
 `;
 
@@ -107,7 +111,7 @@ exports[`a language the card doesn't know falls back to English 2`] = `
   ],
   [
     "Show automations of an alarm",
-    "Tap an alarm to see the automations and scripts that use it or its phone."
+    "Tap an alarm to see the automations and scripts that use it. Those of the whole phone get a row of their own."
   ]
 ]
 `;

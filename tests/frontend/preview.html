@@ -64,6 +64,20 @@
         many: { expand: "2b3c4d5e6f7a8b9c" },
         "many-all": { expand: "2b3c4d5e6f7a8b9c", all: true },
         "no-automations": { expand: "3c4d5e6f7a8b9c0d" },
+        // The phone row: one automation per subject, one device trigger under "Other", one off.
+        phone: {
+          expand: PHONE.id,
+          hass: {
+            phones: [
+              {
+                ...PHONE,
+                automations: ["automation.wake_the_kids", "automation.kitchen_lights", "automation.coffee_machine", "automation.open_the_blinds", "script.good_morning"],
+                entityAutomations: { any_alarm: ["automation.wake_the_kids", "automation.open_the_blinds"], wakeup_alarm: ["script.good_morning"], sleep: ["automation.kitchen_lights"] },
+              },
+            ],
+          },
+        },
+        "phone-empty": { expand: PHONE.id },
         loading: { expand: "1a2b3c4d5e6f7a8b", hass: { callWS: () => new Promise(() => {}) } },
         error: { expand: "1a2b3c4d5e6f7a8b", hass: { callWS: async () => Promise.reject(new Error("x")) } },
         "two-phones": { config: { title: "Alarms" }, hass: { phones: [PHONE, SECOND_PHONE] } },
