@@ -55,7 +55,10 @@ jobs:
           [ -f .next-version ] || exit 0 # no releasable commits
           # Same notes as the next stable release: everything since the last stable tag.
           node release/gitmoji.js > notes.md
-          VERSION="$(cat .next-version)-beta.${{ github.run_number }}"
+          NEXT=$(cat .next-version)
+          # Next beta of this version: last beta number + 1 (the stable release deletes the betas).
+          LAST=$(git tag -l "v$NEXT-beta.*" | sed 's/.*-beta\.//' | sort -n | tail -1)
+          VERSION="$NEXT-beta.$(( ${LAST:-0} + 1 ))"
           jq --arg v "$VERSION" '.version = $v' "$MANIFEST" > tmp.json && mv tmp.json "$MANIFEST"
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
