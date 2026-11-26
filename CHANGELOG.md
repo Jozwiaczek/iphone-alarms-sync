@@ -1,5 +1,32 @@
 # Changelog
 
+## [v1.7.0](https://github.com/Jozwiaczek/iphone-alarms-sync/compare/v1.6.0...v1.7.0) (2026-11-26)
+
+### ✨ New features
+
+- ✨ Add a dashboard card that lists your iPhone alarms ([#51](https://github.com/Jozwiaczek/iphone-alarms-sync/pull/51))
+- ✨ Show when each alarm last went off on the alarms card ([#54](https://github.com/Jozwiaczek/iphone-alarms-sync/pull/54))
+- ✨ List every automation of a phone and its alarms in one Automations row ([#56](https://github.com/Jozwiaczek/iphone-alarms-sync/pull/56))
+- ✨ Let alarms card options come from Jinja2 templates ([#58](https://github.com/Jozwiaczek/iphone-alarms-sync/pull/58))
+
+### 🐛 Fixes and improvements
+
+- 🌐 Show the integration and its dashboard card in Polish ([#52](https://github.com/Jozwiaczek/iphone-alarms-sync/pull/52))
+- 🗑️ Drop the Sleep | Wake Up row from the alarms card ([#53](https://github.com/Jozwiaczek/iphone-alarms-sync/pull/53))
+- 🐛 Show automations that use the whole phone on the alarms card ([#55](https://github.com/Jozwiaczek/iphone-alarms-sync/pull/55))
+
+<details>
+<summary>🧰 Under the hood (6)</summary>
+
+- 📝 Show what the integration offers at the top of the README ([#47](https://github.com/Jozwiaczek/iphone-alarms-sync/pull/47))
+- 👷 Stop commenting on every pull request in a release ([#48](https://github.com/Jozwiaczek/iphone-alarms-sync/pull/48))
+- 👷 Comment the release version on pull requests again ([#49](https://github.com/Jozwiaczek/iphone-alarms-sync/pull/49))
+- 🔥 Remove the unused Snooze time number: iOS never shared it ([#50](https://github.com/Jozwiaczek/iphone-alarms-sync/pull/50))
+- 📝 Explain timeouts caused by a stuck Home Assistant app connection ([#57](https://github.com/Jozwiaczek/iphone-alarms-sync/pull/57))
+- 👷 Number betas per version instead of per workflow run ([#59](https://github.com/Jozwiaczek/iphone-alarms-sync/pull/59))
+
+</details>
+
 ## [v1.6.0](https://github.com/Jozwiaczek/iphone-alarms-sync/compare/v1.5.0...v1.6.0) (2026-11-24)
 
 ### ✨ New features
